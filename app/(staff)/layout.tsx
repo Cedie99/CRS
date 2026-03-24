@@ -30,6 +30,7 @@ export default async function StaffLayout({
         userName={session.user.name ?? ""}
         userRole={session.user.role}
         agentCode={session.user.agentCode}
+        avatarUrl={(session.user as any).avatarUrl ?? null}
       />
       <main className="flex-1 bg-zinc-50">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</div>

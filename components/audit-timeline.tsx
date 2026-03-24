@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { formatDistanceToNow } from "@/lib/utils";
 
 export type WorkflowAction =
@@ -41,10 +42,39 @@ interface EventEntry {
   note: string | null;
   createdAt: Date;
   actorName: string;
+  actorAvatarUrl?: string | null;
 }
 
 interface AuditTimelineProps {
   events: EventEntry[];
+}
+
+function ActorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  if (avatarUrl) {
+    return (
+      <Image
+        src={avatarUrl}
+        alt={name}
+        width={20}
+        height={20}
+        className="h-5 w-5 rounded-full object-cover shrink-0"
+        unoptimized
+      />
+    );
+  }
+
+  return (
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2d6e1e] text-[9px] font-semibold text-white">
+      {initials}
+    </span>
+  );
 }
 
 export function AuditTimeline({ events }: AuditTimelineProps) {
@@ -62,12 +92,14 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
           <p className="text-sm font-medium text-zinc-900">
             {ACTION_LABELS[event.action]}
           </p>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            by{" "}
-            <span className="font-medium text-zinc-700">{event.actorName}</span>
-            {" · "}
-            {formatDistanceToNow(event.createdAt)}
-          </p>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <ActorAvatar name={event.actorName} avatarUrl={event.actorAvatarUrl} />
+            <p className="text-xs text-zinc-500">
+              <span className="font-medium text-zinc-700">{event.actorName}</span>
+              {" · "}
+              {formatDistanceToNow(event.createdAt)}
+            </p>
+          </div>
           {event.note && (
             <p className="mt-1.5 rounded-md bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
               {event.note}

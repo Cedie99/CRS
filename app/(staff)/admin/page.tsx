@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "@/lib/utils";
 import { Users } from "lucide-react";
 
-export const metadata = { title: "Admin — All Submissions — CIS" };
+export const metadata = { title: "Admin — All Submissions — CRS" };
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "Standard",
@@ -32,7 +32,7 @@ export default async function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">All Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Master list of all CIS submissions across the system.
+            Master list of all CRS submissions across the system.
           </p>
         </div>
         <Link href="/admin/users" className={buttonVariants({ variant: "outline" })}>

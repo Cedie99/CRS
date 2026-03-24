@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ArrowRight, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,10 +22,23 @@ interface FinanceActionsProps {
 
 export function FinanceActions({ cisId }: FinanceActionsProps) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [action, setAction] = useState<"forward" | "deny" | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  function openDialog(a: "forward" | "deny") {
+    setAction(a);
+    setNote("");
+    setError("");
+    setOpen(true);
+  }
+
+  function closeDialog() {
+    if (isLoading) return;
+    setOpen(false);
+  }
 
   async function handleSubmit() {
     if (!action) return;
@@ -42,10 +62,9 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
         setError(json.error ?? "Something went wrong.");
         return;
       }
+      setOpen(false);
       toast.success(
-        action === "forward"
-          ? "CIS forwarded to Senior Approver."
-          : "CIS denied."
+        action === "forward" ? "CRS forwarded to Senior Approver." : "CRS denied."
       );
       router.push("/finance");
       router.refresh();
@@ -64,69 +83,71 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!action ? (
-          <div className="flex gap-3">
-            <Button onClick={() => setAction("forward")} className="gap-2">
-              <ArrowRight className="h-4 w-4" />
-              Forward to Approver
+        <div className="flex gap-3">
+          <Button onClick={() => openDialog("forward")} className="gap-2">
+            <ArrowRight className="h-4 w-4" />
+            Forward to Approver
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => openDialog("deny")}
+            className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <XCircle className="h-4 w-4" />
+            Deny
+          </Button>
+        </div>
+      </CardContent>
+
+      <Dialog open={open} onOpenChange={closeDialog}>
+        <DialogContent showCloseButton={!isLoading}>
+          <DialogHeader>
+            <DialogTitle>
+              {action === "forward" ? "Forward to Senior Approver" : "Deny Submission"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-zinc-600">
+            {action === "forward"
+              ? "You are about to forward this submission to the Senior Approver. You may add an optional note."
+              : "You are about to deny this CRS submission. Please provide a reason."}
+          </p>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="dialog-note">
+              {action === "forward" ? "Note (optional)" : "Denial reason *"}
+            </Label>
+            <Textarea
+              id="dialog-note"
+              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={
+                action === "forward" ? "Finance review notes…" : "Reason for denial…"
+              }
+              disabled={isLoading}
+            />
+            {error && <p className="text-sm text-red-600">{error}</p>}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog} disabled={isLoading}>
+              Cancel
             </Button>
             <Button
-              variant="outline"
-              onClick={() => setAction("deny")}
-              className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={handleSubmit}
+              disabled={isLoading}
+              variant={action === "deny" ? "destructive" : "default"}
             >
-              <XCircle className="h-4 w-4" />
-              Deny
+              {isLoading
+                ? "Submitting…"
+                : action === "forward"
+                ? "Confirm Forward"
+                : "Confirm Denial"}
             </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-zinc-700">
-              {action === "forward"
-                ? "Forwarding to Senior Approver — you may add an optional note."
-                : "Denying this submission — please provide a reason."}
-            </p>
-            <div className="space-y-1.5">
-              <Label htmlFor="note">
-                {action === "forward" ? "Note (optional)" : "Denial reason *"}
-              </Label>
-              <Textarea
-                id="note"
-                rows={3}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder={
-                  action === "forward"
-                    ? "Finance review notes…"
-                    : "Reason for denial…"
-                }
-                disabled={isLoading}
-              />
-              {error && <p className="text-sm text-red-600">{error}</p>}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                variant={action === "deny" ? "destructive" : "default"}
-              >
-                {isLoading
-                  ? "Submitting…"
-                  : action === "forward"
-                  ? "Confirm Forward"
-                  : "Confirm Denial"}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => { setAction(null); setNote(""); setError(""); }}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

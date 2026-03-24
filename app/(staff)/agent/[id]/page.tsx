@@ -7,6 +7,8 @@ import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { WorkflowStepper } from "@/components/workflow-stepper";
+import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, AlertTriangle, Clock } from "lucide-react";
 
@@ -57,6 +59,7 @@ export default async function AgentCisDetailPage({
       note: workflowEvents.note,
       createdAt: workflowEvents.createdAt,
       actorName: users.fullName,
+      actorAvatarUrl: users.avatarUrl,
     })
     .from(workflowEvents)
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
@@ -75,6 +78,9 @@ export default async function AgentCisDetailPage({
         <ArrowLeft className="h-4 w-4" />
         Back to my submissions
       </Link>
+
+      <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
+      <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
 
       {/* Draft — awaiting customer */}
       {cis.status === "draft" && (
@@ -115,7 +121,7 @@ export default async function AgentCisDetailPage({
             )}
             {cis.status === "returned" && (
               <p className="mt-1 text-xs text-rose-500">
-                To resubmit, please create a new CIS form with the corrections.
+                To resubmit, please create a new CRS form with the corrections.
               </p>
             )}
           </div>

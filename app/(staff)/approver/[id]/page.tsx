@@ -7,6 +7,8 @@ import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { ApproverActions } from "@/components/actions/approver-actions";
+import { WorkflowStepper } from "@/components/workflow-stepper";
+import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 
@@ -35,6 +37,7 @@ export default async function ApproverCisDetailPage({
       note: workflowEvents.note,
       createdAt: workflowEvents.createdAt,
       actorName: users.fullName,
+      actorAvatarUrl: users.avatarUrl,
     })
     .from(workflowEvents)
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
@@ -52,6 +55,9 @@ export default async function ApproverCisDetailPage({
         <ArrowLeft className="h-4 w-4" />
         Back to queue
       </Link>
+
+      <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
+      <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
 
       <CisInfoCard
         tradeName={cis.tradeName}

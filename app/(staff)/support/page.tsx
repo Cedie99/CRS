@@ -6,7 +6,7 @@ import { CisCard } from "@/components/cis-card";
 import { redirect } from "next/navigation";
 import { FileText, Database, XCircle } from "lucide-react";
 
-export const metadata = { title: "Sales Support — CIS" };
+export const metadata = { title: "Sales Support — CRS" };
 
 export default async function SupportDashboard() {
   const session = await auth();
