@@ -1,6 +1,6 @@
-# CRS — Customer Registration Sheet Platform
+# CRS — Customer Registration System
 
-Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Division**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit Customer Registration Sheets on behalf of prospective customers, and internal stakeholders review, endorse, and approve or deny those submissions through a traceable approval chain.
+Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Division**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit customer registration forms on behalf of prospective customers, and internal stakeholders review, endorse, and approve or deny those submissions through a traceable approval chain.
 
 ---
 
