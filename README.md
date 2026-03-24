@@ -81,22 +81,28 @@ app/
 │   ├── legal/
 │   ├── approver/
 │   ├── support/
-│   └── admin/
+│   ├── admin/
+│   └── profile/         # Avatar upload and account info page
 └── api/
     ├── auth/            # NextAuth + register
     ├── cis/             # CIS CRUD + workflow actions
     ├── form/            # Public token-based form submission
-    └── notifications/   # In-app notification system
+    ├── notifications/   # In-app notification system
+    └── profile/         # Avatar upload and removal endpoint
 
 components/
 ├── actions/             # Per-role action buttons (endorse, approve, deny, etc.)
 ├── admin/               # User management table
 ├── ui/                  # shadcn/base-ui components
-├── navbar.tsx           # Sticky nav with notification bell
+├── navbar.tsx           # Sticky nav with notification bell and avatar
 ├── cis-card.tsx         # Submission list card
+├── cis-card-skeleton.tsx # Animated skeleton placeholder for loading states
 ├── cis-info-card.tsx    # Full CIS detail view
-├── audit-timeline.tsx   # Workflow event history
-└── status-badge.tsx     # Status pill component
+├── audit-timeline.tsx   # Workflow event history with actor avatars
+├── dashboard-filters.tsx # URL-param search + status filter bar
+├── status-badge.tsx     # Status pill with animated dot indicator
+├── workflow-stepper.tsx  # Horizontal approval-chain progress indicator
+└── workflow-handoff.tsx  # "Currently with / Will forward to" role pills
 
 lib/
 ├── auth.ts              # NextAuth config
@@ -166,6 +172,10 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Customer type drives routing** — `standard` goes to the manager first; `fs_petroleum` and `special` go to the legal approver first
 - **Returned forms are archived** — agents cannot edit a returned form; they must create a new submission
 - **Audit trail is non-negotiable** — every action (submit, endorse, return, forward, approve, deny, encode) is logged with actor and timestamp
+- **Avatar in JWT** — user avatars are stored in the JWT token after login so no extra DB query is made on every page load; the token is refreshed client-side after upload via NextAuth's `update()` trigger
+- **URL-param filtering** — dashboard search and status filters use URL search params (server-side, RSC-compatible, shareable links)
+- **Skeleton loading** — every dashboard has a `loading.tsx` that renders animated skeleton placeholders while data loads
+- **Confirmation dialogs** — approve/deny/forward actions open a modal dialog before submitting to prevent accidental submissions
 
 ---
 
@@ -173,7 +183,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Table | Description |
 |---|---|
-| `users` | All platform users with role, agent code, and manager assignment |
+| `users` | All platform users with role, agent code, manager assignment, and avatar URL |
 | `cis_submissions` | CIS form data, status, and routing metadata |
 | `workflow_events` | Full audit log of every action on every form |
 | `notifications` | In-app notification records per recipient |
