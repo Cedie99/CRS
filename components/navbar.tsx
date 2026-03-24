@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Bell, LogOut, CheckCheck } from "lucide-react";
+import { Bell, LogOut, CheckCheck, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -52,9 +52,10 @@ interface NavbarProps {
   userName: string;
   userRole: string;
   agentCode?: string | null;
+  avatarUrl?: string | null;
 }
 
-export function Navbar({ userName, userRole, agentCode }: NavbarProps) {
+export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -113,7 +114,7 @@ export function Navbar({ userName, userRole, agentCode }: NavbarProps) {
           />
           <span className="hidden h-5 w-px bg-zinc-600 sm:block" />
           <span className="hidden text-[10px] uppercase tracking-widest text-zinc-400 sm:block">
-            Customer Information Sheet
+            Customer Request System
           </span>
           <span className="hidden rounded-md bg-zinc-700 px-2 py-0.5 text-xs font-medium text-zinc-300 sm:block">
             {ROLE_LABELS[userRole] ?? userRole}
@@ -188,6 +189,7 @@ export function Navbar({ userName, userRole, agentCode }: NavbarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#2d6e1e]">
               <Avatar className="h-8 w-8 cursor-pointer">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
                 <AvatarFallback className="bg-[#2d6e1e] text-xs text-white">{initials}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -201,6 +203,11 @@ export function Navbar({ userName, userRole, agentCode }: NavbarProps) {
                   )}
                 </p>
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleSignOut}

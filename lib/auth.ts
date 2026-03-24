@@ -22,21 +22,27 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }: any) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
-        token.agentCode = (user as any).agentCode ?? null;
-        token.agentType = (user as any).agentType ?? null;
+        token.role = user.role;
+        token.agentCode = user.agentCode ?? null;
+        token.agentType = user.agentType ?? null;
+        token.avatarUrl = user.avatarUrl ?? null;
+      }
+      // Called from client via useSession().update({ avatarUrl })
+      if (trigger === "update" && session?.avatarUrl !== undefined) {
+        token.avatarUrl = session.avatarUrl;
       }
       return token;
     },
-    session({ session, token }) {
+    session({ session, token }: any) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as any;
-        session.user.agentCode = (token.agentCode as string) ?? null;
-        session.user.agentType = (token.agentType as any) ?? null;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.agentCode = token.agentCode ?? null;
+        session.user.agentType = token.agentType ?? null;
+        session.user.avatarUrl = token.avatarUrl ?? null;
       }
       return session;
     },
@@ -94,6 +100,7 @@ export const authConfig: NextAuthConfig = {
           role: user.role,
           agentCode: user.agentCode,
           agentType: user.agentType,
+          avatarUrl: user.avatarUrl ?? null,
         };
       },
     }),

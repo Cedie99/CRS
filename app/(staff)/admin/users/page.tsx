@@ -5,7 +5,7 @@ import { users } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 import { UserManagementTable } from "@/components/admin/user-management-table";
 
-export const metadata = { title: "User Management — CIS" };
+export const metadata = { title: "User Management — CRS" };
 
 export default async function AdminUsersPage() {
   const session = await auth();
