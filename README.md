@@ -1,6 +1,6 @@
-# CIS — Customer Information Sheet Platform
+# CRS — Customer Registration Sheet Platform
 
-Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Division**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit Customer Information Sheets on behalf of prospective customers, and internal stakeholders review, endorse, and approve or deny those submissions through a traceable approval chain.
+Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Division**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit Customer Registration Sheets on behalf of prospective customers, and internal stakeholders review, endorse, and approve or deny those submissions through a traceable approval chain.
 
 ---
 
@@ -24,7 +24,7 @@ Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Divi
 
 | Role | Dashboard | Description |
 |---|---|---|
-| `sales_agent` / `rsr` | `/agent` | Initiates CIS forms and shares the customer link |
+| `sales_agent` / `rsr` | `/agent` | Initiates CRS forms and shares the customer link |
 | `sales_manager` / `rsr_manager` | `/manager` | Endorses or returns submissions from their agents |
 | `finance_reviewer` | `/finance` | Reviews customer credit and business standing |
 | `legal_approver` | `/legal` | Handles FS Petroleum and special customer types |
@@ -37,7 +37,7 @@ Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Divi
 ## Workflow
 
 ```
-Agent initiates CIS → customer receives shareable link
+Agent initiates CRS → customer receives shareable link
          ↓
 Customer fills out and submits the form
          ↓
@@ -85,7 +85,7 @@ app/
 │   └── profile/         # Avatar upload and account info page
 └── api/
     ├── auth/            # NextAuth + register
-    ├── cis/             # CIS CRUD + workflow actions
+    ├── cis/             # CRS CRUD + workflow actions
     ├── form/            # Public token-based form submission
     ├── notifications/   # In-app notification system
     └── profile/         # Avatar upload and removal endpoint
@@ -97,7 +97,7 @@ components/
 ├── navbar.tsx           # Sticky nav with notification bell and avatar
 ├── cis-card.tsx         # Submission list card
 ├── cis-card-skeleton.tsx # Animated skeleton placeholder for loading states
-├── cis-info-card.tsx    # Full CIS detail view
+├── cis-info-card.tsx    # Full CRS detail view
 ├── audit-timeline.tsx   # Workflow event history with actor avatars
 ├── dashboard-filters.tsx # URL-param search + status filter bar
 ├── status-badge.tsx     # Status pill with animated dot indicator
@@ -168,7 +168,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Key Design Decisions
 
 - **Self-registration with admin activation** — new users register but start inactive; an admin must assign their role, agent code, and manager before they can log in
-- **Agent code auto-stamping** — when an agent creates a CIS, their agent code is pulled from their profile and permanently stamped on the record
+- **Agent code auto-stamping** — when an agent creates a CRS, their agent code is pulled from their profile and permanently stamped on the record
 - **Customer type drives routing** — `standard` goes to the manager first; `fs_petroleum` and `special` go to the legal approver first
 - **Returned forms are archived** — agents cannot edit a returned form; they must create a new submission
 - **Audit trail is non-negotiable** — every action (submit, endorse, return, forward, approve, deny, encode) is logged with actor and timestamp
@@ -184,7 +184,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Table | Description |
 |---|---|
 | `users` | All platform users with role, agent code, manager assignment, and avatar URL |
-| `cis_submissions` | CIS form data, status, and routing metadata |
+| `cis_submissions` | CRS form data, status, and routing metadata |
 | `workflow_events` | Full audit log of every action on every form |
 | `notifications` | In-app notification records per recipient |
 
