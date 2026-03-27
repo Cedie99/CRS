@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -55,19 +54,20 @@ interface UserManagementTableProps {
   users: UserRow[];
   managers: UserRow[];
   currentUserId: string;
+  submissionCounts?: Record<string, number>;
 }
 
 export function UserManagementTable({
   users: initialUsers,
   managers,
   currentUserId,
+  submissionCounts = {},
 }: UserManagementTableProps) {
   const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [form, setForm] = useState({
     role: "",
-    agentCode: "",
     agentType: "",
     managerId: "",
   });
@@ -78,7 +78,6 @@ export function UserManagementTable({
     setEditingUser(user);
     setForm({
       role: user.role,
-      agentCode: user.agentCode ?? "",
       agentType: user.agentType ?? "",
       managerId: user.managerId ?? "",
     });
@@ -92,7 +91,6 @@ export function UserManagementTable({
     try {
       const body: Record<string, unknown> = {
         role: form.role || undefined,
-        agentCode: form.agentCode || null,
         agentType: (form.agentType || null) as "sales_agent" | "rsr" | null,
         managerId: form.managerId || null,
         isActive: true,
@@ -115,7 +113,7 @@ export function UserManagementTable({
             ? {
                 ...u,
                 role: form.role || u.role,
-                agentCode: form.agentCode || null,
+                agentCode: json.agentCode ?? u.agentCode,
                 agentType: (form.agentType || null) as any,
                 managerId: form.managerId || null,
                 isActive: true,
@@ -183,13 +181,15 @@ export function UserManagementTable({
       )}
 
       <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="min-w-[640px] w-full text-sm">
           <thead>
             <tr className="border-b bg-zinc-50 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Agent Code</th>
+              <th className="px-4 py-3">Submissions</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Joined</th>
               <th className="px-4 py-3"></th>
@@ -207,6 +207,11 @@ export function UserManagementTable({
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-zinc-500">
                   {user.agentCode ?? "—"}
+                </td>
+                <td className="px-4 py-3 tabular-nums text-sm text-zinc-600">
+                  {isAgentRole(user.role)
+                    ? (submissionCounts[user.id] ?? 0)
+                    : <span className="text-zinc-300">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   {user.isActive ? (
@@ -251,6 +256,7 @@ export function UserManagementTable({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Edit / Activate dialog */}
@@ -290,13 +296,16 @@ export function UserManagementTable({
             {isAgentRole(form.role) && (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="agentCode">Agent code</Label>
-                  <Input
-                    id="agentCode"
-                    value={form.agentCode}
-                    onChange={(e) => setForm((f) => ({ ...f, agentCode: e.target.value }))}
-                    placeholder="e.g. SA-001"
-                  />
+                  <Label>Agent code</Label>
+                  {editingUser?.agentCode ? (
+                    <div className="flex h-9 items-center rounded-md border bg-zinc-50 px-3 font-mono text-sm text-zinc-700">
+                      {editingUser.agentCode}
+                    </div>
+                  ) : (
+                    <div className="flex h-9 items-center rounded-md border border-dashed bg-zinc-50 px-3 text-sm text-zinc-400 italic">
+                      Will be auto-generated on save
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Agent type</Label>

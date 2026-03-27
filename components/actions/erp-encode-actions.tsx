@@ -31,7 +31,7 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
         setConfirming(false);
         return;
       }
-      toast.success("Marked as ERP encoded.");
+      toast.success("Customer marked as onboarded.");
       router.push(backHref);
       router.refresh();
     } catch {
@@ -45,23 +45,23 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          ERP Encoding
+          Complete Onboarding
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-zinc-600">
-          Once the customer has been encoded in the ERP system, mark this submission as complete.
+          Once the customer has been entered into the system, mark this submission as fully onboarded.
         </p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {!confirming ? (
           <Button onClick={() => setConfirming(true)} className="gap-2">
             <Database className="h-4 w-4" />
-            Mark as ERP Encoded
+            Mark as Onboarded
           </Button>
         ) : (
           <div className="flex gap-2">
             <Button onClick={handleEncode} disabled={isLoading}>
-              {isLoading ? "Saving…" : "Confirm ERP Encoded"}
+              {isLoading ? "Saving…" : "Yes, Mark as Onboarded"}
             </Button>
             <Button
               variant="ghost"

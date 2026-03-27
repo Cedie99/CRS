@@ -14,7 +14,7 @@ interface RoleInfo {
 const ROLES: Record<string, RoleInfo> = {
   customer: {
     label: "Customer",
-    description: "Filling out the CRS form",
+    description: "Filling out the business information form",
     dotColor: "bg-zinc-400",
     bgColor: "bg-zinc-50",
     textColor: "text-zinc-700",
@@ -54,7 +54,7 @@ const ROLES: Record<string, RoleInfo> = {
   },
   sales_support: {
     label: "Sales Support",
-    description: "ERP encoding",
+    description: "Recording into the system",
     dotColor: "bg-green-500",
     bgColor: "bg-green-50",
     textColor: "text-green-800",
@@ -101,7 +101,7 @@ function getHandoff(status: CisStatus, customerType: string): HandoffConfig | nu
       };
     case "approved":
       return {
-        current: { role: "sales_support", action: "Encoding the approved submission into ERP" },
+        current: { role: "sales_support", action: "Entering the approved customer into the system" },
         next: null,
       };
     default:
@@ -161,18 +161,18 @@ export function WorkflowHandoff({ status, customerType }: WorkflowHandoffProps) 
 
   return (
     <div className="rounded-xl border bg-white px-4 py-3">
-      <div className="flex items-start gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
         <RolePill roleKey={handoff.current.role} action={handoff.current.action} label="with" />
 
         {handoff.next ? (
           <>
-            <div className="mt-8 flex shrink-0 items-center">
-              <ArrowRight className="h-4 w-4 text-zinc-300" />
+            <div className="flex items-center justify-center sm:mt-8 sm:shrink-0">
+              <ArrowRight className="h-4 w-4 rotate-90 text-zinc-300 sm:rotate-0" />
             </div>
             <RolePill roleKey={handoff.next.role} action={handoff.next.action} label="next" />
           </>
         ) : (
-          <div className="mt-8 flex shrink-0 items-center">
+          <div className="flex items-center justify-center sm:mt-8 sm:shrink-0">
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
               Final step
             </span>

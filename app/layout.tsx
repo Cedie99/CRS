@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -9,8 +10,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "CIS — Client Information System",
-  description: "Document request and workflow management platform",
+  title: "CRS — Customer Request System",
+  description: "Customer request and workflow management platform for Oracle Petroleum.",
 };
 
 export default function RootLayout({
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        {children}
+        <Providers>{children}</Providers>
         <Toaster richColors position="top-right" />
       </body>
     </html>

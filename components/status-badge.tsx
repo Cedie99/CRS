@@ -29,25 +29,25 @@ const STATUS_CONFIG: Record<
     pulse: true,
   },
   pending_endorsement: {
-    label: "Pending Endorsement",
+    label: "Manager Review",
     className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
     dot: "bg-amber-400",
     pulse: true,
   },
   pending_legal_review: {
-    label: "Pending Legal Review",
+    label: "Legal Review",
     className: "bg-purple-100 text-purple-700 hover:bg-purple-100",
     dot: "bg-purple-400",
     pulse: true,
   },
   pending_finance_review: {
-    label: "Pending Finance Review",
+    label: "Finance Review",
     className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
     dot: "bg-amber-500",
     pulse: true,
   },
   pending_approval: {
-    label: "Pending Approval",
+    label: "Final Approval",
     className: "bg-orange-100 text-orange-700 hover:bg-orange-100",
     dot: "bg-orange-400",
     pulse: true,
@@ -58,9 +58,9 @@ const STATUS_CONFIG: Record<
     dot: "bg-green-500",
   },
   erp_encoded: {
-    label: "ERP Encoded",
+    label: "Onboarded",
     className: "bg-green-200 text-green-800 hover:bg-green-200",
-    dot: "bg-blue-500",
+    dot: "bg-green-600",
   },
   denied: {
     label: "Denied",

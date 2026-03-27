@@ -81,14 +81,14 @@ export default function LoginPage() {
             Welcome back.
           </h1>
           <p className="mt-4 max-w-sm text-base leading-relaxed text-zinc-400">
-            Sign in to access the Customer Information Sheet platform for Oracle Petroleum Toll Blend Division.
+            Sign in to access the Customer Request System for Oracle Petroleum Toll Blend Division.
           </p>
 
           <div className="mt-10 space-y-3">
             {[
-              "Role-based approval workflow",
-              "Real-time submission tracking",
-              "Complete audit trail on every form",
+              "Multi-step approval process for every customer",
+              "Track your submissions in real time",
+              "Full history of every action taken",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2d6e1e]">

@@ -63,7 +63,7 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "endorse" ? "CRS endorsed." : "CRS returned to agent.");
+      toast.success(action === "endorse" ? "Approved and forwarded to Finance." : "Sent back to agent.");
       router.push("/manager");
       router.refresh();
     } catch {
@@ -77,14 +77,17 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Your Decision
+          Your Action
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          Review the customer information above, then choose an action.
+        </p>
         <div className="flex gap-3">
           <Button onClick={() => openDialog("endorse")} className="gap-2">
             <CheckCircle className="h-4 w-4" />
-            Endorse
+            Approve &amp; Forward
           </Button>
           <Button
             variant="outline"
@@ -92,7 +95,7 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
             className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
           >
             <RotateCcw className="h-4 w-4" />
-            Return to Agent
+            Send Back to Agent
           </Button>
         </div>
       </CardContent>
@@ -101,14 +104,14 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
         <DialogContent showCloseButton={!isLoading}>
           <DialogHeader>
             <DialogTitle>
-              {action === "endorse" ? "Endorse Submission" : "Return to Agent"}
+              {action === "endorse" ? "Approve & Forward to Finance" : "Send Back to Agent"}
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-sm text-zinc-600">
             {action === "endorse"
-              ? "You are about to endorse this CRS submission and forward it to Finance Review. You may add an optional note."
-              : "You are about to return this submission to the agent for corrections. Please provide a reason."}
+              ? "You are approving this submission and forwarding it to the Finance team for review. You may add an optional note."
+              : "You are sending this form back to the agent for corrections. Please explain what needs to be fixed."}
           </p>
 
           <div className="space-y-1.5">
@@ -122,8 +125,8 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
               onChange={(e) => setNote(e.target.value)}
               placeholder={
                 action === "endorse"
-                  ? "Any remarks for the reviewer…"
-                  : "Explain what needs to be corrected…"
+                  ? "Any notes for the Finance team… (optional)"
+                  : "Describe what needs to be fixed…"
               }
               disabled={isLoading}
             />
@@ -142,8 +145,8 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
               {isLoading
                 ? "Submitting…"
                 : action === "endorse"
-                ? "Confirm Endorsement"
-                : "Confirm Return"}
+                ? "Approve & Forward"
+                : "Yes, Send Back"}
             </Button>
           </DialogFooter>
         </DialogContent>

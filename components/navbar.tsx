@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Bell, LogOut, CheckCheck, User } from "lucide-react";
+import { Bell, LogOut, CheckCheck, User, Menu, UserPlus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,17 +48,28 @@ type Notification = {
   sentAt: string;
 };
 
+type PendingRegistration = {
+  id: string;
+  fullName: string;
+  email: string;
+  createdAt: string;
+};
+
 interface NavbarProps {
   userName: string;
   userRole: string;
   agentCode?: string | null;
   avatarUrl?: string | null;
+  onMenuToggle?: () => void;
 }
 
-export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps) {
+export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle }: NavbarProps) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const isAdmin = userRole === "admin";
 
   const initials = userName
     .split(" ")
@@ -69,6 +80,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
 
   const homeHref = ROLE_HREFS[userRole] ?? "/";
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const totalBadgeCount = unreadCount + pendingRegistrations.length;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -79,12 +91,27 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
     }
   }, []);
 
+  const fetchPendingRegistrations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/pending-registrations");
+      if (res.ok) setPendingRegistrations(await res.json());
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds for new notifications
     const interval = setInterval(fetchNotifications, 30_000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchPendingRegistrations();
+    const interval = setInterval(fetchPendingRegistrations, 30_000);
+    return () => clearInterval(interval);
+  }, [isAdmin, fetchPendingRegistrations]);
 
   async function handleOpenNotifications(open: boolean) {
     setNotifOpen(open);
@@ -102,7 +129,15 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
 
   return (
     <header className="sticky top-0 z-50 bg-[#1a1a1a]">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onMenuToggle}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none lg:hidden"
+            aria-label="Toggle menu"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
         <Link href={homeHref} className="flex items-center gap-3">
           <Image
             src="/oracle-logo.png"
@@ -120,33 +155,69 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
             {ROLE_LABELS[userRole] ?? userRole}
           </span>
         </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Notification bell */}
           <DropdownMenu open={notifOpen} onOpenChange={handleOpenNotifications}>
             <DropdownMenuTrigger className="relative flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none">
               <Bell className="h-4 w-4" />
-              {unreadCount > 0 && (
+              {totalBadgeCount > 0 && (
                 <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#f5d220] text-[10px] font-bold text-[#1a1a1a]">
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {totalBadgeCount > 9 ? "9+" : totalBadgeCount}
                 </span>
               )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-1rem)]">
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-sm font-semibold text-zinc-900">Notifications</span>
-                {notifications.length > 0 && (
-                  <span className="text-xs text-zinc-400">{notifications.length} total</span>
+                {(notifications.length + pendingRegistrations.length) > 0 && (
+                  <span className="text-xs text-zinc-400">
+                    {notifications.length + pendingRegistrations.length} total
+                  </span>
                 )}
               </div>
               <DropdownMenuSeparator />
 
-              {notifications.length === 0 ? (
+              {/* Pending registrations — admin only */}
+              {isAdmin && pendingRegistrations.length > 0 && (
+                <>
+                  <div className="px-3 py-1.5">
+                    <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                      <UserPlus className="h-3 w-3" />
+                      Pending Activation
+                    </span>
+                  </div>
+                  {pendingRegistrations.map((u) => (
+                    <DropdownMenuItem
+                      key={u.id}
+                      className="flex cursor-pointer flex-col items-start gap-1 px-3 py-2.5"
+                      onClick={() => {
+                        setNotifOpen(false);
+                        router.push("/admin/users");
+                      }}
+                    >
+                      <div className="flex w-full items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                        <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
+                          {u.fullName} registered and needs activation
+                        </p>
+                      </div>
+                      <span className="pl-3.5 text-[10px] text-zinc-400">
+                        {formatDistanceToNow(new Date(u.createdAt))}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                  {notifications.length > 0 && <DropdownMenuSeparator />}
+                </>
+              )}
+
+              {notifications.length === 0 && pendingRegistrations.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
                   <Bell className="h-6 w-6 text-zinc-300" />
                   <p className="text-sm text-zinc-400">No notifications yet</p>
                 </div>
-              ) : (
+              ) : notifications.length > 0 ? (
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.map((n) => (
                     <DropdownMenuItem
@@ -171,9 +242,9 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
                     </DropdownMenuItem>
                   ))}
                 </div>
-              )}
+              ) : null}
 
-              {notifications.some((n) => !n.isRead) === false && notifications.length > 0 && (
+              {notifications.some((n) => !n.isRead) === false && notifications.length > 0 && pendingRegistrations.length === 0 && (
                 <>
                   <DropdownMenuSeparator />
                   <div className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-zinc-400">
@@ -193,7 +264,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl }: NavbarProps
                 <AvatarFallback className="bg-[#2d6e1e] text-xs text-white">{initials}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-52 max-w-[calc(100vw-1rem)]">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium leading-none">{userName}</p>
                 <p className="mt-1 text-xs text-zinc-500">

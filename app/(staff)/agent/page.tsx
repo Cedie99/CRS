@@ -39,7 +39,6 @@ export default async function AgentDashboard({
     .where(and(...conditions))
     .orderBy(desc(cisSubmissions.createdAt));
 
-  // Stats always use unfiltered counts
   const all = await db
     .select()
     .from(cisSubmissions)
@@ -52,38 +51,104 @@ export default async function AgentDashboard({
   const completed = all.filter((s) => s.status === "erp_encoded").length;
   const denied = all.filter((s) => s.status === "denied" || s.status === "returned").length;
 
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+
+  const stats = [
+    {
+      label: "Total",
+      value: total,
+      sub: total === 1 ? "1 submission" : `${total} submissions`,
+      icon: FileText,
+      iconBg: "bg-zinc-100",
+      iconColor: "text-zinc-500",
+      valueColor: "text-zinc-900",
+      barColor: "bg-zinc-400",
+      percent: 100,
+    },
+    {
+      label: "In Progress",
+      value: active,
+      sub: total > 0 ? `${pct(active)}% of total` : "none yet",
+      icon: Clock,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+      valueColor: "text-blue-700",
+      barColor: "bg-blue-400",
+      percent: pct(active),
+    },
+    {
+      label: "Onboarded",
+      value: completed,
+      sub: total > 0 ? `${pct(completed)}% of total` : "none yet",
+      icon: CheckCircle,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-600",
+      valueColor: "text-green-700",
+      barColor: "bg-green-500",
+      percent: pct(completed),
+    },
+    {
+      label: "Not Accepted",
+      value: denied,
+      sub: total > 0 ? `${pct(denied)}% of total` : "none yet",
+      icon: XCircle,
+      iconBg: "bg-red-50",
+      iconColor: "text-red-500",
+      valueColor: "text-red-700",
+      barColor: "bg-red-400",
+      percent: pct(denied),
+    },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">My Submissions</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">My Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Track your CRS form submissions.
+            View and track all customer forms you&apos;ve submitted.
             {session!.user.agentCode && (
-              <span className="ml-1 font-mono text-zinc-400">· {session!.user.agentCode}</span>
+              <span className="ml-1.5 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-500">
+                {session!.user.agentCode}
+              </span>
             )}
           </p>
         </div>
         <Link href="/agent/new" className={buttonVariants()}>
           <Plus className="mr-1.5 h-4 w-4" />
-          New CRS
+          New Customer
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { label: "Total", value: total, icon: FileText, color: "text-zinc-500" },
-          { label: "Active", value: active, icon: Clock, color: "text-blue-500" },
-          { label: "Completed", value: completed, icon: CheckCircle, color: "text-green-500" },
-          { label: "Returned / Denied", value: denied, icon: XCircle, color: "text-red-500" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl border bg-white p-4">
-            <div className="flex items-center gap-2">
-              <Icon className={`h-4 w-4 ${color}`} />
-              <span className="text-xs font-medium text-zinc-500">{label}</span>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
+          <div
+            key={label}
+            className="relative overflow-hidden rounded-xl border bg-white p-5 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  {label}
+                </p>
+                <p className={`mt-1.5 text-3xl font-bold tabular-nums ${valueColor}`}>
+                  {value}
+                </p>
+                <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+              </div>
+              <div className={`rounded-xl p-2.5 ${iconBg}`}>
+                <Icon className={`h-5 w-5 ${iconColor}`} />
+              </div>
             </div>
-            <p className="mt-2 text-2xl font-semibold text-zinc-900">{value}</p>
+            {/* Colored fill bar at bottom showing proportion */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-100">
+              <div
+                className={`h-full transition-all duration-700 ${barColor}`}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -91,23 +156,27 @@ export default async function AgentDashboard({
       <DashboardFilters />
 
       {submissions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-16 text-center">
-          <FileText className="h-10 w-10 text-zinc-300" />
-          <h2 className="mt-3 text-sm font-medium text-zinc-900">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
+          <div className="rounded-full bg-zinc-100 p-4">
+            <FileText className="h-8 w-8 text-zinc-400" />
+          </div>
+          <h2 className="mt-4 text-base font-semibold text-zinc-900">
             {q || status ? "No matching submissions" : "No submissions yet"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q || status ? "Try adjusting your search or filters." : "Start by submitting a new CRS form."}
+            {q || status
+              ? "Try adjusting your search or filters."
+              : "Start by adding a new customer. A form link will be generated for them to fill out."}
           </p>
           {!q && !status && (
-            <Link href="/agent/new" className={`mt-4 ${buttonVariants()}`}>
+            <Link href="/agent/new" className={`mt-5 ${buttonVariants()}`}>
               <Plus className="mr-1.5 h-4 w-4" />
-              New CRS
+              Add New Customer
             </Link>
           )}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {submissions.map((s) => (
             <CisCard
               key={s.id}
@@ -116,8 +185,9 @@ export default async function AgentDashboard({
               contactPerson={s.contactPerson}
               customerType={s.customerType}
               agentCode={s.agentCode}
-              status={s.status as any}
+              status={s.status as CisStatus}
               createdAt={s.createdAt}
+              updatedAt={s.updatedAt}
               href={`/agent/${s.id}`}
             />
           ))}

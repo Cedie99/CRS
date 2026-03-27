@@ -95,13 +95,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Customer Information Sheet</CardTitle>
+        <CardTitle>Business Information Form</CardTitle>
         <CardDescription>
-          Please fill in your business information below. All fields marked * are required.
+          Please fill in your business details below. Fields marked with <span className="font-medium text-zinc-700">*</span> are required.
           <span className="mt-1 block text-xs text-zinc-400">
-            Agent: <span className="font-mono">{agentCode}</span>
-            {" · "}
-            Type: {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
+            Submitted via agent: <span className="font-mono">{agentCode}</span>
           </span>
         </CardDescription>
       </CardHeader>
@@ -172,7 +170,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
           </div>
 
           <Button type="submit" disabled={isLoading || !businessType} className="w-full">
-            {isLoading ? "Submitting…" : "Submit Information"}
+            {isLoading ? "Submitting…" : "Submit My Information"}
           </Button>
         </CardContent>
       </form>

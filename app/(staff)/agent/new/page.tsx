@@ -3,23 +3,47 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Copy, Check, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, Copy, Check, Link as LinkIcon, Building2, Flame, Star, Scale } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const CUSTOMER_TYPES = [
-  { value: "standard", label: "Standard" },
-  { value: "fs_petroleum", label: "FS Petroleum" },
-  { value: "special", label: "Special" },
+  {
+    value: "standard",
+    label: "Standard",
+    description: "Regular customer account. Goes through Manager → Finance → Final Approval.",
+    icon: Building2,
+    routeNote: null,
+    cardColor: "border-zinc-200 hover:border-zinc-400",
+    activeColor: "border-[#2d6e1e] bg-green-50 ring-2 ring-[#2d6e1e]/20",
+    iconBg: "bg-zinc-100",
+    iconColor: "text-zinc-600",
+  },
+  {
+    value: "fs_petroleum",
+    label: "FS Petroleum",
+    description: "Fuel station account. Requires Legal Review before going to Finance.",
+    icon: Flame,
+    routeNote: "Legal Review required first",
+    cardColor: "border-zinc-200 hover:border-purple-300",
+    activeColor: "border-purple-400 bg-purple-50 ring-2 ring-purple-400/20",
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600",
+  },
+  {
+    value: "special",
+    label: "Special Account",
+    description: "Special or unique cases. Requires Legal Review before going to Finance.",
+    icon: Star,
+    routeNote: "Legal Review required first",
+    cardColor: "border-zinc-200 hover:border-amber-300",
+    activeColor: "border-amber-400 bg-amber-50 ring-2 ring-amber-400/20",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+  },
 ];
 
 export default function NewCisPage() {
@@ -74,50 +98,69 @@ export default function NewCisPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>New CIS Submission</CardTitle>
+          <CardTitle>New Customer Submission</CardTitle>
           <CardDescription>
-            Select the customer type to generate a form link. Share the link with
-            your customer so they can fill out their information directly.
+            Choose the customer type below. A unique form link will be generated
+            for you to share with your customer — they fill it out directly.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {!generatedLink ? (
             <>
-              <div className="space-y-1.5">
-                <Label>Customer type *</Label>
-                <Select
-                  value={customerType}
-                  onValueChange={(v) => setCustomerType(v ?? "")}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select customer type…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CUSTOMER_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {customerType === "fs_petroleum" && (
-                  <p className="text-xs text-purple-600">
-                    This submission will be routed to Legal Review first.
-                  </p>
-                )}
-                {customerType === "special" && (
-                  <p className="text-xs text-purple-600">
-                    This submission will be routed to Legal Review first.
-                  </p>
-                )}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-zinc-700">
+                  What type of customer is this? *
+                </Label>
+                <div className="grid gap-2.5">
+                  {CUSTOMER_TYPES.map((t) => {
+                    const Icon = t.icon;
+                    const isSelected = customerType === t.value;
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => setCustomerType(t.value)}
+                        className={cn(
+                          "flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-150",
+                          isSelected ? t.activeColor : t.cardColor,
+                          "disabled:cursor-not-allowed disabled:opacity-60"
+                        )}
+                      >
+                        <span className={cn("mt-0.5 rounded-lg p-2", t.iconBg)}>
+                          <Icon className={cn("h-4 w-4", t.iconColor)} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-zinc-900">{t.label}</span>
+                            {t.routeNote && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
+                                <Scale className="h-3 w-3" />
+                                {t.routeNote}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-xs text-zinc-500">{t.description}</p>
+                        </div>
+                        <span
+                          className={cn(
+                            "mt-1 h-4 w-4 shrink-0 rounded-full border-2 transition-all",
+                            isSelected
+                              ? "border-[#2d6e1e] bg-[#2d6e1e]"
+                              : "border-zinc-300 bg-white"
+                          )}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {error && (
                 <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   onClick={handleGenerate}
                   disabled={isLoading || !customerType}
@@ -134,11 +177,11 @@ export default function NewCisPage() {
               <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-green-700">
                   <LinkIcon className="h-4 w-4" />
-                  Customer form link generated
+                  Link ready — share it with your customer!
                 </div>
                 <p className="mt-1 text-xs text-green-600">
-                  Share this link with your customer. Once they fill and submit the form,
-                  it will appear in your dashboard and enter the approval workflow.
+                  Send this link to your customer. Once they fill in and submit their information,
+                  it will automatically appear in your dashboard and go through the review process.
                 </p>
               </div>
 
@@ -158,7 +201,7 @@ export default function NewCisPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-1">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <Button onClick={() => router.push("/agent")}>
                   Back to Dashboard
                 </Button>

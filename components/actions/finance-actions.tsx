@@ -64,7 +64,7 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
       }
       setOpen(false);
       toast.success(
-        action === "forward" ? "CRS forwarded to Senior Approver." : "CRS denied."
+        action === "forward" ? "Forwarded to Senior Approver." : "Submission denied."
       );
       router.push("/finance");
       router.refresh();
@@ -79,10 +79,13 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Finance Review Decision
+          Your Action
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          Review the customer information above, then choose an action.
+        </p>
         <div className="flex gap-3">
           <Button onClick={() => openDialog("forward")} className="gap-2">
             <ArrowRight className="h-4 w-4" />
@@ -109,8 +112,8 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
-              ? "You are about to forward this submission to the Senior Approver. You may add an optional note."
-              : "You are about to deny this CRS submission. Please provide a reason."}
+              ? "You are forwarding this submission to the Senior Approver for final decision. You may add an optional note."
+              : "You are denying this submission. Please explain why it cannot be approved."}
           </p>
 
           <div className="space-y-1.5">
@@ -142,8 +145,8 @@ export function FinanceActions({ cisId }: FinanceActionsProps) {
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
-                ? "Confirm Forward"
-                : "Confirm Denial"}
+                ? "Yes, Forward"
+                : "Yes, Deny"}
             </Button>
           </DialogFooter>
         </DialogContent>

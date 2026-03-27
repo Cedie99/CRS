@@ -1,11 +1,27 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
+  Hash,
+  User,
+  Briefcase,
+  FileText,
+} from "lucide-react";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "Standard",
   fs_petroleum: "FS Petroleum",
   special: "Special",
+};
+
+const CUSTOMER_TYPE_COLORS: Record<string, string> = {
+  standard: "bg-zinc-100 text-zinc-600",
+  fs_petroleum: "bg-purple-50 text-purple-700 border border-purple-100",
+  special: "bg-amber-50 text-amber-700 border border-amber-100",
 };
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -34,11 +50,26 @@ interface CisInfoCardProps {
   updatedAt: Date;
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function Field({
+  label,
+  value,
+  icon: Icon,
+  mono,
+}: {
+  label: string;
+  value?: string | null;
+  icon?: React.ComponentType<{ className?: string }>;
+  mono?: boolean;
+}) {
   return (
-    <div className="space-y-0.5">
-      <p className="text-xs font-medium text-zinc-500">{label}</p>
-      <p className="text-sm text-zinc-900">{value || <span className="text-zinc-400">—</span>}</p>
+    <div className="space-y-1.5">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+        {Icon && <Icon className="h-3 w-3" />}
+        {label}
+      </p>
+      <p className={`text-sm text-zinc-900 ${mono ? "font-mono" : ""}`}>
+        {value || <span className="text-zinc-300">—</span>}
+      </p>
     </div>
   );
 }
@@ -63,63 +94,83 @@ export function CisInfoCard(props: CisInfoCardProps) {
   } = props;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle className="text-lg">{tradeName ?? "—"}</CardTitle>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Agent{" "}
-              <span className="font-mono font-medium text-zinc-700">{agentCode}</span>
+    <Card className="overflow-hidden">
+      {/* Header band */}
+      <div className="border-b border-zinc-100 bg-zinc-50 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-bold text-zinc-900">
+              {tradeName ?? <span className="italic text-zinc-400 font-normal">Untitled</span>}
+            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+              <span>
+                Agent{" "}
+                <span className="font-mono font-semibold text-zinc-700">{agentCode}</span>
+              </span>
               {agentType && (
-                <span className="ml-1 rounded-full bg-zinc-100 px-1.5 py-0.5 text-xs">
+                <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-zinc-600">
                   {agentType === "sales_agent" ? "Sales" : "RSR"}
                 </span>
               )}
-            </p>
+            </div>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <div className="flex shrink-0 flex-row items-center gap-2 sm:flex-col sm:items-end">
             <StatusBadge status={status} />
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
+              }`}
+            >
+              <Building2 className="h-3 w-3" />
               {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
             </span>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-5">
-        <Separator />
-
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-          Customer Information
-        </p>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Trade / Business name" value={tradeName} />
-          <Field label="Contact person" value={contactPerson} />
-          <Field label="Contact number" value={contactNumber} />
-          <Field label="Email address" value={emailAddress} />
-          <div className="sm:col-span-2">
-            <Field label="Business address" value={businessAddress} />
+      <CardContent className="space-y-6 p-4 sm:p-6">
+        {/* Customer Info section */}
+        <div>
+          <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
+            <User className="h-3.5 w-3.5" />
+            Customer Information
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} />
+            <Field label="Contact Person" value={contactPerson} icon={User} />
+            <Field label="Contact Number" value={contactNumber} icon={Phone} />
+            <Field label="Email Address" value={emailAddress} icon={Mail} />
+            <div className="sm:col-span-2">
+              <Field label="Business Address" value={businessAddress} icon={MapPin} />
+            </div>
+            <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} />
+            <Field
+              label="Business Type"
+              value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? businessType) : null}
+              icon={Building2}
+            />
+            <Field label="TIN Number" value={tinNumber} icon={Hash} mono />
           </div>
-          <Field label="City / Municipality" value={cityMunicipality} />
-          <Field
-            label="Business type"
-            value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? businessType) : null}
-          />
-          <Field label="TIN number" value={tinNumber} />
         </div>
 
         {additionalNotes && (
-          <div className="rounded-md bg-zinc-50 px-3 py-2">
-            <p className="text-xs font-medium text-zinc-500">Additional notes</p>
-            <p className="mt-0.5 text-sm text-zinc-700 whitespace-pre-wrap">{additionalNotes}</p>
-          </div>
+          <>
+            <Separator />
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
+                <FileText className="h-3.5 w-3.5" />
+                Additional Notes
+              </p>
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap">
+                {additionalNotes}
+              </p>
+            </div>
+          </>
         )}
 
         <Separator />
 
-        <div className="flex gap-6 text-xs text-zinc-400">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-400 sm:gap-x-8">
           <span>
             Submitted{" "}
             <span className="font-medium text-zinc-600">

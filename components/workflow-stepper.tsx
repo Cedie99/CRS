@@ -9,21 +9,20 @@ interface Step {
 
 const STANDARD_STEPS: Step[] = [
   { key: "submitted", label: "Submitted" },
-  { key: "pending_endorsement", label: "Endorsement" },
-  { key: "pending_finance_review", label: "Finance Review" },
+  { key: "pending_endorsement", label: "Manager" },
+  { key: "pending_finance_review", label: "Finance" },
   { key: "pending_approval", label: "Approval" },
-  { key: "approved", label: "Approved" },
+  { key: "approved", label: "Done" },
 ];
 
 const LEGAL_STEPS: Step[] = [
   { key: "submitted", label: "Submitted" },
-  { key: "pending_legal_review", label: "Legal Review" },
-  { key: "pending_finance_review", label: "Finance Review" },
+  { key: "pending_legal_review", label: "Legal" },
+  { key: "pending_finance_review", label: "Finance" },
   { key: "pending_approval", label: "Approval" },
-  { key: "approved", label: "Approved" },
+  { key: "approved", label: "Done" },
 ];
 
-// Map each status to its step index (0-based)
 const STANDARD_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
   submitted: 0,
   pending_endorsement: 1,
@@ -57,30 +56,38 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
 
   if (isTerminal) {
     return (
-      <div className="rounded-xl border bg-white px-4 py-3">
-        <div className="flex items-center gap-2">
+      <div className="rounded-xl border bg-white px-5 py-4">
+        <div className="flex items-center gap-3">
           {status === "denied" ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100">
-              <X className="h-3.5 w-3.5 text-red-600" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <X className="h-4 w-4 text-red-600" />
             </span>
           ) : (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100">
-              <RotateCcw className="h-3.5 w-3.5 text-rose-600" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100">
+              <RotateCcw className="h-4 w-4 text-rose-600" />
             </span>
           )}
-          <span className={cn(
-            "text-sm font-medium",
-            status === "denied" ? "text-red-700" : "text-rose-700"
-          )}>
-            {status === "denied" ? "Submission Denied" : "Returned to Agent"}
-          </span>
+          <div>
+            <p
+              className={cn(
+                "text-sm font-semibold",
+                status === "denied" ? "text-red-700" : "text-rose-700"
+              )}
+            >
+              {status === "denied" ? "Submission Denied" : "Returned to Agent"}
+            </p>
+            <p className="text-xs text-zinc-400 mt-0.5">This form is no longer being processed.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border bg-white px-4 py-3">
+    <div className="rounded-xl border bg-white px-5 py-4">
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+        Workflow Progress
+      </p>
       <div className="flex items-center">
         {steps.map((step, i) => {
           const isCompleted = i < currentIndex;
@@ -90,24 +97,25 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
 
           return (
             <div key={step.key} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-1.5">
                 <div
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-colors",
-                    isCompleted && "bg-[#2d6e1e] text-white",
-                    isCurrent && "bg-[#2d6e1e] text-white ring-2 ring-[#2d6e1e] ring-offset-2",
+                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all",
+                    isCompleted && "bg-[#2d6e1e] text-white shadow-sm",
+                    isCurrent &&
+                      "bg-[#2d6e1e] text-white ring-4 ring-[#2d6e1e]/20",
                     isFuture && "bg-zinc-100 text-zinc-400"
                   )}
                 >
                   {isCompleted ? (
-                    <Check className="h-3.5 w-3.5" />
+                    <Check className="h-4 w-4" />
                   ) : (
                     <span>{i + 1}</span>
                   )}
                 </div>
                 <span
                   className={cn(
-                    "hidden whitespace-nowrap text-[10px] font-medium sm:block",
+                    "hidden whitespace-nowrap text-[10px] font-semibold sm:block",
                     isCompleted && "text-[#2d6e1e]",
                     isCurrent && "text-[#2d6e1e]",
                     isFuture && "text-zinc-400"
@@ -119,7 +127,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
               {!isLast && (
                 <div
                   className={cn(
-                    "mx-1 mb-4 h-px flex-1 sm:mx-2",
+                    "mx-1 mb-5 h-0.5 flex-1 rounded-full sm:mx-2",
                     i < currentIndex ? "bg-[#2d6e1e]" : "bg-zinc-200"
                   )}
                 />

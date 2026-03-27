@@ -1,7 +1,7 @@
-import { desc } from "drizzle-orm";
+import { desc, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, cisSubmissions } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 import { UserManagementTable } from "@/components/admin/user-management-table";
 
@@ -31,11 +31,23 @@ export default async function AdminUsersPage() {
     (u) => (u.role === "sales_manager" || u.role === "rsr_manager") && u.isActive
   );
 
+  // Submission counts per agent
+  const countRows = await db
+    .select({ agentId: cisSubmissions.agentId, total: count() })
+    .from(cisSubmissions)
+    .groupBy(cisSubmissions.agentId);
+
+  const submissionCounts: Record<string, number> = {};
+  for (const row of countRows) {
+    submissionCounts[row.agentId] = Number(row.total);
+  }
+
   return (
     <UserManagementTable
       users={allUsers}
       managers={managers}
       currentUserId={session.user.id}
+      submissionCounts={submissionCounts}
     />
   );
 }

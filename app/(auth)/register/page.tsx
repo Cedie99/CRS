@@ -113,7 +113,7 @@ export default function RegisterPage() {
             Join the platform.
           </h1>
           <p className="mt-4 max-w-sm text-base leading-relaxed text-zinc-400">
-            Create your account to start submitting and managing Customer Information Sheets for Oracle Petroleum.
+            Create your account to start submitting and managing Customer Requests for Oracle Petroleum.
           </p>
 
           <div className="mt-10 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5">

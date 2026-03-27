@@ -8,14 +8,14 @@ const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
-  { value: "pending_endorsement", label: "Pending Endorsement" },
-  { value: "pending_legal_review", label: "Pending Legal Review" },
-  { value: "pending_finance_review", label: "Pending Finance Review" },
-  { value: "pending_approval", label: "Pending Approval" },
+  { value: "pending_endorsement", label: "Manager Review" },
+  { value: "pending_legal_review", label: "Legal Review" },
+  { value: "pending_finance_review", label: "Finance Review" },
+  { value: "pending_approval", label: "Final Approval" },
   { value: "approved", label: "Approved" },
-  { value: "erp_encoded", label: "ERP Encoded" },
+  { value: "erp_encoded", label: "Onboarded" },
   { value: "denied", label: "Denied" },
-  { value: "returned", label: "Returned" },
+  { value: "returned", label: "Sent Back" },
 ];
 
 interface DashboardFiltersProps {
@@ -57,7 +57,7 @@ export function DashboardFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative flex-1 min-w-[180px] max-w-xs">
+      <div className="relative flex-1 min-w-[140px] max-w-xs sm:min-w-[180px]">
         <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 pointer-events-none" />
         <input
           type="search"
@@ -72,7 +72,7 @@ export function DashboardFilters({
         <select
           value={status}
           onChange={(e) => updateParams({ status: e.target.value })}
-          className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
+          className="h-9 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none sm:flex-none"
         >
           {statusOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>

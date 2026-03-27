@@ -109,7 +109,7 @@ export function ProfileClient({
 
       <div className="rounded-xl border bg-white p-6 space-y-6">
         {/* Avatar section */}
-        <div className="flex items-center gap-5">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           <div className="relative">
             <div className="h-20 w-20 overflow-hidden rounded-full bg-[#2d6e1e]">
               {avatarUrl ? (

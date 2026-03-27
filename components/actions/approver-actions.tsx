@@ -63,7 +63,7 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "approve" ? "CRS approved." : "CRS denied.");
+      toast.success(action === "approve" ? "Customer approved." : "Submission denied.");
       router.push("/approver");
       router.refresh();
     } catch {
@@ -80,7 +80,10 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
           Final Decision
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          This is the final step before the customer is onboarded. Review carefully before deciding.
+        </p>
         <div className="flex gap-3">
           <Button onClick={() => openDialog("approve")} className="gap-2">
             <CheckCircle className="h-4 w-4" />
@@ -107,8 +110,8 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
 
           <p className="text-sm text-zinc-600">
             {action === "approve"
-              ? "You are about to approve this CRS submission. You may add an optional note."
-              : "You are about to deny this CRS submission. Please provide a reason."}
+              ? "You are approving this customer. The Sales Support team will then enter them into the system. You may add an optional note."
+              : "You are denying this submission. Please explain why it cannot be approved."}
           </p>
 
           <div className="space-y-1.5">
@@ -140,8 +143,8 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
               {isLoading
                 ? "Submitting…"
                 : action === "approve"
-                ? "Confirm Approval"
-                : "Confirm Denial"}
+                ? "Yes, Approve"
+                : "Yes, Deny"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -63,7 +63,7 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "forward" ? "CRS forwarded to Finance." : "CRS denied.");
+      toast.success(action === "forward" ? "Forwarded to Finance." : "Submission denied.");
       router.push("/legal");
       router.refresh();
     } catch {
@@ -77,10 +77,13 @@ export function LegalActions({ cisId }: LegalActionsProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Legal Review Decision
+          Your Action
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          Review the customer information above, then choose an action.
+        </p>
         <div className="flex gap-3">
           <Button onClick={() => openDialog("forward")} className="gap-2">
             <ArrowRight className="h-4 w-4" />
@@ -107,8 +110,8 @@ export function LegalActions({ cisId }: LegalActionsProps) {
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
-              ? "You are about to forward this submission to Finance. You may add an optional note."
-              : "You are about to deny this CRS submission. Please provide a reason."}
+              ? "You are forwarding this submission to the Finance team. You may add an optional note."
+              : "You are denying this submission. Please explain why it cannot be approved."}
           </p>
 
           <div className="space-y-1.5">
@@ -140,8 +143,8 @@ export function LegalActions({ cisId }: LegalActionsProps) {
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
-                ? "Confirm Forward"
-                : "Confirm Denial"}
+                ? "Yes, Forward"
+                : "Yes, Deny"}
             </Button>
           </DialogFooter>
         </DialogContent>
