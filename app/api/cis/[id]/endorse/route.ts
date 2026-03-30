@@ -21,7 +21,7 @@ export async function PATCH(
   const { id } = await params;
 
   const [cis] = await db
-    .select({ status: cisSubmissions.status, agentId: cisSubmissions.agentId })
+    .select({ status: cisSubmissions.status, agentId: cisSubmissions.agentId, customerType: cisSubmissions.customerType })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -48,10 +48,12 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  const isLegal = cis.customerType === "fs_petroleum" || cis.customerType === "special";
+
   await transitionCis({
     cisId: id,
-    toStatus: "pending_finance_review",
-    action: "endorsed",
+    toStatus: isLegal ? "pending_legal_review" : "pending_finance_review",
+    action: isLegal ? "forwarded_to_legal" : "endorsed",
     actorId: userId,
     note: parsed.data.note,
   });

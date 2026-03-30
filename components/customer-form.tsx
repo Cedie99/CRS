@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { cisFormSchema } from "@/lib/validations/cis";
+import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ const CUSTOMER_TYPE_LABELS: Record<string, string> = {
 
 type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form", string>>;
 
+
 interface CustomerFormProps {
   token: string;
   agentCode: string;
@@ -45,12 +47,20 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [businessType, setBusinessType] = useState("");
+  const signatureRef = useRef<SignaturePadRef>(null);
+  const [signatureEmpty, setSignatureEmpty] = useState(true);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrors({});
 
     const fd = new FormData(e.currentTarget);
+    const customerSignature = signatureRef.current?.toDataURL() ?? "";
+    if (signatureRef.current?.isEmpty()) {
+      setErrors({ customerSignature: "Signature is required" });
+      return;
+    }
+
     const data = {
       tradeName: fd.get("tradeName") as string,
       contactPerson: fd.get("contactPerson") as string,
@@ -61,6 +71,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       businessType,
       tinNumber: (fd.get("tinNumber") as string) || undefined,
       additionalNotes: (fd.get("additionalNotes") as string) || undefined,
+      customerSignature,
     };
 
     const parsed = cisFormSchema.safeParse(data);
@@ -169,7 +180,24 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             <Textarea id="additionalNotes" name="additionalNotes" rows={3} placeholder="Any relevant information…" disabled={isLoading} />
           </div>
 
-          <Button type="submit" disabled={isLoading || !businessType} className="w-full">
+          <Separator />
+
+          <div className="space-y-2">
+            <Label>Signature *</Label>
+            <p className="text-xs text-zinc-500">
+              By signing below, you confirm the information above is accurate and authorize Oracle Petroleum to process your business details.
+            </p>
+            <SignaturePad
+              ref={signatureRef}
+              onChange={(isEmpty) => setSignatureEmpty(isEmpty)}
+              disabled={isLoading}
+            />
+            {errors.customerSignature && (
+              <p className="text-sm text-red-600">{errors.customerSignature}</p>
+            )}
+          </div>
+
+          <Button type="submit" disabled={isLoading || !businessType || signatureEmpty} className="w-full">
             {isLoading ? "Submitting…" : "Submit My Information"}
           </Button>
         </CardContent>

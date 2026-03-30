@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
+import { verifySeal, displayFingerprint } from "@/lib/signature-integrity";
 import {
   Phone,
   Mail,
@@ -10,6 +11,10 @@ import {
   User,
   Briefcase,
   FileText,
+  PenLine,
+  ShieldCheck,
+  ShieldAlert,
+  Fingerprint,
 } from "lucide-react";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
@@ -33,6 +38,7 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 };
 
 interface CisInfoCardProps {
+  cisId: string;
   tradeName: string | null;
   contactPerson: string | null;
   contactNumber: string | null;
@@ -48,6 +54,12 @@ interface CisInfoCardProps {
   status: CisStatus;
   createdAt: Date;
   updatedAt: Date;
+  customerSignature?: string | null;
+  customerSignedAt?: Date | null;
+  customerSignatureSeal?: string | null;
+  approverSignature?: string | null;
+  approverSignedAt?: Date | null;
+  approverSignatureSeal?: string | null;
 }
 
 function Field({
@@ -74,8 +86,74 @@ function Field({
   );
 }
 
+function SignatureBlock({
+  label,
+  dataUrl,
+  signedAt,
+  verified,
+  hasSeal,
+}: {
+  label: string;
+  dataUrl: string;
+  signedAt?: Date | null;
+  verified: boolean;
+  hasSeal: boolean;
+}) {
+  const fp = displayFingerprint(dataUrl);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+        {hasSeal && (
+          verified ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
+              <ShieldCheck className="h-3 w-3" />
+              Verified
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 border border-red-200">
+              <ShieldAlert className="h-3 w-3" />
+              Seal mismatch
+            </span>
+          )
+        )}
+      </div>
+
+      <div className="rounded-md border border-zinc-200 bg-white p-2 inline-block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={dataUrl}
+          alt={label}
+          className="h-24 w-auto max-w-xs object-contain"
+        />
+      </div>
+
+      <p className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-400">
+        <Fingerprint className="h-3 w-3 shrink-0" />
+        {fp}
+        <span className="text-zinc-300">···</span>
+      </p>
+
+      {signedAt && (
+        <p className="text-xs text-zinc-400">
+          Signed{" "}
+          {new Date(signedAt).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function CisInfoCard(props: CisInfoCardProps) {
   const {
+    cisId,
     tradeName,
     contactPerson,
     contactNumber,
@@ -91,7 +169,26 @@ export function CisInfoCard(props: CisInfoCardProps) {
     status,
     createdAt,
     updatedAt,
+    customerSignature,
+    customerSignedAt,
+    customerSignatureSeal,
+    approverSignature,
+    approverSignedAt,
+    approverSignatureSeal,
   } = props;
+
+  const hasSignatures = customerSignature || approverSignature;
+
+  // Verify seals server-side (constant-time, never exposed to client)
+  const customerVerified =
+    customerSignature && customerSignedAt && customerSignatureSeal
+      ? verifySeal(cisId, customerSignedAt, customerSignature, customerSignatureSeal)
+      : false;
+
+  const approverVerified =
+    approverSignature && approverSignedAt && approverSignatureSeal
+      ? verifySeal(cisId, approverSignedAt, approverSignature, approverSignatureSeal)
+      : false;
 
   return (
     <Card className="overflow-hidden">
@@ -164,6 +261,38 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap">
                 {additionalNotes}
               </p>
+            </div>
+          </>
+        )}
+
+        {hasSignatures && (
+          <>
+            <Separator />
+            <div>
+              <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
+                <PenLine className="h-3.5 w-3.5" />
+                Signatures
+              </p>
+              <div className="grid gap-8 sm:grid-cols-2">
+                {customerSignature && (
+                  <SignatureBlock
+                    label="Customer Signature"
+                    dataUrl={customerSignature}
+                    signedAt={customerSignedAt}
+                    verified={customerVerified}
+                    hasSeal={!!customerSignatureSeal}
+                  />
+                )}
+                {approverSignature && (
+                  <SignatureBlock
+                    label="Approver Signature"
+                    dataUrl={approverSignature}
+                    signedAt={approverSignedAt}
+                    verified={approverVerified}
+                    hasSeal={!!approverSignatureSeal}
+                  />
+                )}
+              </div>
             </div>
           </>
         )}

@@ -20,10 +20,16 @@ export const cisFormSchema = z.object({
   ]),
   tinNumber: z.string().max(50).optional(),
   additionalNotes: z.string().max(2000).optional(),
+  customerSignature: z.string().min(1, "Signature is required"),
 });
 
 export const endorseSchema = z.object({
   note: z.string().max(1000).optional(),
+});
+
+export const approveSchema = z.object({
+  note: z.string().max(1000).optional(),
+  approverSignature: z.string().min(1, "Signature is required"),
 });
 
 export const returnSchema = z.object({
@@ -51,3 +57,4 @@ export const legalReviewSchema = z.object({
 
 export type InitiateInput = z.infer<typeof initiateSchema>;
 export type CisFormInput = z.infer<typeof cisFormSchema>;
+export type ApproveInput = z.infer<typeof approveSchema>;

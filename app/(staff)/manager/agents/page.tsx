@@ -5,7 +5,7 @@ import { cisSubmissions, users } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Users, ArrowRight } from "lucide-react";
+import { Users, ArrowRight, Mail, Calendar, Clock } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "My Agents — CRS" };
@@ -18,6 +18,22 @@ const IN_PROGRESS_STATUSES: CisStatus[] = [
   "approved",
 ];
 
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function formatRelative(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86_400_000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 30) return `${diffDays}d ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  return `${Math.floor(diffMonths / 12)}y ago`;
+}
+
 export default async function ManagerAgentsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -26,9 +42,11 @@ export default async function ManagerAgentsPage() {
     .select({
       id: users.id,
       fullName: users.fullName,
+      email: users.email,
       agentCode: users.agentCode,
       agentType: users.agentType,
       avatarUrl: users.avatarUrl,
+      createdAt: users.createdAt,
     })
     .from(users)
     .where(and(eq(users.managerId, session.user.id), eq(users.isActive, true)));
@@ -38,7 +56,12 @@ export default async function ManagerAgentsPage() {
   const submissions =
     agentIds.length > 0
       ? await db
-          .select({ agentId: cisSubmissions.agentId, status: cisSubmissions.status })
+          .select({
+            agentId: cisSubmissions.agentId,
+            status: cisSubmissions.status,
+            updatedAt: cisSubmissions.updatedAt,
+            customerType: cisSubmissions.customerType,
+          })
           .from(cisSubmissions)
           .where(inArray(cisSubmissions.agentId, agentIds))
       : [];
@@ -52,6 +75,11 @@ export default async function ManagerAgentsPage() {
       inProgress: number;
       erpEncoded: number;
       deniedReturned: number;
+      successCount: number;
+      latestActivity: Date | null;
+      typeStandard: number;
+      typeFsPetroleum: number;
+      typeSpecial: number;
     }
   >();
 
@@ -62,6 +90,11 @@ export default async function ManagerAgentsPage() {
       inProgress: 0,
       erpEncoded: 0,
       deniedReturned: 0,
+      successCount: 0,
+      latestActivity: null,
+      typeStandard: 0,
+      typeFsPetroleum: 0,
+      typeSpecial: 0,
     });
   }
 
@@ -69,6 +102,7 @@ export default async function ManagerAgentsPage() {
     const stats = statsByAgent.get(s.agentId);
     if (!stats) continue;
     stats.total++;
+
     if (s.status === "pending_endorsement") {
       stats.pendingEndorsement++;
     } else if (IN_PROGRESS_STATUSES.includes(s.status as CisStatus)) {
@@ -78,6 +112,21 @@ export default async function ManagerAgentsPage() {
     } else if (s.status === "denied" || s.status === "returned") {
       stats.deniedReturned++;
     }
+
+    if (s.status === "approved" || s.status === "erp_encoded") {
+      stats.successCount++;
+    }
+
+    if (s.updatedAt) {
+      const d = new Date(s.updatedAt);
+      if (!stats.latestActivity || d > stats.latestActivity) {
+        stats.latestActivity = d;
+      }
+    }
+
+    if (s.customerType === "standard") stats.typeStandard++;
+    else if (s.customerType === "fs_petroleum") stats.typeFsPetroleum++;
+    else if (s.customerType === "special") stats.typeSpecial++;
   }
 
   const totalAgents = agents.length;
@@ -122,6 +171,8 @@ export default async function ManagerAgentsPage() {
             const stats = statsByAgent.get(agent.id)!;
             const pct =
               stats.total > 0 ? Math.round((stats.erpEncoded / stats.total) * 100) : 0;
+            const successRate =
+              stats.total > 0 ? Math.round((stats.successCount / stats.total) * 100) : 0;
 
             return (
               <div
@@ -129,7 +180,7 @@ export default async function ManagerAgentsPage() {
                 className="flex flex-col overflow-hidden rounded-xl border bg-white transition-all duration-200 hover:border-zinc-300 hover:shadow-sm"
               >
                 {/* Card header */}
-                <div className="flex items-start gap-3 p-5 pb-4">
+                <div className="flex items-start gap-3 p-5 pb-3">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-blue-100">
                     {agent.avatarUrl ? (
                       <Image
@@ -146,7 +197,7 @@ export default async function ManagerAgentsPage() {
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold leading-tight text-zinc-900">{agent.fullName}</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {agent.agentCode && (
@@ -164,11 +215,31 @@ export default async function ManagerAgentsPage() {
                         {agent.agentType === "rsr" ? "RSR" : "Sales Agent"}
                       </span>
                     </div>
+                    {/* Email */}
+                    <div className="mt-1.5 flex items-center gap-1 min-w-0">
+                      <Mail className="h-3 w-3 shrink-0 text-zinc-400" />
+                      <span className="truncate text-xs text-zinc-500">{agent.email}</span>
+                    </div>
                   </div>
                 </div>
 
+                {/* Member since / Last active */}
+                <div className="mx-5 mb-3 flex items-center gap-3 rounded-lg bg-zinc-50 px-3 py-2 text-[11px] text-zinc-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 shrink-0 text-zinc-400" />
+                    Since {formatDate(new Date(agent.createdAt))}
+                  </span>
+                  <span className="h-3 w-px bg-zinc-200" />
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3 shrink-0 text-zinc-400" />
+                    {stats.latestActivity
+                      ? formatRelative(stats.latestActivity)
+                      : "No activity yet"}
+                  </span>
+                </div>
+
                 {/* Stats chips */}
-                <div className="grid grid-cols-3 gap-1 px-3 pb-4 text-center sm:px-5">
+                <div className="grid grid-cols-3 gap-1 px-3 pb-3 text-center sm:px-5">
                   <div className="rounded-lg bg-zinc-50 px-2 py-2">
                     <p className="text-lg font-bold tabular-nums text-zinc-900">{stats.total}</p>
                     <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
@@ -199,7 +270,7 @@ export default async function ManagerAgentsPage() {
                       Onboarded
                     </p>
                   </div>
-                  <div className="col-span-2 rounded-lg bg-red-50 px-2 py-2">
+                  <div className="rounded-lg bg-red-50 px-2 py-2">
                     <p className="text-lg font-bold tabular-nums text-red-700">
                       {stats.deniedReturned}
                     </p>
@@ -207,6 +278,27 @@ export default async function ManagerAgentsPage() {
                       Not Accepted
                     </p>
                   </div>
+                  <div className="rounded-lg bg-emerald-50 px-2 py-2">
+                    <p className="text-lg font-bold tabular-nums text-emerald-700">
+                      {successRate}%
+                    </p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">
+                      Success
+                    </p>
+                  </div>
+                </div>
+
+                {/* Customer type breakdown */}
+                <div className="mx-5 mb-3 flex items-center gap-1.5">
+                  <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-sky-100">
+                    {stats.typeStandard} Std
+                  </span>
+                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 ring-1 ring-orange-100">
+                    {stats.typeFsPetroleum} FSP
+                  </span>
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 ring-1 ring-violet-100">
+                    {stats.typeSpecial} Spl
+                  </span>
                 </div>
 
                 {/* Progress bar */}

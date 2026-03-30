@@ -116,6 +116,14 @@ export const cisSubmissions = pgTable("cis_submissions", {
   tinNumber: varchar("tin_number", { length: 50 }),
   additionalNotes: text("additional_notes"),
 
+  // E-signatures
+  customerSignature: text("customer_signature"),
+  customerSignedAt: timestamp("customer_signed_at"),
+  customerSignatureSeal: text("customer_signature_seal"),
+  approverSignature: text("approver_signature"),
+  approverSignedAt: timestamp("approver_signed_at"),
+  approverSignatureSeal: text("approver_signature_seal"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

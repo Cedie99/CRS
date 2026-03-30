@@ -11,7 +11,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "admin" && session.user.role !== "sales_support") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

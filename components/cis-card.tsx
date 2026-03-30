@@ -154,12 +154,12 @@ export function CisCard({
           <div className="my-3 h-px bg-zinc-100" />
 
           {/* Row 4: Workflow track + timestamp */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 mt-4 mb-4">
             {isTerminal ? (
               <span
                 className={cn(
                   "text-[11px] font-medium",
-                  status === "denied" ? "text-red-500" : "text-rose-500"
+                  status === "denied" ? "text-red-500" : "text-rose-500" 
                 )}
               >
                 {NEXT_STEP[status]}
@@ -173,7 +173,7 @@ export function CisCard({
                     <span key={i} className="flex items-center gap-1">
                       <span
                         className={cn(
-                          "inline-block h-1.5 w-1.5 rounded-full transition-all duration-300",
+                          "inline-block h-2.5 w-2.5 rounded-full transition-all duration-400",
                           done && "bg-[#2d6e1e]",
                           active && "bg-[#2d6e1e] ring-2 ring-[#2d6e1e]/25",
                           !done && !active && "bg-zinc-200"
@@ -211,7 +211,7 @@ export function CisCard({
 
           {/* Next step hint — only on non-terminal */}
           {!isTerminal && (
-            <p className="mt-1.5 text-[11px] text-zinc-400">
+            <p className="mt-1.5 text-[12px] text-zinc-800">
               {NEXT_STEP[status]}
             </p>
           )}

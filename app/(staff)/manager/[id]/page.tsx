@@ -69,6 +69,7 @@ export default async function ManagerCisDetailPage({
         {/* Main */}
         <div className="space-y-5 lg:col-span-3">
           <CisInfoCard
+            cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}
@@ -84,6 +85,12 @@ export default async function ManagerCisDetailPage({
             status={cis.status as any}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
+            customerSignature={cis.customerSignature}
+            customerSignedAt={cis.customerSignedAt}
+            customerSignatureSeal={cis.customerSignatureSeal}
+            approverSignature={cis.approverSignature}
+            approverSignedAt={cis.approverSignedAt}
+            approverSignatureSeal={cis.approverSignatureSeal}
           />
           {canAct && <ManagerActions cisId={id} />}
         </div>

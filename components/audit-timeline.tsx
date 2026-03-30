@@ -10,6 +10,7 @@ import {
   XCircle,
   Database,
   FileText,
+  Fingerprint,
 } from "lucide-react";
 
 export type WorkflowAction =
@@ -189,11 +190,27 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
                   {formatDistanceToNow(event.createdAt)}
                 </p>
               </div>
-              {event.note && (
-                <p className="mt-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600">
-                  {event.note}
-                </p>
-              )}
+              {event.note && (() => {
+                const lines = event.note.split("\n");
+                const fpLine = lines.find((l) => l.startsWith("sha256:"));
+                const humanLines = lines.filter((l) => !l.startsWith("sha256:")).join("\n").trim();
+                return (
+                  <>
+                    {humanLines && (
+                      <p className="mt-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600">
+                        {humanLines}
+                      </p>
+                    )}
+                    {fpLine && (
+                      <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] text-zinc-400">
+                        <Fingerprint className="h-3 w-3 shrink-0" />
+                        {fpLine.replace("sha256:", "").slice(0, 16).match(/.{4}/g)?.join(" ")}
+                        <span className="text-zinc-300">···</span>
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </li>
         );

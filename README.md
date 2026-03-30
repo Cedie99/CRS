@@ -88,7 +88,7 @@ app/
     ├── cis/             # CRS CRUD + workflow actions
     ├── form/            # Public token-based form submission
     ├── notifications/   # In-app notification system
-    └── profile/         # Avatar upload and removal endpoint
+    └── profile/         # Avatar upload/removal, profile edit, password change
 
 components/
 ├── actions/             # Per-role action buttons (endorse, approve, deny, etc.)
@@ -101,14 +101,16 @@ components/
 ├── audit-timeline.tsx   # Workflow event history with actor avatars
 ├── dashboard-filters.tsx # URL-param search + status filter bar
 ├── status-badge.tsx     # Status pill with animated dot indicator
-├── workflow-stepper.tsx  # Horizontal approval-chain progress indicator
-└── workflow-handoff.tsx  # "Currently with / Will forward to" role pills
+├── workflow-stepper.tsx  # Horizontal approval-chain progress indicator; final step shows checkmark with pulse animation
+├── workflow-handoff.tsx  # "Currently with / Will forward to" role pills
+└── signature-pad.tsx    # Canvas-based signature capture component
 
 lib/
 ├── auth.ts              # NextAuth config
 ├── db/                  # Drizzle client + schema
-├── validations/         # Zod schemas
+├── validations/         # Zod schemas (cis, profile)
 ├── workflow.ts          # transitionCis() — status transitions + notifications
+├── signature-integrity.ts # Signature hash/verification utilities
 └── utils.ts             # cn(), formatDistanceToNow()
 ```
 
@@ -176,6 +178,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - **URL-param filtering** — dashboard search and status filters use URL search params (server-side, RSC-compatible, shareable links)
 - **Skeleton loading** — every dashboard has a `loading.tsx` that renders animated skeleton placeholders while data loads
 - **Confirmation dialogs** — approve/deny/forward actions open a modal dialog before submitting to prevent accidental submissions
+- **Two-column profile layout** — profile page uses a side-by-side grid (avatar + read-only info on the left, edit forms on the right) to keep everything above the fold
+- **Workflow completion indicator** — the final "Done" step on the workflow stepper shows a checkmark with a pulsing ring animation so users can immediately spot fully approved submissions
+- **In-app profile editing** — users can update their name, email, and password directly from the profile page without admin intervention
 
 ---
 

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { cisFormSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
+import { computeSeal, sha256Fingerprint } from "@/lib/signature-integrity";
 
 // GET /api/form/[token] — fetch CIS info for the customer form
 export async function GET(
@@ -61,10 +62,20 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  const signedAt = new Date();
+  const seal = computeSeal(cis.id, signedAt, parsed.data.customerSignature);
+  const fp = sha256Fingerprint(parsed.data.customerSignature);
+
   // Save form data and mark as submitted
   await db
     .update(cisSubmissions)
-    .set({ ...parsed.data, status: "submitted", updatedAt: new Date() })
+    .set({
+      ...parsed.data,
+      status: "submitted",
+      customerSignedAt: signedAt,
+      customerSignatureSeal: seal,
+      updatedAt: signedAt,
+    })
     .where(eq(cisSubmissions.id, cis.id));
 
   // Get manager ID for notification
@@ -74,14 +85,12 @@ export async function POST(
     .where(eq(users.id, cis.agentId))
     .limit(1);
 
-  const nextStatus =
-    cis.customerType === "standard" ? "pending_endorsement" : "pending_legal_review";
-
   await transitionCis({
     cisId: cis.id,
-    toStatus: nextStatus,
-    action: cis.customerType === "standard" ? "submitted" : "forwarded_to_legal",
-    actorId: cis.agentId, // agent is the actor since customer has no account
+    toStatus: "pending_endorsement",
+    action: "submitted",
+    actorId: cis.agentId,
+    note: `sha256:${fp}`,
     managerId: agent?.managerId ?? null,
   });
 

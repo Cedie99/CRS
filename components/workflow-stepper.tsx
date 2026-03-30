@@ -16,11 +16,12 @@ const STANDARD_STEPS: Step[] = [
 ];
 
 const LEGAL_STEPS: Step[] = [
-  { key: "submitted", label: "Submitted" },
-  { key: "pending_legal_review", label: "Legal" },
-  { key: "pending_finance_review", label: "Finance" },
-  { key: "pending_approval", label: "Approval" },
-  { key: "approved", label: "Done" },
+  { key: "submitted",              label: "Submitted" },
+  { key: "pending_endorsement",    label: "Manager"   },
+  { key: "pending_legal_review",   label: "Legal"     },
+  { key: "pending_finance_review", label: "Finance"   },
+  { key: "pending_approval",       label: "Approval"  },
+  { key: "approved",               label: "Done"      },
 ];
 
 const STANDARD_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
@@ -33,12 +34,13 @@ const STANDARD_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
 };
 
 const LEGAL_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
-  submitted: 0,
-  pending_legal_review: 1,
-  pending_finance_review: 2,
-  pending_approval: 3,
-  approved: 4,
-  erp_encoded: 4,
+  submitted:              0,
+  pending_endorsement:    1,
+  pending_legal_review:   2,
+  pending_finance_review: 3,
+  pending_approval:       4,
+  approved:               5,
+  erp_encoded:            5,
 };
 
 interface WorkflowStepperProps {
@@ -85,7 +87,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
 
   return (
     <div className="rounded-xl border bg-white px-5 py-4">
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+      <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-zinc-400">
         Workflow Progress
       </p>
       <div className="flex items-center">
@@ -94,30 +96,40 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
           const isCurrent = i === currentIndex;
           const isFuture = i > currentIndex;
           const isLast = i === steps.length - 1;
+          const isDone = isCurrent && isLast;
 
           return (
             <div key={step.key} className="flex flex-1 items-center">
               <div className="flex flex-col items-center gap-1.5">
-                <div
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all",
-                    isCompleted && "bg-[#2d6e1e] text-white shadow-sm",
-                    isCurrent &&
-                      "bg-[#2d6e1e] text-white ring-4 ring-[#2d6e1e]/20",
-                    isFuture && "bg-zinc-100 text-zinc-400"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span>{i + 1}</span>
-                  )}
-                </div>
+                {isDone ? (
+                  <div className="relative flex h-10 w-10 items-center justify-center">
+                    <span className="absolute inset-0 rounded-full bg-[#2d6e1e] animate-ping opacity-25" />
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6e1e] text-white shadow-md ring-4 ring-[#2d6e1e]/30">
+                      <Check className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all",
+                      isCompleted && "bg-[#2d6e1e] text-white shadow-sm",
+                      isCurrent && "bg-[#2d6e1e] text-white ring-4 ring-[#2d6e1e]/20",
+                      isFuture && "bg-zinc-100 text-zinc-400"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span>{i + 1}</span>
+                    )}
+                  </div>
+                )}
                 <span
                   className={cn(
-                    "hidden whitespace-nowrap text-[10px] font-semibold sm:block",
-                    isCompleted && "text-[#2d6e1e]",
-                    isCurrent && "text-[#2d6e1e]",
+                    "hidden whitespace-nowrap text-[12px] font-semibold sm:block",
+                    isDone && "text-[#2d6e1e]",
+                    !isDone && isCompleted && "text-[#2d6e1e]",
+                    !isDone && isCurrent && "text-[#2d6e1e]",
                     isFuture && "text-zinc-400"
                   )}
                 >

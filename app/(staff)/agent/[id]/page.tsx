@@ -40,6 +40,12 @@ export default async function AgentCisDetailPage({
       businessType: cisSubmissions.businessType,
       tinNumber: cisSubmissions.tinNumber,
       additionalNotes: cisSubmissions.additionalNotes,
+      customerSignature: cisSubmissions.customerSignature,
+      customerSignedAt: cisSubmissions.customerSignedAt,
+      customerSignatureSeal: cisSubmissions.customerSignatureSeal,
+      approverSignature: cisSubmissions.approverSignature,
+      approverSignedAt: cisSubmissions.approverSignedAt,
+      approverSignatureSeal: cisSubmissions.approverSignatureSeal,
       createdAt: cisSubmissions.createdAt,
       updatedAt: cisSubmissions.updatedAt,
     })
@@ -138,6 +144,7 @@ export default async function AgentCisDetailPage({
         {/* Main */}
         <div className="space-y-5 lg:col-span-3">
           <CisInfoCard
+            cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}
@@ -153,6 +160,12 @@ export default async function AgentCisDetailPage({
             status={cis.status as any}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
+            customerSignature={cis.customerSignature}
+            customerSignedAt={cis.customerSignedAt}
+            customerSignatureSeal={cis.customerSignatureSeal}
+            approverSignature={cis.approverSignature}
+            approverSignedAt={cis.approverSignedAt}
+            approverSignatureSeal={cis.approverSignatureSeal}
           />
         </div>
 

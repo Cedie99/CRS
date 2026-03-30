@@ -160,10 +160,10 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
         <div className="flex items-center gap-2">
           {/* Notification bell */}
           <DropdownMenu open={notifOpen} onOpenChange={handleOpenNotifications}>
-            <DropdownMenuTrigger className="relative flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none">
+            <DropdownMenuTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none">
               <Bell className="h-4 w-4" />
               {totalBadgeCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#f5d220] text-[10px] font-bold text-[#1a1a1a]">
+                <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#ff0000] text-[12px] font-bold text-[#ffffff]">
                   {totalBadgeCount > 9 ? "9+" : totalBadgeCount}
                 </span>
               )}
@@ -183,7 +183,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
               {isAdmin && pendingRegistrations.length > 0 && (
                 <>
                   <div className="px-3 py-1.5">
-                    <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-amber-600">
                       <UserPlus className="h-3 w-3" />
                       Pending Activation
                     </span>
@@ -199,7 +199,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
                     >
                       <div className="flex w-full items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                        <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
+                        <p className="flex-1 text-s font-medium leading-relaxed text-zinc-900">
                           {u.fullName} registered and needs activation
                         </p>
                       </div>
