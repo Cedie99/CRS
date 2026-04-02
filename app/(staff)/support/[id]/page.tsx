@@ -51,14 +51,14 @@ export default async function SupportCisDetailPage({
     <div className="space-y-5">
       <Link
         href="/support"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
+        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to support queue
       </Link>
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <div className="space-y-5 lg:col-span-3">
+        <div className="space-y-5 lg:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
             tradeName={cis.tradeName}
@@ -82,11 +82,59 @@ export default async function SupportCisDetailPage({
             approverSignature={cis.approverSignature}
             approverSignedAt={cis.approverSignedAt}
             approverSignatureSeal={cis.approverSignatureSeal}
+            petroleumLicenseNo={cis.petroleumLicenseNo}
+            depotStationType={cis.depotStationType}
+            tankCapacity={cis.tankCapacity}
+            doeAccreditationNo={cis.doeAccreditationNo}
+            specialAccountType={cis.specialAccountType}
+            specialAccountRemarks={cis.specialAccountRemarks}
+            paymentTerms={cis.paymentTerms}
+            docGovCertifications={cis.docGovCertifications}
+            corporateName={cis.corporateName}
+            dateOfBusinessReg={cis.dateOfBusinessReg}
+            numberOfEmployees={cis.numberOfEmployees}
+            website={cis.website}
+            telephoneNumber={cis.telephoneNumber}
+            landmarks={cis.landmarks}
+            deliverySameAsOffice={cis.deliverySameAsOffice}
+            deliveryAddress={cis.deliveryAddress}
+            deliveryLandmarks={cis.deliveryLandmarks}
+            deliveryMobile={cis.deliveryMobile}
+            deliveryTelephone={cis.deliveryTelephone}
+            lineOfBusiness={cis.lineOfBusiness}
+            lineOfBusinessOther={cis.lineOfBusinessOther}
+            businessActivity={cis.businessActivity}
+            businessActivityOther={cis.businessActivityOther}
+            owners={cis.owners}
+            officers={cis.officers}
+            businessLife={cis.businessLife}
+            howLongAtAddress={cis.howLongAtAddress}
+            numberOfBranches={cis.numberOfBranches}
+            govCertifications={cis.govCertifications}
+            tradeReferences={cis.tradeReferences}
+            bankReferences={cis.bankReferences}
+            achievements={cis.achievements}
+            otherMerits={cis.otherMerits}
+            docValidId={cis.docValidId}
+            docMayorsPermit={cis.docMayorsPermit}
+            docSecDti={cis.docSecDti}
+            docBirCertificate={cis.docBirCertificate}
+            docLocationMap={cis.docLocationMap}
+            docFinancialStatement={cis.docFinancialStatement}
+            docBankStatement={cis.docBankStatement}
+            docProofOfBilling={cis.docProofOfBilling}
+            docLeaseContract={cis.docLeaseContract}
+            docProofOfOwnership={cis.docProofOfOwnership}
+            docStorePhoto={cis.docStorePhoto}
+            docSupplierInvoice={cis.docSupplierInvoice}
+            docSocialMedia={cis.docSocialMedia}
+            docCertifications={cis.docCertifications}
+            docOther={cis.docOther}
           />
           {canEncode && <ErpEncodeActions cisId={id} backHref="/support" />}
         </div>
 
-        <div className="space-y-5 lg:col-span-2">
+        <div className="print:hidden space-y-5 lg:col-span-2">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>

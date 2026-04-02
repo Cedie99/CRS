@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
@@ -50,4 +50,36 @@ export async function GET(
   }
 
   return NextResponse.json(row);
+}
+
+// DELETE /api/cis/[id] — only the owning agent may delete a draft
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { role, id: userId } = session.user;
+  if (role !== "sales_agent" && role !== "rsr") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const [row] = await db
+    .select({ id: cisSubmissions.id, agentId: cisSubmissions.agentId, status: cisSubmissions.status })
+    .from(cisSubmissions)
+    .where(eq(cisSubmissions.id, id))
+    .limit(1);
+
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (row.agentId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (row.status !== "draft") {
+    return NextResponse.json({ error: "Only draft submissions can be deleted" }, { status: 422 });
+  }
+
+  await db.delete(cisSubmissions).where(and(eq(cisSubmissions.id, id), eq(cisSubmissions.status, "draft")));
+
+  return NextResponse.json({ ok: true });
 }

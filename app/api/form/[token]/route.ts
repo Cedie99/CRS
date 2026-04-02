@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
-import { cisFormSchema } from "@/lib/validations/cis";
+import { getCisFormSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 import { computeSeal, sha256Fingerprint } from "@/lib/signature-integrity";
 
@@ -57,7 +57,7 @@ export async function POST(
   }
 
   const body = await req.json();
-  const parsed = cisFormSchema.safeParse(body);
+  const parsed = getCisFormSchema(cis.customerType).safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }

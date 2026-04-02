@@ -7,6 +7,8 @@ import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { DeleteDraftButton } from "@/components/delete-draft-button";
+import { DismissButton } from "@/components/dismiss-button";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +48,55 @@ export default async function AgentCisDetailPage({
       approverSignature: cisSubmissions.approverSignature,
       approverSignedAt: cisSubmissions.approverSignedAt,
       approverSignatureSeal: cisSubmissions.approverSignatureSeal,
+      petroleumLicenseNo: cisSubmissions.petroleumLicenseNo,
+      depotStationType: cisSubmissions.depotStationType,
+      tankCapacity: cisSubmissions.tankCapacity,
+      doeAccreditationNo: cisSubmissions.doeAccreditationNo,
+      specialAccountType: cisSubmissions.specialAccountType,
+      specialAccountRemarks: cisSubmissions.specialAccountRemarks,
+      paymentTerms: cisSubmissions.paymentTerms,
+      docGovCertifications: cisSubmissions.docGovCertifications,
+      corporateName: cisSubmissions.corporateName,
+      dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
+      numberOfEmployees: cisSubmissions.numberOfEmployees,
+      website: cisSubmissions.website,
+      telephoneNumber: cisSubmissions.telephoneNumber,
+      landmarks: cisSubmissions.landmarks,
+      deliverySameAsOffice: cisSubmissions.deliverySameAsOffice,
+      deliveryAddress: cisSubmissions.deliveryAddress,
+      deliveryLandmarks: cisSubmissions.deliveryLandmarks,
+      deliveryMobile: cisSubmissions.deliveryMobile,
+      deliveryTelephone: cisSubmissions.deliveryTelephone,
+      lineOfBusiness: cisSubmissions.lineOfBusiness,
+      lineOfBusinessOther: cisSubmissions.lineOfBusinessOther,
+      businessActivity: cisSubmissions.businessActivity,
+      businessActivityOther: cisSubmissions.businessActivityOther,
+      owners: cisSubmissions.owners,
+      officers: cisSubmissions.officers,
+      businessLife: cisSubmissions.businessLife,
+      howLongAtAddress: cisSubmissions.howLongAtAddress,
+      numberOfBranches: cisSubmissions.numberOfBranches,
+      govCertifications: cisSubmissions.govCertifications,
+      tradeReferences: cisSubmissions.tradeReferences,
+      bankReferences: cisSubmissions.bankReferences,
+      achievements: cisSubmissions.achievements,
+      otherMerits: cisSubmissions.otherMerits,
+      docValidId: cisSubmissions.docValidId,
+      docMayorsPermit: cisSubmissions.docMayorsPermit,
+      docSecDti: cisSubmissions.docSecDti,
+      docBirCertificate: cisSubmissions.docBirCertificate,
+      docLocationMap: cisSubmissions.docLocationMap,
+      docFinancialStatement: cisSubmissions.docFinancialStatement,
+      docBankStatement: cisSubmissions.docBankStatement,
+      docProofOfBilling: cisSubmissions.docProofOfBilling,
+      docLeaseContract: cisSubmissions.docLeaseContract,
+      docProofOfOwnership: cisSubmissions.docProofOfOwnership,
+      docStorePhoto: cisSubmissions.docStorePhoto,
+      docSupplierInvoice: cisSubmissions.docSupplierInvoice,
+      docSocialMedia: cisSubmissions.docSocialMedia,
+      docCertifications: cisSubmissions.docCertifications,
+      docOther: cisSubmissions.docOther,
+      isArchived: cisSubmissions.isArchived,
       createdAt: cisSubmissions.createdAt,
       updatedAt: cisSubmissions.updatedAt,
     })
@@ -78,7 +129,7 @@ export default async function AgentCisDetailPage({
     <div className="space-y-5">
       <Link
         href="/agent"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
+        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to my submissions
@@ -86,7 +137,7 @@ export default async function AgentCisDetailPage({
 
       {/* Status banners */}
       {cis.status === "draft" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+        <div className="print:hidden rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
             <Clock className="h-4 w-4" />
             Waiting for your customer to fill out the form
@@ -94,13 +145,16 @@ export default async function AgentCisDetailPage({
           <p className="text-xs text-amber-600">
             Copy the link below and send it to your customer. Once they complete and submit the form, it will automatically move to the approval process.
           </p>
-          <CopyLinkButton token={cis.publicToken} />
+          <div className="flex items-center gap-2">
+            <CopyLinkButton token={cis.publicToken} />
+            <DeleteDraftButton cisId={cis.id} />
+          </div>
         </div>
       )}
 
       {(cis.status === "returned" || cis.status === "denied") && (
         <div
-          className={`flex gap-3 rounded-xl border px-5 py-4 ${
+          className={`print:hidden flex gap-3 rounded-xl border px-5 py-4 ${
             cis.status === "returned"
               ? "border-rose-200 bg-rose-50"
               : "border-red-200 bg-red-50"
@@ -136,13 +190,16 @@ export default async function AgentCisDetailPage({
               </p>
             )}
           </div>
+          <div className="ml-auto shrink-0 self-start">
+            <DismissButton cisId={cis.id} />
+          </div>
         </div>
       )}
 
       {/* Two-column layout */}
       <div className="grid gap-5 lg:grid-cols-5">
         {/* Main */}
-        <div className="space-y-5 lg:col-span-3">
+        <div className="space-y-5 lg:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
             tradeName={cis.tradeName}
@@ -166,11 +223,59 @@ export default async function AgentCisDetailPage({
             approverSignature={cis.approverSignature}
             approverSignedAt={cis.approverSignedAt}
             approverSignatureSeal={cis.approverSignatureSeal}
+            petroleumLicenseNo={cis.petroleumLicenseNo}
+            depotStationType={cis.depotStationType}
+            tankCapacity={cis.tankCapacity}
+            doeAccreditationNo={cis.doeAccreditationNo}
+            specialAccountType={cis.specialAccountType}
+            specialAccountRemarks={cis.specialAccountRemarks}
+            paymentTerms={cis.paymentTerms}
+            docGovCertifications={cis.docGovCertifications}
+            corporateName={cis.corporateName}
+            dateOfBusinessReg={cis.dateOfBusinessReg}
+            numberOfEmployees={cis.numberOfEmployees}
+            website={cis.website}
+            telephoneNumber={cis.telephoneNumber}
+            landmarks={cis.landmarks}
+            deliverySameAsOffice={cis.deliverySameAsOffice}
+            deliveryAddress={cis.deliveryAddress}
+            deliveryLandmarks={cis.deliveryLandmarks}
+            deliveryMobile={cis.deliveryMobile}
+            deliveryTelephone={cis.deliveryTelephone}
+            lineOfBusiness={cis.lineOfBusiness}
+            lineOfBusinessOther={cis.lineOfBusinessOther}
+            businessActivity={cis.businessActivity}
+            businessActivityOther={cis.businessActivityOther}
+            owners={cis.owners}
+            officers={cis.officers}
+            businessLife={cis.businessLife}
+            howLongAtAddress={cis.howLongAtAddress}
+            numberOfBranches={cis.numberOfBranches}
+            govCertifications={cis.govCertifications}
+            tradeReferences={cis.tradeReferences}
+            bankReferences={cis.bankReferences}
+            achievements={cis.achievements}
+            otherMerits={cis.otherMerits}
+            docValidId={cis.docValidId}
+            docMayorsPermit={cis.docMayorsPermit}
+            docSecDti={cis.docSecDti}
+            docBirCertificate={cis.docBirCertificate}
+            docLocationMap={cis.docLocationMap}
+            docFinancialStatement={cis.docFinancialStatement}
+            docBankStatement={cis.docBankStatement}
+            docProofOfBilling={cis.docProofOfBilling}
+            docLeaseContract={cis.docLeaseContract}
+            docProofOfOwnership={cis.docProofOfOwnership}
+            docStorePhoto={cis.docStorePhoto}
+            docSupplierInvoice={cis.docSupplierInvoice}
+            docSocialMedia={cis.docSocialMedia}
+            docCertifications={cis.docCertifications}
+            docOther={cis.docOther}
           />
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-5 lg:col-span-2">
+        <div className="print:hidden space-y-5 lg:col-span-2">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>

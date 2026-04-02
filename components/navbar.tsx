@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { Bell, LogOut, CheckCheck, User, Menu, UserPlus } from "lucide-react";
+import { Bell, CheckCheck, Menu, UserPlus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -56,28 +54,17 @@ type PendingRegistration = {
 };
 
 interface NavbarProps {
-  userName: string;
   userRole: string;
-  agentCode?: string | null;
-  avatarUrl?: string | null;
   onMenuToggle?: () => void;
 }
 
-export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle }: NavbarProps) {
+export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
 
   const isAdmin = userRole === "admin";
-
-  const initials = userName
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   const homeHref = ROLE_HREFS[userRole] ?? "/";
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const totalBadgeCount = unreadCount + pendingRegistrations.length;
@@ -122,11 +109,6 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
     }
   }
 
-  async function handleSignOut() {
-    await signOut({ redirect: false });
-    router.push("/login");
-  }
-
   return (
     <header className="sticky top-0 z-50 bg-[#1a1a1a]">
       <div className="flex h-14 items-center justify-between px-4 sm:px-6">
@@ -160,7 +142,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
         <div className="flex items-center gap-2">
           {/* Notification bell */}
           <DropdownMenu open={notifOpen} onOpenChange={handleOpenNotifications}>
-            <DropdownMenuTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none">
+            <DropdownMenuTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none cursor-pointer">
               <Bell className="h-4 w-4" />
               {totalBadgeCount > 0 && (
                 <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#ff0000] text-[12px] font-bold text-[#ffffff]">
@@ -199,7 +181,7 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
                     >
                       <div className="flex w-full items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                        <p className="flex-1 text-s font-medium leading-relaxed text-zinc-900">
+                        <p className="flex-1 text-s    font-medium leading-relaxed text-zinc-900">
                           {u.fullName} registered and needs activation
                         </p>
                       </div>
@@ -256,39 +238,6 @@ export function Navbar({ userName, userRole, agentCode, avatarUrl, onMenuToggle 
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* User menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#2d6e1e]">
-              <Avatar className="h-8 w-8 cursor-pointer">
-                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-                <AvatarFallback className="bg-[#2d6e1e] text-xs text-white">{initials}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 max-w-[calc(100vw-1rem)]">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium leading-none">{userName}</p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  {ROLE_LABELS[userRole]}
-                  {agentCode && (
-                    <span className="ml-1 font-mono">· {agentCode}</span>
-                  )}
-                </p>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="text-red-600 focus:text-red-600"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </header>

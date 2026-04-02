@@ -28,8 +28,6 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     const emptyRef = useRef(true);
     const [showPlaceholder, setShowPlaceholder] = useState(true);
 
-    const getCtx = () => canvasRef.current?.getContext("2d") ?? null;
-
     const getPos = (
       e: MouseEvent | TouchEvent,
       canvas: HTMLCanvasElement
@@ -42,10 +40,24 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
 
+    // Lazily get a styled ctx — re-applies styles so they survive canvas resets.
+    const getDrawCtx = useCallback(() => {
+      const canvas = canvasRef.current;
+      if (!canvas || canvas.width === 0) return null;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      return ctx;
+    }, []);
+
     const clear = useCallback(() => {
       const canvas = canvasRef.current;
-      const ctx = getCtx();
-      if (!canvas || !ctx) return;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       emptyRef.current = true;
       setShowPlaceholder(true);
@@ -58,26 +70,46 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       isEmpty: () => emptyRef.current,
     }));
 
+    // ── Canvas sizing ──────────────────────────────────────────────────────────
+    // Uses ResizeObserver so the canvas is correctly sized even when it starts
+    // inside a hidden (display:none) step and becomes visible later.
     useEffect(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      // Size canvas to match CSS display size
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      const ctx = canvas.getContext("2d")!;
-      ctx.scale(dpr, dpr);
-      ctx.strokeStyle = "#18181b";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      const initCanvas = () => {
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width === 0) return;
+        const dpr = window.devicePixelRatio || 1;
+        const newW = Math.round(rect.width * dpr);
+        const newH = Math.round(rect.height * dpr);
+        // Skip if dimensions haven't changed (avoids clearing a drawn signature
+        // on minor layout shifts or repeated observer callbacks).
+        if (canvas.width === newW && canvas.height === newH) return;
+        canvas.width = newW;
+        canvas.height = newH;
+        const ctx = canvas.getContext("2d")!;
+        ctx.scale(dpr, dpr);
+      };
+
+      const observer = new ResizeObserver(initCanvas);
+      observer.observe(canvas);
+      initCanvas(); // Immediate attempt (works when canvas is already visible)
+
+      return () => observer.disconnect();
+    }, []);
+
+    // ── Drawing event listeners ────────────────────────────────────────────────
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
       const onStart = (e: MouseEvent | TouchEvent) => {
         if (disabled) return;
         e.preventDefault();
         isDrawing.current = true;
+        const ctx = getDrawCtx();
+        if (!ctx) return;
         const pos = getPos(e, canvas);
         ctx.beginPath();
         ctx.moveTo(pos.x, pos.y);
@@ -86,6 +118,8 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       const onMove = (e: MouseEvent | TouchEvent) => {
         if (!isDrawing.current || disabled) return;
         e.preventDefault();
+        const ctx = getDrawCtx();
+        if (!ctx) return;
         const pos = getPos(e, canvas);
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
@@ -116,8 +150,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         canvas.removeEventListener("touchmove", onMove);
         window.removeEventListener("touchend", onEnd);
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [disabled]);
+    }, [disabled, getDrawCtx, onChange]);
 
     return (
       <div className="space-y-2">

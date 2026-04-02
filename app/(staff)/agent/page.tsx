@@ -1,48 +1,109 @@
 import Link from "next/link";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, ne } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import { CisCard } from "@/components/cis-card";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
+import { CurrentDate } from "@/components/current-date";
 import { Plus, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "My Submissions — CRS" };
 
+function isMissingArchivedColumnError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const maybeError = error as { code?: string; message?: string };
+  return (
+    maybeError.code === "42703" &&
+    (maybeError.message ?? "").toLowerCase().includes("is_archived")
+  );
+}
+
 export default async function AgentDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; archived?: string }>;
 }) {
   const session = await auth();
-  const { q, status } = await searchParams;
+  const { q, status, archived } = await searchParams;
+  const showArchived = archived === "1";
+  type Submission = typeof cisSubmissions.$inferSelect;
 
-  const conditions = [eq(cisSubmissions.agentId, session!.user.id)];
+  let supportsArchived = true;
+  let submissions: Submission[] = [];
+  let all: Submission[] = [];
+  let archivedCount = 0;
 
-  if (q) {
-    conditions.push(
-      or(
-        ilike(cisSubmissions.tradeName, `%${q}%`),
-        ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )!
-    );
+  try {
+    const conditions = [
+      eq(cisSubmissions.agentId, session!.user.id),
+      showArchived ? eq(cisSubmissions.isArchived, true) : ne(cisSubmissions.isArchived, true),
+    ];
+
+    if (!showArchived) {
+      if (q) {
+        conditions.push(
+          or(
+            ilike(cisSubmissions.tradeName, `%${q}%`),
+            ilike(cisSubmissions.contactPerson, `%${q}%`)
+          )!
+        );
+      }
+      if (status) {
+        conditions.push(eq(cisSubmissions.status, status as CisStatus));
+      }
+    }
+
+    submissions = await db
+      .select()
+      .from(cisSubmissions)
+      .where(and(...conditions))
+      .orderBy(desc(cisSubmissions.createdAt));
+
+    all = await db
+      .select()
+      .from(cisSubmissions)
+      .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true)));
+
+    archivedCount = await db
+      .select({ id: cisSubmissions.id })
+      .from(cisSubmissions)
+      .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true)))
+      .then((r) => r.length);
+  } catch (error) {
+    if (!isMissingArchivedColumnError(error)) {
+      throw error;
+    }
+
+    supportsArchived = false;
+    const fallbackConditions = [eq(cisSubmissions.agentId, session!.user.id)];
+    if (q) {
+      fallbackConditions.push(
+        or(
+          ilike(cisSubmissions.tradeName, `%${q}%`),
+          ilike(cisSubmissions.contactPerson, `%${q}%`)
+        )!
+      );
+    }
+    if (status) {
+      fallbackConditions.push(eq(cisSubmissions.status, status as CisStatus));
+    }
+
+    submissions = await db
+      .select()
+      .from(cisSubmissions)
+      .where(and(...fallbackConditions))
+      .orderBy(desc(cisSubmissions.createdAt));
+
+    all = await db
+      .select()
+      .from(cisSubmissions)
+      .where(eq(cisSubmissions.agentId, session!.user.id));
   }
-  if (status) {
-    conditions.push(eq(cisSubmissions.status, status as CisStatus));
-  }
 
-  const submissions = await db
-    .select()
-    .from(cisSubmissions)
-    .where(and(...conditions))
-    .orderBy(desc(cisSubmissions.createdAt));
-
-  const all = await db
-    .select()
-    .from(cisSubmissions)
-    .where(eq(cisSubmissions.agentId, session!.user.id));
+  const effectiveShowArchived = supportsArchived && showArchived;
 
   const total = all.length;
   const active = all.filter((s) =>
@@ -115,14 +176,11 @@ export default async function AgentDashboard({
             )}
           </p>
         </div>
-        <Link href="/agent/new" className={buttonVariants()}>
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Customer
-        </Link>
+        <CurrentDate />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Stats — hidden in archived view */}
+      {!effectiveShowArchived && <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
           <div
             key={label}
@@ -151,9 +209,20 @@ export default async function AgentDashboard({
             </div>
           </div>
         ))}
-      </div>
+      </div>}
 
-      <DashboardFilters />
+      <DashboardFilters
+        quickFilters={!showArchived ? [
+          { value: "", label: "All" },
+          { value: "draft", label: "Draft" },
+          { value: "submitted", label: "Submitted" },
+          { value: "approved", label: "Approved" },
+          { value: "erp_encoded", label: "Onboarded" },
+        ] : undefined}
+        showStatusFilter={!effectiveShowArchived}
+        showArchivedToggle={supportsArchived}
+        archivedCount={archivedCount}
+      />
 
       {submissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">

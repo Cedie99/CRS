@@ -23,21 +23,24 @@ export function StaffShell({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar
-        userName={userName}
-        userRole={userRole}
-        agentCode={agentCode}
-        avatarUrl={avatarUrl}
-        onMenuToggle={() => setSidebarOpen((o) => !o)}
-      />
-      <div className="flex flex-1">
-        <AppSidebar
-          role={userRole}
-          mobileOpen={sidebarOpen}
-          onMobileClose={() => setSidebarOpen(false)}
+      <div className="print:hidden">
+        <Navbar
+          userRole={userRole}
+          onMenuToggle={() => setSidebarOpen((o) => !o)}
         />
+      </div>
+      <div className="flex flex-1">
+        <div className="print:hidden">
+          <AppSidebar
+            role={userRole}
+            userName={userName}
+            avatarUrl={avatarUrl}
+            mobileOpen={sidebarOpen}
+            onMobileClose={() => setSidebarOpen(false)}
+          />
+        </div>
         <main className="min-w-0 flex-1 bg-zinc-50">
-          <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</div>
         </main>
       </div>
     </div>

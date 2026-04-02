@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Plus,
@@ -12,8 +13,10 @@ import {
   Inbox,
   FileText,
   Users,
+  LogOut,
   X,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -70,32 +73,43 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
 };
 
-function SidebarContent({ role, onClose }: { role: string; onClose?: () => void }) {
+interface SidebarContentProps {
+  role: string;
+  userName?: string;
+  avatarUrl?: string | null;
+  onClose?: () => void;
+}
+
+function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const items = NAV_ITEMS[role] ?? [];
+
+  const initials = userName
+    ? userName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "?";
+
+  async function handleSignOut() {
+    await signOut({ redirect: false });
+    router.push("/login");
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-4">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-            Navigation
-          </p>
-          <p className="mt-0.5 text-sm font-semibold text-zinc-800">
-            {ROLE_LABELS[role] ?? role}
-          </p>
-        </div>
-        {onClose && (
+      {/* Mobile close button */}
+      {onClose && (
+        <div className="flex items-center justify-end border-b border-zinc-100 px-3 py-3">
           <button
             onClick={onClose}
             className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
           >
             <X className="h-4 w-4" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <nav className="flex-1 space-y-0.5 px-3 py-3">
+      {/* Nav items */}
+      <nav className="flex-1 space-y-0.5 px-3 py-4">
         {items.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -108,16 +122,16 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
               href={item.href}
               onClick={onClose}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-[#2d6e1e]/10 text-[#2d6e1e]"
-                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                  ? "bg-[#2d6e1e] text-white"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
               )}
             >
               <Icon
                 className={cn(
                   "h-4 w-4 shrink-0",
-                  isActive ? "text-[#2d6e1e]" : "text-zinc-400"
+                  isActive ? "text-white" : "text-zinc-400"
                 )}
               />
               {item.label}
@@ -126,12 +140,38 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
         })}
       </nav>
 
-      <div className="border-t border-zinc-100 px-4 py-3">
-        <p className="text-[10px] leading-relaxed text-zinc-400">
-          Oracle Petroleum
-          <br />
-          Toll Blend Division
-        </p>
+      {/* User info + profile + logout */}
+      <div className="space-y-0.5 border-t border-zinc-100 px-3 py-3">
+        {userName && (
+          <Link
+            href="/profile"
+            onClick={onClose}
+            className={cn(
+              "flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors",
+              pathname === "/profile"
+                ? "bg-[#2d6e1e]/10"
+                : "hover:bg-zinc-100"
+            )}
+          >
+            <Avatar className="h-7 w-7 shrink-0">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
+              <AvatarFallback className="bg-[#2d6e1e] text-[10px] text-white">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-zinc-800">{userName}</p>
+              <p className="truncate text-xs text-zinc-400">{ROLE_LABELS[role] ?? role}</p>
+            </div>
+          </Link>
+        )}
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          Logout
+        </button>
       </div>
     </div>
   );
@@ -139,16 +179,18 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
 
 interface AppSidebarProps {
   role: string;
+  userName?: string;
+  avatarUrl?: string | null;
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
-export function AppSidebar({ role, mobileOpen, onMobileClose }: AppSidebarProps) {
+export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClose }: AppSidebarProps) {
   return (
     <>
       {/* Desktop */}
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white lg:flex">
-        <SidebarContent role={role} />
+        <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} />
       </aside>
 
       {/* Mobile overlay */}
@@ -159,7 +201,7 @@ export function AppSidebar({ role, mobileOpen, onMobileClose }: AppSidebarProps)
             onClick={onMobileClose}
           />
           <div className="absolute left-0 top-0 z-50 h-full w-64 max-w-[80vw] bg-white shadow-xl">
-            <SidebarContent role={role} onClose={onMobileClose} />
+            <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} onClose={onMobileClose} />
           </div>
         </div>
       )}

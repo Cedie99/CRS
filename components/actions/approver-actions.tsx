@@ -89,7 +89,7 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
   }
 
   return (
-    <Card>
+    <Card className="print:hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           Final Decision
