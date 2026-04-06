@@ -186,9 +186,44 @@ export const returnSchema = z.object({
     .max(1000),
 });
 
+export const FINANCE_EU_OPTIONS = [
+  { value: "end_user", label: "End User" },
+  { value: "reseller", label: "Reseller" },
+  { value: "dealer", label: "Dealer" },
+] as const;
+
+export const FINANCE_DR_OPTIONS = [
+  { value: "cod", label: "COD (Cash on Delivery)" },
+  { value: "cbd", label: "CBD (Cash Before Delivery)" },
+  { value: "credit", label: "Credit" },
+] as const;
+
+export const FINANCE_CREDIT_TERMS_OPTIONS = [
+  { value: "30_days", label: "30 Days" },
+  { value: "60_days", label: "60 Days" },
+  { value: "90_days", label: "90 Days" },
+] as const;
+
 export const financeForwardSchema = z.object({
   note: z.string().max(1000).optional(),
+  financeEu: z.enum(["end_user", "reseller", "dealer"], {
+    error: "End User classification is required",
+  }),
+  financeDl: z.string().min(1, "Delivery Limit is required").max(100),
+  financeDr: z.enum(["cod", "cbd", "credit"], {
+    error: "Delivery Receipt terms are required",
+  }),
+  financePlTs: z.string().min(1, "Price List / Terms & Schedule is required").max(255),
+  financeApprovedPoints: z
+    .number({ error: "Approved Points must be a number" })
+    .int("Approved Points must be a whole number")
+    .min(0).max(200),
+  financeCreditTerms: z.enum(["30_days", "60_days", "90_days"], {
+    error: "Credit Terms selection is required",
+  }),
 });
+
+export type FinanceForwardInput = z.infer<typeof financeForwardSchema>;
 
 export const denySchema = z.object({
   note: z

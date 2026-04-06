@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import { validateSubmissionDocumentExpirations } from "@/lib/document-expiration";
 import { approveSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 import { computeSeal, sha256Fingerprint } from "@/lib/signature-integrity";
@@ -20,7 +21,7 @@ export async function PATCH(
   const { id } = await params;
 
   const [cis] = await db
-    .select({ status: cisSubmissions.status })
+    .select({ status: cisSubmissions.status, docMayorsPermit: cisSubmissions.docMayorsPermit })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -28,6 +29,11 @@ export async function PATCH(
   if (!cis) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (cis.status !== "pending_approval") {
     return NextResponse.json({ error: "CIS is not pending approval" }, { status: 409 });
+  }
+
+  const expirationCheck = validateSubmissionDocumentExpirations(cis);
+  if (!expirationCheck.ok) {
+    return NextResponse.json({ error: expirationCheck.errors.join(" ") }, { status: 422 });
   }
 
   const body = await req.json();

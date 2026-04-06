@@ -2,54 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import {
+  DOC_COLUMN_MAP,
+  docTypeRequiresExpiration,
+  normalizeExpirationDate,
+  sortFilesByUploadedAtDesc,
+  type DocType,
+  type FileEntry,
+} from "@/lib/doc-types";
 import path from "path";
 import fs from "fs/promises";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-
-const DOC_TYPES = [
-  "docValidId",
-  "docMayorsPermit",
-  "docSecDti",
-  "docBirCertificate",
-  "docLocationMap",
-  "docFinancialStatement",
-  "docBankStatement",
-  "docProofOfBilling",
-  "docLeaseContract",
-  "docProofOfOwnership",
-  "docStorePhoto",
-  "docSupplierInvoice",
-  "docSocialMedia",
-  "docCertifications",
-  "docGovCertifications",
-  "docOther",
-] as const;
-
-type DocType = (typeof DOC_TYPES)[number];
-
-// Map camelCase docType to Drizzle column key
-const DOC_COLUMN_MAP: Record<DocType, DocType> = {
-  docValidId: "docValidId",
-  docMayorsPermit: "docMayorsPermit",
-  docSecDti: "docSecDti",
-  docBirCertificate: "docBirCertificate",
-  docLocationMap: "docLocationMap",
-  docFinancialStatement: "docFinancialStatement",
-  docBankStatement: "docBankStatement",
-  docProofOfBilling: "docProofOfBilling",
-  docLeaseContract: "docLeaseContract",
-  docProofOfOwnership: "docProofOfOwnership",
-  docStorePhoto: "docStorePhoto",
-  docSupplierInvoice: "docSupplierInvoice",
-  docSocialMedia: "docSocialMedia",
-  docCertifications: "docCertifications",
-  docGovCertifications: "docGovCertifications",
-  docOther: "docOther",
-};
-
-type FileEntry = { name: string; url: string; size: number; type: string };
 
 async function getCis(token: string) {
   const [cis] = await db
@@ -95,6 +60,7 @@ export async function POST(
   const formData = await req.formData();
   const file = formData.get("file");
   const docType = formData.get("docType");
+  const expirationDate = formData.get("expirationDate");
 
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -102,6 +68,20 @@ export async function POST(
   if (typeof docType !== "string" || !(docType in DOC_COLUMN_MAP)) {
     return NextResponse.json({ error: "Invalid document type" }, { status: 400 });
   }
+  const typedDocType = docType as DocType;
+
+  let normalizedExpirationDate: string | undefined;
+  if (docTypeRequiresExpiration(typedDocType)) {
+    if (typeof expirationDate !== "string") {
+      return NextResponse.json({ error: "Expiration date is required for this document" }, { status: 400 });
+    }
+    const normalized = normalizeExpirationDate(expirationDate);
+    if (!normalized) {
+      return NextResponse.json({ error: "Invalid expiration date" }, { status: 400 });
+    }
+    normalizedExpirationDate = normalized;
+  }
+
   if (!ALLOWED_TYPES.includes(file.type)) {
     return NextResponse.json({ error: "Only PDF, JPEG, PNG, or WebP files allowed" }, { status: 400 });
   }
@@ -111,20 +91,26 @@ export async function POST(
     return NextResponse.json({ error: "File must be under 10MB" }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop() ?? "bin";
   const safeFilename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
   const uploadDir = path.join(process.cwd(), "public", "uploads", "cis", cis.id, docType);
   await fs.mkdir(uploadDir, { recursive: true });
   await fs.writeFile(path.join(uploadDir, safeFilename), Buffer.from(bytes));
 
   const url = `/uploads/cis/${cis.id}/${docType}/${safeFilename}`;
-  const entry: FileEntry = { name: file.name, url, size: bytes.byteLength, type: file.type };
+  const entry: FileEntry = {
+    name: file.name,
+    url,
+    size: bytes.byteLength,
+    type: file.type,
+    uploadedAt: new Date().toISOString(),
+    expirationDate: normalizedExpirationDate,
+  };
 
-  const colKey = DOC_COLUMN_MAP[docType as DocType];
+  const colKey = DOC_COLUMN_MAP[typedDocType];
   const existing = (cis[colKey] as FileEntry[] | null) ?? [];
   await db
     .update(cisSubmissions)
-    .set({ [colKey]: [...existing, entry] })
+    .set({ [colKey]: sortFilesByUploadedAtDesc([...existing, entry]) })
     .where(eq(cisSubmissions.id, cis.id));
 
   return NextResponse.json(entry);

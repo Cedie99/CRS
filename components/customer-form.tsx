@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS } from "@/lib/validations/cis";
+import { DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
 import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
+import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, X, Upload, FileText, Trash2, ChevronLeft, ChevronRight, Pencil, Check } from "lucide-react";
+import { Loader2, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,7 +30,6 @@ interface OwnerRow { name: string; nationality: string; percentage: string; cont
 interface OfficerRow { name: string; position: string; contact: string }
 interface TradeRefRow { company: string; address: string; contact: string; years: string }
 interface BankRefRow { bank: string; branch: string; accountType: string; accountNo: string }
-interface FileEntry { name: string; url: string; size: number; type: string }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -45,25 +46,6 @@ const PAYMENT_TERMS = [
   { value: "credit_30", label: "Credit – 30 days" },
   { value: "credit_60", label: "Credit – 60 days" },
   { value: "credit_90", label: "Credit – 90 days" },
-];
-
-const DOC_SLOTS: { key: string; label: string; required?: boolean }[] = [
-  { key: "docValidId",              label: "Valid Government ID",                            required: true },
-  { key: "docMayorsPermit",         label: "Mayor or Barangay Permit",                       required: true },
-  { key: "docSecDti",               label: "SEC / DTI Registration Certificate",              required: true },
-  { key: "docBirCertificate",       label: "BIR Registration Certificate",                   required: true },
-  { key: "docLocationMap",          label: "Location Map / Vicinity Map" },
-  { key: "docFinancialStatement",   label: "Financial Statement / ITR" },
-  { key: "docBankStatement",        label: "3-Month Bank Statement / Bank Authorization Letter" },
-  { key: "docProofOfBilling",       label: "Proof of Billing" },
-  { key: "docLeaseContract",        label: "Lease Contract / Title (if applicable)" },
-  { key: "docProofOfOwnership",     label: "Proof of Ownership (if applicable)" },
-  { key: "docStorePhoto",           label: "Photo of Plant / Office / Store with Signage" },
-  { key: "docSupplierInvoice",      label: "Supplier Invoice (latest)" },
-  { key: "docSocialMedia",          label: "Social Media / Website Screenshot" },
-  { key: "docCertifications",       label: "Certifications (ISO / Halal Certificate)" },
-  { key: "docGovCertifications",    label: "Government and Other Certifications" },
-  { key: "docOther",                label: "Other Supporting Documents" },
 ];
 
 const TOTAL_STEPS = 6;
@@ -199,215 +181,6 @@ function DynamicTable<T extends { [K in keyof T]: string }>({
   );
 }
 
-// ─── File upload slot ─────────────────────────────────────────────────────────
-
-function FileRow({
-  file,
-  docType,
-  token,
-  disabled,
-  onRemove,
-  onRename,
-}: {
-  file: FileEntry;
-  docType: string;
-  token: string;
-  disabled: boolean;
-  onRemove: () => void;
-  onRename: (newName: string) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(file.name);
-  const [renaming, setRenaming] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  function startEdit() {
-    setDraft(file.name);
-    setEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
-  }
-
-  async function commitRename() {
-    const trimmed = draft.trim();
-    if (!trimmed || trimmed === file.name) {
-      setEditing(false);
-      return;
-    }
-    setRenaming(true);
-    try {
-      await fetch(`/api/form/${token}/upload`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ docType, url: file.url, newName: trimmed }),
-      });
-      onRename(trimmed);
-    } catch { /* ignore */ }
-    setRenaming(false);
-    setEditing(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { e.preventDefault(); commitRename(); }
-    if (e.key === "Escape") { setEditing(false); }
-  }
-
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-zinc-100 bg-zinc-50 px-3 py-1.5">
-      <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-      {editing ? (
-        <input
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commitRename}
-          onKeyDown={handleKeyDown}
-          disabled={renaming}
-          className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-xs text-zinc-700 outline-none focus:border-zinc-500"
-        />
-      ) : (
-        <span className="min-w-0 flex-1 truncate text-xs text-zinc-700">{file.name}</span>
-      )}
-      <span className="shrink-0 text-[10px] text-zinc-400">{(file.size / 1024).toFixed(0)} KB</span>
-      {editing ? (
-        <button
-          type="button"
-          onClick={commitRename}
-          disabled={renaming || disabled}
-          className="shrink-0 text-zinc-400 hover:text-zinc-700 disabled:opacity-40"
-        >
-          {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={startEdit}
-          disabled={disabled}
-          className="shrink-0 text-zinc-400 hover:text-zinc-700 disabled:opacity-40"
-          title="Rename file"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        disabled={disabled || editing}
-        className="shrink-0 text-zinc-400 hover:text-red-500 disabled:opacity-40"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  );
-}
-
-function DocUploadSlot({
-  docType,
-  label,
-  required,
-  token,
-  files,
-  onChange,
-  disabled,
-}: {
-  docType: string;
-  label: string;
-  required?: boolean;
-  token: string;
-  files: FileEntry[];
-  onChange: (files: FileEntry[]) => void;
-  disabled: boolean;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function handleFiles(fileList: FileList | null) {
-    if (!fileList?.length) return;
-    setError("");
-    setUploading(true);
-    const results: FileEntry[] = [];
-    for (const file of Array.from(fileList)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("docType", docType);
-      try {
-        const res = await fetch(`/api/form/${token}/upload`, { method: "POST", body: fd });
-        const json = await res.json();
-        if (!res.ok) { setError(json.error ?? "Upload failed"); break; }
-        results.push(json as FileEntry);
-      } catch {
-        setError("Upload failed. Please try again.");
-        break;
-      }
-    }
-    if (results.length) onChange([...files, ...results]);
-    setUploading(false);
-  }
-
-  async function handleRemove(file: FileEntry) {
-    try {
-      await fetch(`/api/form/${token}/upload`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ docType, url: file.url }),
-      });
-    } catch { /* ignore */ }
-    onChange(files.filter((f) => f.url !== file.url));
-  }
-
-  function handleRename(file: FileEntry, newName: string) {
-    onChange(files.map((f) => f.url === file.url ? { ...f, name: newName } : f));
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="text-sm">
-          {label}
-          {required && <span className="ml-1 text-zinc-400 text-xs">(required)</span>}
-        </Label>
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled || uploading}
-          className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-        >
-          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-          Upload
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-          className="hidden"
-          disabled={disabled || uploading}
-          onChange={(e) => handleFiles(e.target.files)}
-          onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
-        />
-      </div>
-
-      {error && <p className="text-xs text-red-600">{error}</p>}
-
-      {files.length > 0 && (
-        <div className="space-y-1.5">
-          {files.map((f) => (
-            <FileRow
-              key={f.url}
-              file={f}
-              docType={docType}
-              token={token}
-              disabled={disabled}
-              onRemove={() => handleRemove(f)}
-              onRename={(newName) => handleRename(f, newName)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
 interface CustomerFormProps {
@@ -496,13 +269,6 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         errs.businessActivityOther = "Please specify";
       }
     }
-    if (step === 5) {
-      const missing = DOC_SLOTS.filter((slot) => slot.required && (docs[slot.key]?.length ?? 0) === 0);
-      if (missing.length > 0) {
-        errs._form = `Please upload required document(s): ${missing.map((m) => m.label).join(", ")}`;
-      }
-    }
-
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return false;
@@ -529,12 +295,6 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     setDeclarationError("");
 
     const fd = new FormData(e.currentTarget);
-
-    const missingRequiredDocs = DOC_SLOTS.filter((slot) => slot.required && (docs[slot.key]?.length ?? 0) === 0);
-    if (missingRequiredDocs.length > 0) {
-      setErrors({ _form: `Please upload required document(s): ${missingRequiredDocs.map((m) => m.label).join(", ")}` });
-      return;
-    }
 
     if (signatureRef.current?.isEmpty()) {
       setErrors({ customerSignature: "Signature is required" });
@@ -992,8 +752,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     key={slot.key}
                     docType={slot.key}
                     label={slot.label}
-                    required={slot.required}
-                    token={token}
+                    endpoint={`/api/form/${token}/upload`}
                     files={docs[slot.key]}
                     onChange={(files) => setDocFiles(slot.key, files)}
                     disabled={isLoading}

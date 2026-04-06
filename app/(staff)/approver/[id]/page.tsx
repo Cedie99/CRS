@@ -130,6 +130,13 @@ export default async function ApproverCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditTerms={cis.financeCreditTerms}
           />
           {canAct && <ApproverActions cisId={id} />}
         </div>

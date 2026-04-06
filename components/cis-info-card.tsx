@@ -2,6 +2,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
 import { verifySeal, displayFingerprint } from "@/lib/signature-integrity";
+import { AgentDocSection } from "@/components/agent-doc-section";
+import {
+  DOC_LABELS,
+  DOC_SLOTS,
+  docTypeRequiresExpiration,
+  getFileExpirationStatus,
+  sortFilesByUploadedAtDesc,
+  type DocType,
+  type FileEntry,
+} from "@/lib/doc-types";
 import {
   Phone,
   Mail,
@@ -18,7 +28,6 @@ import {
   Link as LinkIcon,
   Users,
   BookOpen,
-  Landmark,
   Paperclip,
 } from "lucide-react";
 import { PrintButton } from "@/components/print-button";
@@ -76,25 +85,6 @@ const BUSINESS_ACTIVITY_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const DOC_LABELS: Record<string, string> = {
-  docValidId: "Valid Government ID",
-  docMayorsPermit: "Mayor or Barangay Permit",
-  docSecDti: "SEC / DTI Registration",
-  docBirCertificate: "BIR Certificate",
-  docLocationMap: "Location Map",
-  docFinancialStatement: "Financial Statement / ITR",
-  docBankStatement: "3-Month Bank Statement / Bank Authorization Letter",
-  docProofOfBilling: "Proof of Billing",
-  docLeaseContract: "Lease Contract",
-  docProofOfOwnership: "Proof of Ownership",
-  docStorePhoto: "Photo of Plant / Office / Store with Signage",
-  docSupplierInvoice: "Supplier Invoice",
-  docSocialMedia: "Social Media",
-  docCertifications: "Certifications (ISO / Halal Certificate)",
-  docGovCertifications: "Government and Other Certifications",
-  docOther: "Other Documents",
-};
-
 const PAYMENT_TERMS_LABELS: Record<string, string> = {
   cod:       "COD (Cash on Delivery)",
   credit_30: "Credit – 30 days",
@@ -102,7 +92,16 @@ const PAYMENT_TERMS_LABELS: Record<string, string> = {
   credit_90: "Credit – 90 days",
 };
 
-type FileEntry = { name: string; url: string; size: number; type: string };
+const FINANCE_EU_LABELS: Record<string, string> = {
+  end_user: "End User", reseller: "Reseller", dealer: "Dealer",
+};
+const FINANCE_DR_LABELS: Record<string, string> = {
+  cod: "COD (Cash on Delivery)", cbd: "CBD (Cash Before Delivery)", credit: "Credit",
+};
+const FINANCE_CREDIT_TERMS_LABELS: Record<string, string> = {
+  "30_days": "30 Days", "60_days": "60 Days", "90_days": "90 Days",
+};
+
 type OwnerRow = { name: string; nationality: string; percentage: string; contact: string };
 type OfficerRow = { name: string; position: string; contact: string };
 type TradeRefRow = { company: string; address: string; contact: string; years: string };
@@ -111,6 +110,59 @@ type BankRefRow = { bank: string; branch: string; accountType: string; accountNo
 function isImageFile(file: FileEntry) {
   if (file.type?.toLowerCase().startsWith("image/")) return true;
   return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name) || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.url);
+}
+
+function isPdfFile(file: FileEntry) {
+  if (file.type?.toLowerCase() === "application/pdf") return true;
+  return /\.pdf$/i.test(file.name) || /\.pdf$/i.test(file.url);
+}
+
+function formatUploadedAt(value?: string) {
+  if (!value) return "Uploaded date unavailable";
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return "Uploaded date unavailable";
+  return `Uploaded ${new Date(parsed).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
+function formatExpirationDate(value?: string) {
+  if (!value) return "No expiration date recorded";
+  const parsed = Date.parse(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed)) return "Invalid expiration date";
+  return `Expires ${new Date(parsed).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+}
+
+function ExpirationStatusBadge({ status }: { status: "valid" | "expired" | "unknown" }) {
+  if (status === "expired") {
+    return (
+      <span className="inline-flex items-center rounded-md border border-red-300 bg-red-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-red-800 print:border-red-500 print:bg-white print:text-red-700">
+        Expired - Reupload Required
+      </span>
+    );
+  }
+
+  if (status === "valid") {
+    return (
+      <span className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-green-700 print:border-green-500 print:bg-white print:text-green-700">
+        Valid
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 print:border-amber-500 print:bg-white print:text-amber-700">
+      Unknown
+    </span>
+  );
 }
 
 interface CisInfoCardProps {
@@ -193,6 +245,17 @@ interface CisInfoCardProps {
   doeAccreditationNo?: string | null;
   specialAccountType?: string | null;
   specialAccountRemarks?: string | null;
+  agentUpload?: {
+    cisId: string;
+  };
+  // Finance credit evaluation
+  financeEu?: string | null;
+  financeDl?: string | null;
+  financeDr?: string | null;
+  financePlTs?: string | null;
+  financePossiblePoints?: number | null;
+  financeApprovedPoints?: number | null;
+  financeCreditTerms?: string | null;
 }
 
 function Field({
@@ -366,6 +429,14 @@ export function CisInfoCard(props: CisInfoCardProps) {
     approverSignature,
     approverSignedAt,
     approverSignatureSeal,
+    agentUpload,
+    financeEu,
+    financeDl,
+    financeDr,
+    financePlTs,
+    financePossiblePoints,
+    financeApprovedPoints,
+    financeCreditTerms,
   } = props;
 
   const hasSignatures = customerSignature || approverSignature;
@@ -394,20 +465,15 @@ export function CisInfoCard(props: CisInfoCardProps) {
   const bankRefRows = (bankReferences as BankRefRow[] | null) ?? [];
 
   // Collect all uploaded docs
-  const docEntries: { label: string; files: FileEntry[] }[] = (
-    [
-      "docValidId", "docMayorsPermit", "docSecDti", "docBirCertificate",
-      "docLocationMap", "docFinancialStatement", "docBankStatement",
-      "docProofOfBilling", "docLeaseContract", "docProofOfOwnership",
-      "docStorePhoto", "docSupplierInvoice", "docSocialMedia",
-      "docCertifications", "docGovCertifications", "docOther",
-    ] as const
-  )
-    .map((key) => ({
-      label: DOC_LABELS[key],
-      files: (props[key as keyof CisInfoCardProps] as FileEntry[] | null) ?? [],
-    }))
-    .filter((e) => e.files.length > 0);
+  const allDocEntries = DOC_SLOTS.map((slot) => ({
+    key: slot.key,
+    label: DOC_LABELS[slot.key],
+    files: (props[slot.key as keyof CisInfoCardProps] as FileEntry[] | null) ?? [],
+  }));
+  const docEntries = allDocEntries.filter((e) => e.files.length > 0);
+  const allDocsByType = Object.fromEntries(
+    allDocEntries.map((entry) => [entry.key, entry.files])
+  ) as Record<DocType, FileEntry[]>;
 
   const hasDelivery = !deliverySameAsOffice && (deliveryAddress || deliveryMobile || deliveryTelephone);
   const hasClassification = lineOfBusiness || businessActivity;
@@ -718,6 +784,16 @@ export function CisInfoCard(props: CisInfoCardProps) {
           </>
         )}
 
+        {agentUpload && (
+          <>
+            <Separator className="print:hidden" />
+            <div className="print:hidden">
+              <SectionTitle icon={Paperclip} label="Agent Document Upload" />
+              <AgentDocSection cisId={agentUpload.cisId} initialDocs={allDocsByType} />
+            </div>
+          </>
+        )}
+
         {/* ── Document Uploads ── */}
         {docEntries.length > 0 && (
           <>
@@ -729,12 +805,15 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   <div key={entry.label}>
                     <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{entry.label}</p>
                     <div className="space-y-1">
-                      {entry.files.map((f) => {
+                      {sortFilesByUploadedAtDesc(entry.files).map((f, index) => {
                         const isImage = isImageFile(f);
+                        const isPdf = isPdfFile(f);
+                        const needsExpiration = docTypeRequiresExpiration(entry.key);
+                        const expirationStatus = needsExpiration ? getFileExpirationStatus(f) : null;
                         return (
                           <div
                             key={f.url}
-                            className="rounded-md border border-zinc-100 bg-zinc-50 p-2 print:border-zinc-200 print:bg-white"
+                            className={`rounded-md border border-zinc-100 bg-zinc-50 p-2 print:border-zinc-200 print:bg-white ${index === 0 ? "" : "print:break-before-page print:pt-4"}`}
                           >
                             {isImage && (
                               <a href={f.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
@@ -744,6 +823,15 @@ export function CisInfoCard(props: CisInfoCardProps) {
                                   className="max-h-56 w-auto max-w-full rounded border border-zinc-200 object-contain print:max-h-64"
                                 />
                               </a>
+                            )}
+                            {isPdf && (
+                              <div className="hidden print:block mb-2">
+                                <iframe
+                                  title={f.name}
+                                  src={`${f.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                  className="h-260 w-full rounded border border-zinc-300"
+                                />
+                              </div>
                             )}
                             <a
                               href={f.url}
@@ -755,6 +843,13 @@ export function CisInfoCard(props: CisInfoCardProps) {
                               <span className="flex-1 truncate">{f.name}</span>
                               <span className="shrink-0 text-[10px] text-zinc-400">{(f.size / 1024).toFixed(0)} KB</span>
                             </a>
+                            <p className="mt-1 text-[10px] text-zinc-400">{formatUploadedAt(f.uploadedAt)}</p>
+                            <p className="mt-0.5 text-[10px] text-zinc-400">{formatExpirationDate(f.expirationDate)}</p>
+                            {needsExpiration && expirationStatus && (
+                              <div className="mt-1">
+                                <ExpirationStatusBadge status={expirationStatus} />
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -778,6 +873,27 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-xs print:border-l-2 print:border-zinc-300 print:pl-3">
                 {additionalNotes}
               </p>
+            </div>
+          </>
+        )}
+
+        {/* ── Finance Evaluation ── */}
+        {financeApprovedPoints != null && (
+          <>
+            <Separator className="print:border-zinc-300" />
+            <div>
+              <SectionTitle icon={FileText} label="Finance Credit Evaluation" />
+              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+                <Field label="End User (EU)" value={financeEu ? (FINANCE_EU_LABELS[financeEu] ?? financeEu) : null} />
+                <Field label="Delivery Limit (DL)" value={financeDl} />
+                <Field label="Delivery Receipt (DR)" value={financeDr ? (FINANCE_DR_LABELS[financeDr] ?? financeDr) : null} />
+                <Field label="Price List / Terms & Schedule (PL/TS)" value={financePlTs} />
+              </div>
+              <div className="mt-5 grid gap-5 sm:grid-cols-3 print:gap-3">
+                <Field label="Possible Points" value={financePossiblePoints != null ? String(financePossiblePoints) : null} />
+                <Field label="Approved Points" value={financeApprovedPoints != null ? String(financeApprovedPoints) : null} />
+                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? financeCreditTerms) : null} />
+              </div>
             </div>
           </>
         )}

@@ -3,8 +3,10 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import { validateSubmissionDocumentExpirations } from "@/lib/document-expiration";
 import { financeForwardSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
+import { computePossiblePoints } from "@/lib/scoring";
 
 export async function PATCH(
   req: Request,
@@ -19,7 +21,7 @@ export async function PATCH(
   const { id } = await params;
 
   const [cis] = await db
-    .select({ status: cisSubmissions.status })
+    .select()
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -29,18 +31,37 @@ export async function PATCH(
     return NextResponse.json({ error: "CIS is not pending finance review" }, { status: 409 });
   }
 
+  const expirationCheck = validateSubmissionDocumentExpirations(cis);
+  if (!expirationCheck.ok) {
+    return NextResponse.json({ error: expirationCheck.errors.join(" ") }, { status: 422 });
+  }
+
   const body = await req.json();
   const parsed = financeForwardSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  const {
+    note, financeEu, financeDl, financeDr, financePlTs,
+    financeApprovedPoints, financeCreditTerms,
+  } = parsed.data;
+
+  const financePossiblePoints = computePossiblePoints(cis);
+
+  // Persist evaluation before status transition
+  await db
+    .update(cisSubmissions)
+    .set({ financeEu, financeDl, financeDr, financePlTs,
+           financePossiblePoints, financeApprovedPoints, financeCreditTerms })
+    .where(eq(cisSubmissions.id, id));
+
   await transitionCis({
     cisId: id,
     toStatus: "pending_approval",
     action: "forwarded_to_approver",
     actorId: session.user.id,
-    note: parsed.data.note,
+    note,
   });
 
   return NextResponse.json({ success: true });

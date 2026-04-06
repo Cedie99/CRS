@@ -130,8 +130,15 @@ export default async function FinanceCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditTerms={cis.financeCreditTerms}
           />
-          {canAct && <FinanceActions cisId={id} />}
+          {canAct && <FinanceActions cisId={id} cis={cis} />}
         </div>
 
         <div className="print:hidden space-y-5 lg:col-span-2">

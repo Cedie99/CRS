@@ -7,6 +7,7 @@ import {
   timestamp,
   pgEnum,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 // --- Enums ---
@@ -191,6 +192,15 @@ export const cisSubmissions = pgTable("cis_submissions", {
   approverSignature: text("approver_signature"),
   approverSignedAt: timestamp("approver_signed_at"),
   approverSignatureSeal: text("approver_signature_seal"),
+
+  // Finance credit evaluation (populated by finance_reviewer when forwarding)
+  financeEu: varchar("finance_eu", { length: 100 }),
+  financeDl: varchar("finance_dl", { length: 100 }),
+  financeDr: varchar("finance_dr", { length: 100 }),
+  financePlTs: varchar("finance_pl_ts", { length: 255 }),
+  financePossiblePoints: integer("finance_possible_points"),
+  financeApprovedPoints: integer("finance_approved_points"),
+  financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

@@ -107,6 +107,10 @@ export default async function AgentCisDetailPage({
   if (!cis) notFound();
   if (cis.agentId !== session.user.id) notFound();
 
+  const canAgentUploadDocs =
+    session.user.id === cis.agentId &&
+    !["denied", "returned", "erp_encoded"].includes(cis.status);
+
   const events = await db
     .select({
       id: workflowEvents.id,
@@ -271,6 +275,7 @@ export default async function AgentCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            agentUpload={canAgentUploadDocs ? { cisId: cis.id } : undefined}
           />
         </div>
 

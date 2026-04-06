@@ -1,0 +1,214 @@
+import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import path from "path";
+import fs from "fs/promises";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { cisSubmissions } from "@/lib/db/schema";
+import {
+  DOC_COLUMN_MAP,
+  docTypeRequiresExpiration,
+  normalizeExpirationDate,
+  sortFilesByUploadedAtDesc,
+  type DocType,
+  type FileEntry,
+} from "@/lib/doc-types";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+async function getCis(id: string) {
+  const [cis] = await db
+    .select({
+      id: cisSubmissions.id,
+      agentId: cisSubmissions.agentId,
+      status: cisSubmissions.status,
+      docValidId: cisSubmissions.docValidId,
+      docMayorsPermit: cisSubmissions.docMayorsPermit,
+      docSecDti: cisSubmissions.docSecDti,
+      docBirCertificate: cisSubmissions.docBirCertificate,
+      docLocationMap: cisSubmissions.docLocationMap,
+      docFinancialStatement: cisSubmissions.docFinancialStatement,
+      docBankStatement: cisSubmissions.docBankStatement,
+      docProofOfBilling: cisSubmissions.docProofOfBilling,
+      docLeaseContract: cisSubmissions.docLeaseContract,
+      docProofOfOwnership: cisSubmissions.docProofOfOwnership,
+      docStorePhoto: cisSubmissions.docStorePhoto,
+      docSupplierInvoice: cisSubmissions.docSupplierInvoice,
+      docSocialMedia: cisSubmissions.docSocialMedia,
+      docCertifications: cisSubmissions.docCertifications,
+      docGovCertifications: cisSubmissions.docGovCertifications,
+      docOther: cisSubmissions.docOther,
+    })
+    .from(cisSubmissions)
+    .where(eq(cisSubmissions.id, id))
+    .limit(1);
+
+  return cis;
+}
+
+async function requireAuthorizedUser(cisId: string) {
+  const session = await auth();
+  if (!session?.user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+
+  const { id: userId, role } = session.user;
+  if (role !== "sales_agent" && role !== "rsr" && role !== "admin") {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+
+  const cis = await getCis(cisId);
+  if (!cis) return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) };
+
+  if (role !== "admin" && cis.agentId !== userId) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+
+  return { cis };
+}
+
+// POST /api/cis/[id]/docs — upload a staff-side supporting document
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const authResult = await requireAuthorizedUser(id);
+  if ("error" in authResult) return authResult.error;
+
+  const { cis } = authResult;
+  if (["denied", "returned", "erp_encoded"].includes(cis.status)) {
+    return NextResponse.json({ error: "Document uploads are not allowed in this status" }, { status: 409 });
+  }
+
+  const formData = await req.formData();
+  const file = formData.get("file");
+  const docType = formData.get("docType");
+  const expirationDate = formData.get("expirationDate");
+
+  if (!file || typeof file === "string") {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+  if (typeof docType !== "string" || !(docType in DOC_COLUMN_MAP)) {
+    return NextResponse.json({ error: "Invalid document type" }, { status: 400 });
+  }
+  const typedDocType = docType as DocType;
+
+  let normalizedExpirationDate: string | undefined;
+  if (docTypeRequiresExpiration(typedDocType)) {
+    if (typeof expirationDate !== "string") {
+      return NextResponse.json({ error: "Expiration date is required for this document" }, { status: 400 });
+    }
+    const normalized = normalizeExpirationDate(expirationDate);
+    if (!normalized) {
+      return NextResponse.json({ error: "Invalid expiration date" }, { status: 400 });
+    }
+    normalizedExpirationDate = normalized;
+  }
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: "Only PDF, JPEG, PNG, or WebP files allowed" }, { status: 400 });
+  }
+
+  const bytes = await file.arrayBuffer();
+  if (bytes.byteLength > MAX_SIZE) {
+    return NextResponse.json({ error: "File must be under 10MB" }, { status: 400 });
+  }
+
+  const safeFilename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "cis", cis.id, docType);
+  await fs.mkdir(uploadDir, { recursive: true });
+  await fs.writeFile(path.join(uploadDir, safeFilename), Buffer.from(bytes));
+
+  const url = `/uploads/cis/${cis.id}/${docType}/${safeFilename}`;
+  const entry: FileEntry = {
+    name: file.name,
+    url,
+    size: bytes.byteLength,
+    type: file.type,
+    uploadedAt: new Date().toISOString(),
+    expirationDate: normalizedExpirationDate,
+  };
+
+  const colKey = DOC_COLUMN_MAP[typedDocType];
+  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  await db
+    .update(cisSubmissions)
+    .set({ [colKey]: sortFilesByUploadedAtDesc([...existing, entry]) })
+    .where(eq(cisSubmissions.id, cis.id));
+
+  return NextResponse.json(entry);
+}
+
+// PATCH /api/cis/[id]/docs — rename an uploaded document
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const authResult = await requireAuthorizedUser(id);
+  if ("error" in authResult) return authResult.error;
+
+  const { cis } = authResult;
+
+  const body = await req.json();
+  const { docType, url, newName } = body as { docType: string; url: string; newName: string };
+
+  if (!docType || !(docType in DOC_COLUMN_MAP) || !url || typeof newName !== "string") {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const trimmed = newName.trim();
+  if (!trimmed) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+
+  const colKey = DOC_COLUMN_MAP[docType as DocType];
+  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  const updated = existing.map((f) => (f.url === url ? { ...f, name: trimmed } : f));
+
+  await db
+    .update(cisSubmissions)
+    .set({ [colKey]: updated })
+    .where(eq(cisSubmissions.id, cis.id));
+
+  return NextResponse.json({ ok: true, name: trimmed });
+}
+
+// DELETE /api/cis/[id]/docs — remove a document entry
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const authResult = await requireAuthorizedUser(id);
+  if ("error" in authResult) return authResult.error;
+
+  const { cis } = authResult;
+  if (["approved", "erp_encoded"].includes(cis.status)) {
+    return NextResponse.json({ error: "Document deletion is not allowed in this status" }, { status: 409 });
+  }
+
+  const body = await req.json();
+  const { docType, url } = body as { docType: string; url: string };
+
+  if (!docType || !(docType in DOC_COLUMN_MAP) || !url) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const relativePath = url.replace(/^\//, "");
+  const filePath = path.join(process.cwd(), "public", relativePath);
+  try {
+    await fs.unlink(filePath);
+  } catch {
+    // File may have already been removed.
+  }
+
+  const colKey = DOC_COLUMN_MAP[docType as DocType];
+  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  const updated = existing.filter((f) => f.url !== url);
+
+  await db
+    .update(cisSubmissions)
+    .set({ [colKey]: updated.length ? updated : null })
+    .where(eq(cisSubmissions.id, cis.id));
+
+  return NextResponse.json({ ok: true });
+}
