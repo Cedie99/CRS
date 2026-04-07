@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS } from "@/lib/validations/cis";
@@ -234,6 +234,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   // Signature
   const signatureRef = useRef<SignaturePadRef>(null);
   const [signatureEmpty, setSignatureEmpty] = useState(true);
+  const onSignatureChange = useCallback((isEmpty: boolean) => setSignatureEmpty(isEmpty), []);
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [declarationError, setDeclarationError] = useState("");
 
@@ -883,7 +884,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               </p>
               <SignaturePad
                 ref={signatureRef}
-                onChange={(isEmpty) => setSignatureEmpty(isEmpty)}
+                onChange={onSignatureChange}
                 disabled={isLoading}
               />
               {errors.customerSignature && (

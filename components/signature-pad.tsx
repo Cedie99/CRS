@@ -7,6 +7,7 @@ import {
   forwardRef,
   useCallback,
   useState,
+  useLayoutEffect,
 } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,10 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     const isDrawing = useRef(false);
     const emptyRef = useRef(true);
     const [showPlaceholder, setShowPlaceholder] = useState(true);
+    // Keep a stable ref to onChange so the drawing effect never needs to re-run
+    // just because the parent passed a new function reference.
+    const onChangeRef = useRef(onChange);
+    useLayoutEffect(() => { onChangeRef.current = onChange; });
 
     const getPos = (
       e: MouseEvent | TouchEvent,
@@ -61,8 +66,8 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       emptyRef.current = true;
       setShowPlaceholder(true);
-      onChange?.(true);
-    }, [onChange]);
+      onChangeRef.current?.(true);
+    }, []);
 
     useImperativeHandle(ref, () => ({
       clear,
@@ -126,7 +131,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         if (emptyRef.current) {
           emptyRef.current = false;
           setShowPlaceholder(false);
-          onChange?.(false);
+          onChangeRef.current?.(false);
         }
       };
 
@@ -150,7 +155,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         canvas.removeEventListener("touchmove", onMove);
         window.removeEventListener("touchend", onEnd);
       };
-    }, [disabled, getDrawCtx, onChange]);
+    }, [disabled, getDrawCtx]);
 
     return (
       <div className="space-y-2">
