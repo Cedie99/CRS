@@ -1,13 +1,23 @@
 import { notFound } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { CustomerForm } from "@/components/customer-form";
+import { db } from "@/lib/db";
+import { cisSubmissions } from "@/lib/db/schema";
 
 async function getCisInfo(token: string) {
-  // We can't use the db directly in a way that avoids the auth check,
-  // so we fetch from our own public API
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/form/${token}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json() as Promise<{ id: string; customerType: string; agentCode: string }>;
+  const [cis] = await db
+    .select({
+      id: cisSubmissions.id,
+      status: cisSubmissions.status,
+      customerType: cisSubmissions.customerType,
+      agentCode: cisSubmissions.agentCode,
+    })
+    .from(cisSubmissions)
+    .where(eq(cisSubmissions.publicToken, token))
+    .limit(1);
+
+  if (!cis || cis.status !== "draft") return null;
+  return cis;
 }
 
 export default async function CustomerFormPage({
