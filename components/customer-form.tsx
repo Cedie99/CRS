@@ -407,7 +407,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         </CardDescription>
       </CardHeader>
 
-      <form ref={formRef} onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={handleSubmit} noValidate>
         <CardContent className="space-y-6">
 
           <StepIndicator current={currentStep} total={TOTAL_STEPS} labels={STEP_LABELS} />
