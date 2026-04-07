@@ -120,7 +120,7 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
               {action === "endorse" ? "Note (optional)" : "Reason *"}
             </Label>
             {action === "endorse" ? (
-              <DecisionNoteTemplatesx
+              <DecisionNoteTemplates
                 type="manager_forward_note"
                 onSelect={setNote}
                 disabled={isLoading}
