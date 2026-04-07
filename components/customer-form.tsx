@@ -474,7 +474,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     name="contactNumber"
                     placeholder="09XX XXX XXXX"
                     inputMode="tel"
-                    pattern="[0-9+()\-\s]*"
+                    pattern="[0-9+()\- ]*"
                     title="Use numbers and phone symbols only"
                     onChange={(e) => {
                       e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
@@ -490,7 +490,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     name="telephoneNumber"
                     placeholder="(02) XXXX-XXXX"
                     inputMode="tel"
-                    pattern="[0-9+()\-\s]*"
+                    pattern="[0-9+()\- ]*"
                     title="Use numbers and phone symbols only"
                     onChange={(e) => {
                       e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
@@ -560,7 +560,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                         name="deliveryMobile"
                         placeholder="09XX XXX XXXX"
                         inputMode="tel"
-                        pattern="[0-9+()\-\s]*"
+                        pattern="[0-9+()\- ]*"
                         title="Use numbers and phone symbols only"
                         onChange={(e) => {
                           e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
@@ -576,7 +576,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                         name="deliveryTelephone"
                         placeholder="(02) XXXX-XXXX"
                         inputMode="tel"
-                        pattern="[0-9+()\-\s]*"
+                        pattern="[0-9+()\- ]*"
                         title="Use numbers and phone symbols only"
                         onChange={(e) => {
                           e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
@@ -691,7 +691,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     label: "Contact number",
                     placeholder: "09XX XXX XXXX",
                     inputMode: "tel",
-                    pattern: "[0-9+()\\-\\s]*",
+                    pattern: "[0-9+()\\- ]*",
                     title: "Use numbers and phone symbols only",
                     sanitize: sanitizePhoneInput,
                   },
@@ -716,7 +716,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     label: "Contact",
                     placeholder: "09XX XXX XXXX",
                     inputMode: "tel",
-                    pattern: "[0-9+()\\-\\s]*",
+                    pattern: "[0-9+()\\- ]*",
                     title: "Use numbers and phone symbols only",
                     sanitize: sanitizePhoneInput,
                   },
@@ -826,7 +826,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                       label: "Contact",
                       placeholder: "09XX XXX XXXX",
                       inputMode: "tel",
-                      pattern: "[0-9+()\\-\\s]*",
+                      pattern: "[0-9+()\\- ]*",
                       title: "Use numbers and phone symbols only",
                       sanitize: sanitizePhoneInput,
                     },
