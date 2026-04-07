@@ -289,12 +289,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     scrollToTop();
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit() {
     setErrors({});
     setDeclarationError("");
 
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(formRef.current!);
 
     if (signatureRef.current?.isEmpty()) {
       setErrors({ customerSignature: "Signature is required" });
@@ -407,7 +406,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         </CardDescription>
       </CardHeader>
 
-      <form ref={formRef} onSubmit={handleSubmit} noValidate>
+      <form ref={formRef} noValidate>
         <CardContent className="space-y-6">
 
           <StepIndicator current={currentStep} total={TOTAL_STEPS} labels={STEP_LABELS} />
@@ -933,7 +932,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button type="submit" disabled={submitDisabled}>
+              <Button type="button" onClick={handleSubmit} disabled={submitDisabled}>
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
