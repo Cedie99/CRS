@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Loader2, Upload, FileText, Trash2, Pencil, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Upload, Camera, RefreshCw, FileText, Trash2, Pencil, Check } from "lucide-react";
 import {
   docTypeRequiresExpiration,
   getFileExpirationStatus,
@@ -198,11 +198,49 @@ export function DocUploadSlot({
   allowDelete?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("environment");
   const [error, setError] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
   const requiresExpiration = docTypeRequiresExpiration(docType);
   const sortedFiles = sortFilesByUploadedAtDesc(files);
+
+  function stopCameraStream() {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
+        track.stop();
+      }
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, []);
+
+  async function uploadSingleFile(file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("docType", docType);
+    if (requiresExpiration) fd.append("expirationDate", expirationDate);
+
+    const res = await fetch(endpoint, { method: "POST", body: fd });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error ?? "Upload failed");
+    }
+    return json as FileEntry;
+  }
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList?.length) return;
@@ -217,18 +255,9 @@ export function DocUploadSlot({
     }
 
     for (const file of Array.from(fileList)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("docType", docType);
-      if (requiresExpiration) fd.append("expirationDate", expirationDate);
       try {
-        const res = await fetch(endpoint, { method: "POST", body: fd });
-        const json = await res.json();
-        if (!res.ok) {
-          setError(json.error ?? "Upload failed");
-          break;
-        }
-        results.push(json as FileEntry);
+        const uploaded = await uploadSingleFile(file);
+        results.push(uploaded);
       } catch {
         setError("Upload failed. Please try again.");
         break;
@@ -238,6 +267,102 @@ export function DocUploadSlot({
     if (results.length) onChange(sortFilesByUploadedAtDesc([...files, ...results]));
     if (results.length && requiresExpiration) setExpirationDate("");
     setUploading(false);
+  }
+
+  async function startCamera(facing: "environment" | "user") {
+    setCameraError("");
+    setError("");
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    stopCameraStream();
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facing } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      setCameraFacing(facing);
+
+      setTimeout(() => {
+        if (!videoRef.current) return;
+        videoRef.current.srcObject = stream;
+        void videoRef.current.play().catch(() => {
+          setCameraError("Unable to start camera preview.");
+        });
+      }, 0);
+    } catch {
+      cameraInputRef.current?.click();
+    }
+  }
+
+  async function openCamera() {
+    await startCamera(cameraFacing);
+  }
+
+  async function switchCamera() {
+    const nextFacing = cameraFacing === "environment" ? "user" : "environment";
+    await startCamera(nextFacing);
+  }
+
+  function closeCamera() {
+    setCameraOpen(false);
+    setCameraError("");
+    stopCameraStream();
+  }
+
+  async function capturePhoto() {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) {
+      setCameraError("Camera is not ready yet. Please try again.");
+      return;
+    }
+
+    if (requiresExpiration && !expirationDate) {
+      setError("Expiration date is required for this document type.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setCameraError("Unable to capture photo.");
+      return;
+    }
+    ctx.drawImage(video, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.92);
+    });
+
+    if (!blob) {
+      setCameraError("Unable to capture photo.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
+      const uploaded = await uploadSingleFile(file);
+      onChange(sortFilesByUploadedAtDesc([...files, uploaded]));
+      if (requiresExpiration) setExpirationDate("");
+      closeCamera();
+    } catch {
+      setError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleRemove(file: FileEntry) {
@@ -286,6 +411,17 @@ export function DocUploadSlot({
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Upload
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              void openCamera();
+            }}
+            disabled={disabled || uploading}
+            className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+          >
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+            Take Photo
+          </button>
         </div>
         <input
           ref={inputRef}
@@ -299,9 +435,69 @@ export function DocUploadSlot({
             (e.target as HTMLInputElement).value = "";
           }}
         />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          capture={cameraFacing}
+          className="hidden"
+          disabled={disabled || uploading}
+          onChange={(e) => {
+            void handleFiles(e.target.files);
+          }}
+          onClick={(e) => {
+            (e.target as HTMLInputElement).value = "";
+          }}
+        />
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+
+      {cameraOpen && (
+        <div className="space-y-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+          <p className="text-xs font-medium text-zinc-600">Camera preview</p>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full rounded-md border border-zinc-200 bg-black"
+          />
+          {cameraError && <p className="text-xs text-red-600">{cameraError}</p>}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void capturePhoto();
+              }}
+              disabled={disabled || uploading}
+              className="rounded-md border border-[#2d6e1e] bg-[#2d6e1e] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#245919] disabled:opacity-50"
+            >
+              Capture Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void switchCamera();
+              }}
+              disabled={disabled || uploading}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Switch Camera
+            </button>
+            <button
+              type="button"
+              onClick={closeCamera}
+              disabled={uploading}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {sortedFiles.length > 0 && (
         <div className="space-y-1.5">
