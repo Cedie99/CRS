@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DecisionNoteTemplates } from "@/components/decision-note-templates";
 import {
   Dialog,
   DialogContent,
@@ -118,6 +119,19 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
             <Label htmlFor="dialog-note">
               {action === "endorse" ? "Note (optional)" : "Reason *"}
             </Label>
+            {action === "endorse" ? (
+              <DecisionNoteTemplates
+                type="manager_forward_note"
+                onSelect={setNote}
+                disabled={isLoading}
+              />
+            ) : (
+              <DecisionNoteTemplates
+                type="manager_return_reason"
+                onSelect={setNote}
+                disabled={isLoading}
+              />
+            )}
             <Textarea
               id="dialog-note"
               rows={3}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DecisionNoteTemplates } from "@/components/decision-note-templates";
 import {
   Dialog,
   DialogContent,
@@ -118,6 +119,11 @@ export function LegalActions({ cisId }: LegalActionsProps) {
             <Label htmlFor="dialog-note">
               {action === "forward" ? "Note (optional)" : "Denial reason *"}
             </Label>
+            {action === "forward" ? (
+              <DecisionNoteTemplates type="legal_forward_note" onSelect={setNote} disabled={isLoading} />
+            ) : (
+              <DecisionNoteTemplates type="legal_deny_reason" onSelect={setNote} disabled={isLoading} />
+            )}
             <Textarea
               id="dialog-note"
               rows={3}

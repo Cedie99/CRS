@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DecisionNoteTemplates } from "@/components/decision-note-templates";
 import {
   Dialog,
   DialogContent,
@@ -133,6 +134,11 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
             <Label htmlFor="dialog-note">
               {action === "approve" ? "Note (optional)" : "Denial reason *"}
             </Label>
+            {action === "approve" ? (
+              <DecisionNoteTemplates type="approver_approve_note" onSelect={setNote} disabled={isLoading} />
+            ) : (
+              <DecisionNoteTemplates type="approver_deny_reason" onSelect={setNote} disabled={isLoading} />
+            )}
             <Textarea
               id="dialog-note"
               rows={3}

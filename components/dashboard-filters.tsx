@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useCallback, useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
@@ -30,6 +30,18 @@ interface DashboardFiltersProps {
   showStatusFilter?: boolean;
   showArchivedToggle?: boolean;
   archivedCount?: number;
+  showExportButtons?: boolean;
+}
+
+function getExportScope(pathname: string): string | null {
+  if (pathname.startsWith("/agent")) return "agent";
+  if (pathname.startsWith("/manager")) return "manager";
+  if (pathname.startsWith("/approver")) return "approver";
+  if (pathname.startsWith("/finance")) return "finance";
+  if (pathname.startsWith("/legal")) return "legal";
+  if (pathname.startsWith("/support")) return "support";
+  if (pathname.startsWith("/admin")) return "admin";
+  return null;
 }
 
 export function DashboardFilters({
@@ -38,6 +50,7 @@ export function DashboardFilters({
   showStatusFilter = true,
   showArchivedToggle = false,
   archivedCount = 0,
+  showExportButtons = true,
 }: DashboardFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,6 +61,7 @@ export function DashboardFilters({
   const q = searchParams.get("q") ?? "";
   const status = searchParams.get("status") ?? "";
   const archived = searchParams.get("archived") === "1";
+  const exportScope = getExportScope(pathname);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -62,6 +76,20 @@ export function DashboardFilters({
   );
 
   const filterIconActive = filterOpen || status !== "";
+
+  const handleExport = useCallback(
+    (format: "csv" | "excel" | "pdf") => {
+      if (!exportScope) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("page");
+      params.delete("queuePage");
+      params.delete("historyPage");
+      params.set("scope", exportScope);
+      params.set("format", format);
+      window.location.href = `/api/cis/export?${params.toString()}`;
+    },
+    [searchParams, exportScope]
+  );
 
   return (
     <div className="space-y-2">
@@ -111,7 +139,7 @@ export function DashboardFilters({
               placeholder="Search a name…"
               defaultValue={q}
               onChange={(e) => updateParams({ q: e.target.value })}
-              className="h-9 w-44 rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-56"
+              className="h-9 w-56 rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-85"
             />
             <Search className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
           </div>
@@ -129,6 +157,32 @@ export function DashboardFilters({
             >
               {archived ? "← Active" : `Archived${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
             </button>
+          )}
+
+          {showExportButtons && exportScope && (
+            <div className="hidden items-center gap-1 sm:flex">
+              <button
+                onClick={() => handleExport("csv")}
+                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+              >
+                <Download className="h-3.5 w-3.5" />
+                CSV
+              </button>
+              <button
+                onClick={() => handleExport("excel")}
+                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Excel
+              </button>
+              <button
+                onClick={() => handleExport("pdf")}
+                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+              >
+                <Download className="h-3.5 w-3.5" />
+                PDF
+              </button>
+            </div>
           )}
         </div>
       </div>

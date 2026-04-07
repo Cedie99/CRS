@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DecisionNoteTemplates } from "@/components/decision-note-templates";
 import {
   Select,
   SelectContent,
@@ -368,6 +369,11 @@ export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
             <Label htmlFor="dialog-note">
               {action === "forward" ? "Note (optional)" : "Denial reason *"}
             </Label>
+            {action === "forward" ? (
+              <DecisionNoteTemplates type="finance_forward_note" onSelect={setNote} disabled={isLoading} />
+            ) : (
+              <DecisionNoteTemplates type="finance_deny_reason" onSelect={setNote} disabled={isLoading} />
+            )}
             <Textarea
               id="dialog-note"
               rows={3}

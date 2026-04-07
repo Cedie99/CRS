@@ -1,8 +1,9 @@
-import { eq, ne, desc, and, inArray, ilike, or } from "drizzle-orm";
+import { eq, ne, desc, and, inArray, ilike, or, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
-import { CisCard } from "@/components/cis-card";
+import { CustomerTypeColumns } from "@/components/customer-type-columns";
+import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -35,12 +36,17 @@ const SUBMISSION_COLS = {
 export default async function ManagerDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; agentId?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; agentId?: string; queuePage?: string; historyPage?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, status, agentId } = await searchParams;
+  const { q, status, agentId, queuePage, historyPage } = await searchParams;
+  const queueCurrentPage = getPageNumber(queuePage);
+  const historyCurrentPage = getPageNumber(historyPage);
+  const pageSize = 12;
+  const queueOffset = (queueCurrentPage - 1) * pageSize;
+  const historyOffset = (historyCurrentPage - 1) * pageSize;
 
   const myAgents = await db
     .select({ id: users.id })
@@ -166,12 +172,21 @@ export default async function ManagerDashboard({
     );
   }
 
-  const actionQueue = await db
-    .select(SUBMISSION_COLS)
-    .from(cisSubmissions)
-    .innerJoin(users, eq(cisSubmissions.agentId, users.id))
-    .where(and(...actionConditions))
-    .orderBy(desc(cisSubmissions.createdAt));
+  const [actionQueue, actionCountRow] = await Promise.all([
+    db
+      .select(SUBMISSION_COLS)
+      .from(cisSubmissions)
+      .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+      .where(and(...actionConditions))
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(queueOffset),
+    db
+      .select({ total: count() })
+      .from(cisSubmissions)
+      .where(and(...actionConditions)),
+  ]);
+  const actionTotal = Number(actionCountRow[0]?.total ?? 0);
 
   // Section 2: Team history — everything except pending_endorsement, with status + search filter
   const historyConditions: any[] = [
@@ -193,12 +208,21 @@ export default async function ManagerDashboard({
     );
   }
 
-  const history = await db
-    .select(SUBMISSION_COLS)
-    .from(cisSubmissions)
-    .innerJoin(users, eq(cisSubmissions.agentId, users.id))
-    .where(and(...historyConditions))
-    .orderBy(desc(cisSubmissions.createdAt));
+  const [history, historyCountRow] = await Promise.all([
+    db
+      .select(SUBMISSION_COLS)
+      .from(cisSubmissions)
+      .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+      .where(and(...historyConditions))
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(historyOffset),
+    db
+      .select({ total: count() })
+      .from(cisSubmissions)
+      .where(and(...historyConditions)),
+  ]);
+  const historyTotal = Number(historyCountRow[0]?.total ?? 0);
 
   // Clear-agent-filter URL (preserves q and status)
   const clearAgentParams = new URLSearchParams();
@@ -276,36 +300,36 @@ export default async function ManagerDashboard({
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-amber-500" />
           <h2 className="text-sm font-semibold text-zinc-700">Needs Your Review</h2>
-          {pendingCount > 0 && (
+          {actionTotal > 0 && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-              {pendingCount}
+              {actionTotal}
             </span>
           )}
         </div>
 
-        {actionQueue.length === 0 ? (
+        {actionTotal === 0 ? (
           <div className="flex items-center gap-3 rounded-xl border border-dashed bg-white px-5 py-4 text-sm text-zinc-400">
             <CheckCircle className="h-4 w-4 shrink-0 text-green-400" />
             {q ? "No pending endorsements match your search." : "Queue is clear — nothing to endorse right now."}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {actionQueue.map((s) => (
-              <CisCard
-                key={s.id}
-                id={s.id}
-                tradeName={s.tradeName}
-                contactPerson={s.contactPerson}
-                customerType={s.customerType}
-                agentCode={s.agentCode}
-                agentName={s.agentName}
-                status={s.status as CisStatus}
-                createdAt={s.createdAt}
-                updatedAt={s.updatedAt}
-                href={`/manager/${s.id}`}
-              />
-            ))}
-          </div>
+          <>
+            <CustomerTypeColumns
+              submissions={actionQueue.map((s) => ({
+                ...s,
+                status: s.status as CisStatus,
+              }))}
+              hrefPrefix="manager"
+            />
+            <DashboardPagination
+              basePath="/manager"
+              currentPage={queueCurrentPage}
+              totalItems={actionTotal}
+              pageSize={pageSize}
+              pageParamName="queuePage"
+              searchParams={{ q, status, agentId, historyPage }}
+            />
+          </>
         )}
       </div>
 
@@ -315,13 +339,13 @@ export default async function ManagerDashboard({
           <FileText className="h-4 w-4 text-zinc-400" />
           <h2 className="text-sm font-semibold text-zinc-700">Team History</h2>
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
-            {total - pendingCount} submission{total - pendingCount !== 1 ? "s" : ""}
+            {historyTotal} submission{historyTotal !== 1 ? "s" : ""}
           </span>
         </div>
 
         <DashboardFilters showStatusFilter />
 
-        {history.length === 0 ? (
+        {historyTotal === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-16 text-center">
             <div className="rounded-full bg-zinc-100 p-4">
               <FileText className="h-8 w-8 text-zinc-400" />
@@ -336,23 +360,23 @@ export default async function ManagerDashboard({
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {history.map((s) => (
-              <CisCard
-                key={s.id}
-                id={s.id}
-                tradeName={s.tradeName}
-                contactPerson={s.contactPerson}
-                customerType={s.customerType}
-                agentCode={s.agentCode}
-                agentName={s.agentName}
-                status={s.status as CisStatus}
-                createdAt={s.createdAt}
-                updatedAt={s.updatedAt}
-                href={`/manager/${s.id}`}
-              />
-            ))}
-          </div>
+          <>
+            <CustomerTypeColumns
+              submissions={history.map((s) => ({
+                ...s,
+                status: s.status as CisStatus,
+              }))}
+              hrefPrefix="manager"
+            />
+            <DashboardPagination
+              basePath="/manager"
+              currentPage={historyCurrentPage}
+              totalItems={historyTotal}
+              pageSize={pageSize}
+              pageParamName="historyPage"
+              searchParams={{ q, status, agentId, queuePage }}
+            />
+          </>
         )}
       </div>
     </div>

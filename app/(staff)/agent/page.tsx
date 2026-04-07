@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { eq, desc, and, ilike, or, ne } from "drizzle-orm";
+import { eq, desc, and, ilike, or, ne, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
-import { CisCard } from "@/components/cis-card";
+import { CustomerTypeColumns } from "@/components/customer-type-columns";
+import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
 import { CurrentDate } from "@/components/current-date";
@@ -24,15 +25,19 @@ function isMissingArchivedColumnError(error: unknown): boolean {
 export default async function AgentDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; archived?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; archived?: string; page?: string }>;
 }) {
   const session = await auth();
-  const { q, status, archived } = await searchParams;
+  const { q, status, archived, page } = await searchParams;
+  const currentPage = getPageNumber(page);
+  const pageSize = 18;
+  const offset = (currentPage - 1) * pageSize;
   const showArchived = archived === "1";
   type Submission = typeof cisSubmissions.$inferSelect;
 
   let supportsArchived = true;
   let submissions: Submission[] = [];
+  let filteredCount = 0;
   let all: Submission[] = [];
   let archivedCount = 0;
 
@@ -56,11 +61,22 @@ export default async function AgentDashboard({
       }
     }
 
+    filteredCount = Number(
+      (
+        await db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(and(...conditions))
+      )[0]?.total ?? 0
+    );
+
     submissions = await db
       .select()
       .from(cisSubmissions)
       .where(and(...conditions))
-      .orderBy(desc(cisSubmissions.createdAt));
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(offset);
 
     all = await db
       .select()
@@ -91,11 +107,22 @@ export default async function AgentDashboard({
       fallbackConditions.push(eq(cisSubmissions.status, status as CisStatus));
     }
 
+    filteredCount = Number(
+      (
+        await db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(and(...fallbackConditions))
+      )[0]?.total ?? 0
+    );
+
     submissions = await db
       .select()
       .from(cisSubmissions)
       .where(and(...fallbackConditions))
-      .orderBy(desc(cisSubmissions.createdAt));
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(offset);
 
     all = await db
       .select()
@@ -245,22 +272,22 @@ export default async function AgentDashboard({
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {submissions.map((s) => (
-            <CisCard
-              key={s.id}
-              id={s.id}
-              tradeName={s.tradeName}
-              contactPerson={s.contactPerson}
-              customerType={s.customerType}
-              agentCode={s.agentCode}
-              status={s.status as CisStatus}
-              createdAt={s.createdAt}
-              updatedAt={s.updatedAt}
-              href={`/agent/${s.id}`}
-            />
-          ))}
-        </div>
+        <>
+          <CustomerTypeColumns
+            submissions={submissions.map((s) => ({
+              ...s,
+              status: s.status as CisStatus,
+            }))}
+            hrefPrefix="agent"
+          />
+          <DashboardPagination
+            basePath="/agent"
+            currentPage={currentPage}
+            totalItems={filteredCount}
+            pageSize={pageSize}
+            searchParams={{ q, status, archived }}
+          />
+        </>
       )}
     </div>
   );

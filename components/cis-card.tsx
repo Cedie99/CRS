@@ -88,6 +88,12 @@ export function CisCard({
     updatedAt &&
     new Date(updatedAt).getTime() - new Date(createdAt).getTime() > 60_000;
 
+  const now = Date.now();
+  const lastActivityAt = wasUpdated && updatedAt ? new Date(updatedAt) : new Date(createdAt);
+  const hoursSinceActivity = (now - lastActivityAt.getTime()) / 3_600_000;
+  const isLatest = hoursSinceActivity <= 24;
+  const isFresh = !isLatest && hoursSinceActivity <= 72;
+
   return (
     <Link href={href} className="group block focus-visible:outline-none">
       <Card
@@ -194,19 +200,33 @@ export function CisCard({
             )}
 
             {/* Timestamp — shows "Updated" if record was modified after submission */}
-            <span className="flex items-center gap-1 text-[11px] text-zinc-400">
-              {wasUpdated ? (
-                <>
-                  <RefreshCw className="h-3 w-3" />
-                  {formatDistanceToNow(updatedAt!)}
-                </>
-              ) : (
-                <>
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(createdAt)}
-                </>
+            <div className="flex items-center gap-2">
+              {isLatest && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
+                  Latest
+                </span>
               )}
-            </span>
+              <span
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
+                  isLatest && "bg-green-50 text-green-700",
+                  !isLatest && isFresh && "bg-amber-50 text-amber-700",
+                  !isLatest && !isFresh && "text-zinc-400"
+                )}
+              >
+                {wasUpdated ? (
+                  <>
+                    <RefreshCw className="h-3 w-3" />
+                    Updated {formatDistanceToNow(updatedAt!)} ago
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-3 w-3" />
+                    Submitted {formatDistanceToNow(createdAt)} ago
+                  </>
+                )}
+              </span>
+            </div>
           </div>
 
           {/* Next step hint — only on non-terminal */}
