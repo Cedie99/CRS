@@ -143,23 +143,37 @@ export default function RegisterPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12">
-        {/* Mobile-only logo */}
-        <div className="mb-8 lg:hidden">
-          <Image
-            src="/oracle-logo.png"
-            alt="Oracle Petroleum"
-            width={140}
-            height={42}
-            className="h-10 w-auto object-contain"
-            priority
-          />
+      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-10 sm:py-12">
+        {/* Mobile-only intro */}
+        <div className="mb-6 w-full max-w-sm lg:hidden">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#f5d220]" />
+          <h1 className="text-center text-3xl font-bold leading-tight text-zinc-900">Create an account</h1>
+          <p className="mt-3 text-center text-sm leading-relaxed text-zinc-500">
+            Your account will be reviewed and activated by an Admin.
+          </p>
+
+          <div className="mt-5 hidden space-y-2 sm:block">
+            {[
+              "Register with your name and email",
+              "Wait for an Admin to activate your account",
+              "Log in and access your role dashboard",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2.5 text-sm text-zinc-600">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2d6e1e]">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-zinc-900">Create an account</h2>
-            <p className="mt-1.5 text-sm text-zinc-500">
+            <h2 className="hidden text-2xl font-semibold text-zinc-900 sm:block">Create an account</h2>
+            <p className="mt-1.5 hidden text-sm text-zinc-500 sm:block">
               Your account will be reviewed and activated by an Admin.
             </p>
           </div>
