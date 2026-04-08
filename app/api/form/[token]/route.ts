@@ -66,33 +66,41 @@ export async function POST(
   const seal = computeSeal(cis.id, signedAt, parsed.data.customerSignature);
   const fp = sha256Fingerprint(parsed.data.customerSignature);
 
-  // Save form data and mark as submitted
-  await db
-    .update(cisSubmissions)
-    .set({
-      ...parsed.data,
-      status: "submitted",
-      customerSignedAt: signedAt,
-      customerSignatureSeal: seal,
-      updatedAt: signedAt,
-    })
-    .where(eq(cisSubmissions.id, cis.id));
+  try {
+    // Save form data and mark as submitted
+    await db
+      .update(cisSubmissions)
+      .set({
+        ...parsed.data,
+        status: "submitted",
+        customerSignedAt: signedAt,
+        customerSignatureSeal: seal,
+        updatedAt: signedAt,
+      })
+      .where(eq(cisSubmissions.id, cis.id));
 
-  // Get manager ID for notification
-  const [agent] = await db
-    .select({ managerId: users.managerId })
-    .from(users)
-    .where(eq(users.id, cis.agentId))
-    .limit(1);
+    // Get manager ID for notification
+    const [agent] = await db
+      .select({ managerId: users.managerId })
+      .from(users)
+      .where(eq(users.id, cis.agentId))
+      .limit(1);
 
-  await transitionCis({
-    cisId: cis.id,
-    toStatus: "pending_endorsement",
-    action: "submitted",
-    actorId: cis.agentId,
-    note: `sha256:${fp}`,
-    managerId: agent?.managerId ?? null,
-  });
+    await transitionCis({
+      cisId: cis.id,
+      toStatus: "pending_endorsement",
+      action: "submitted",
+      actorId: cis.agentId,
+      note: `sha256:${fp}`,
+      managerId: agent?.managerId ?? null,
+    });
+  } catch (err) {
+    console.error("[form/submit] DB error:", err);
+    return NextResponse.json(
+      { error: "Failed to save your submission. Please try again." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

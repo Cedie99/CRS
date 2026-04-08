@@ -373,11 +373,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (json.error?._form) setErrors({ _form: json.error._form[0] });
         else if (typeof json.error === "string") setErrors({ _form: json.error });
-        else setErrors(Object.fromEntries(Object.entries(json.error ?? {}).map(([k, v]) => [k, (v as string[])[0]])));
+        else if (json.error && typeof json.error === "object") setErrors(Object.fromEntries(Object.entries(json.error).map(([k, v]) => [k, (v as string[])[0]])));
+        else setErrors({ _form: json.message ?? "Something went wrong. Please try again." });
         return;
       }
       router.push(`/form/${token}/submitted`);
