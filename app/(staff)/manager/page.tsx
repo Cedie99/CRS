@@ -74,7 +74,7 @@ export default async function ManagerDashboard({
             <ClipboardCheck className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">My Team&apos;s Submissions</h1>
+            <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">My Team&apos;s Submissions</h1>
             <p className="mt-0.5 text-sm text-zinc-500">All customer submissions from your agents.</p>
           </div>
         </div>
@@ -239,7 +239,7 @@ export default async function ManagerDashboard({
             <ClipboardCheck className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">My Team&apos;s Submissions</h1>
+            <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">My Team&apos;s Submissions</h1>
             <p className="mt-0.5 text-sm text-zinc-500">All customer submissions from your agents.</p>
           </div>
         </div>
@@ -257,18 +257,18 @@ export default async function ManagerDashboard({
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
           <div
             key={label}
-            className="relative overflow-hidden rounded-xl border bg-white p-5 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm"
+            className="relative overflow-hidden rounded-xl border bg-white p-4 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm sm:p-5"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   {label}
                 </p>
-                <p className={`mt-1.5 text-3xl font-bold tabular-nums ${valueColor}`}>{value}</p>
-                <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+                <p className={`mt-2 text-2xl font-bold tabular-nums sm:text-3xl ${valueColor}`}>{value}</p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">{sub}</p>
               </div>
-              <div className={`rounded-xl p-2.5 ${iconBg}`}>
-                <Icon className={`h-5 w-5 ${iconColor}`} />
+              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
+                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
               </div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-100">

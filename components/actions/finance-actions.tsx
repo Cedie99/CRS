@@ -337,15 +337,15 @@ export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-1">
-            <Button onClick={() => openDialog("forward")} className="gap-2">
+          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-3">
+            <Button onClick={() => openDialog("forward")} className="w-full gap-2 sm:w-auto">
               <ArrowRight className="h-4 w-4" />
               Forward to Approver
             </Button>
             <Button
               variant="outline"
               onClick={() => openDialog("deny")}
-              className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
             >
               <XCircle className="h-4 w-4" />
               Deny

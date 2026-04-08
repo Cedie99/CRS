@@ -93,18 +93,18 @@ export function DashboardFilters({
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
 
         {/* Quick filter tabs */}
         {quickFilters && (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="hidden sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-1.5">
             {quickFilters.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => updateParams({ status: tab.value })}
                 className={cn(
-                  "rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                  "shrink-0 whitespace-nowrap rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
                   status === tab.value
                     ? "border-[#2d6e1e] bg-[#2d6e1e] text-white"
                     : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900"
@@ -117,7 +117,7 @@ export function DashboardFilters({
         )}
 
         {/* Right-side controls */}
-        <div className={cn("flex items-center gap-2", quickFilters && "ml-auto")}>
+        <div className={cn("flex w-full flex-wrap items-center gap-2 sm:w-auto", quickFilters && "sm:ml-auto")}>
           {/* Filter icon — only when status filtering is enabled */}
           {showStatusFilter && (
             <button
@@ -134,86 +134,90 @@ export function DashboardFilters({
           )}
 
           {/* Search bar */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <input
               type="search"
               placeholder="Search a name…"
               defaultValue={q}
               onChange={(e) => updateParams({ q: e.target.value })}
-              className="h-9 w-56 rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-85"
+              className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-80"
             />
             <Search className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
           </div>
 
-          <DashboardRefreshButton />
+          <div className="flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:overflow-visible sm:pb-0">
+            <DashboardRefreshButton className="h-8 shrink-0 sm:h-9" />
 
-          {/* Archived toggle */}
-          {showArchivedToggle && (
-            <button
-              onClick={() => updateParams({ archived: archived ? "" : "1", q: "", status: "" })}
-              className={cn(
-                "flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors cursor-pointer",
-                archived
-                  ? "border-zinc-400 bg-zinc-100 font-medium text-zinc-900"
-                  : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"
-              )}
-            >
-              {archived ? "← Active" : `Archived${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
-            </button>
-          )}
+            {/* Archived toggle */}
+            {showArchivedToggle && (
+              <button
+                onClick={() => updateParams({ archived: archived ? "" : "1", q: "", status: "" })}
+                className={cn(
+                  "flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors cursor-pointer sm:h-9 sm:text-sm",
+                  archived
+                    ? "border-zinc-400 bg-zinc-100 font-medium text-zinc-900"
+                    : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"
+                )}
+              >
+                {archived ? "← Active" : `Archived${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
+              </button>
+            )}
 
-          {showExportButtons && exportScope && (
-            <div className="hidden items-center gap-1 sm:flex">
-              <button
-                onClick={() => handleExport("csv")}
-                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
-              >
-                <Download className="h-3.5 w-3.5" />
-                CSV
-              </button>
-              <button
-                onClick={() => handleExport("excel")}
-                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Excel
-              </button>
-              <button
-                onClick={() => handleExport("pdf")}
-                className="flex h-9 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
-              >
-                <Download className="h-3.5 w-3.5" />
-                PDF
-              </button>
-            </div>
-          )}
+            {showExportButtons && exportScope && (
+              <>
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExport("excel")}
+                  className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Excel
+                </button>
+                <button
+                  onClick={() => handleExport("pdf")}
+                  className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  PDF
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Advanced filter panel */}
       {filterOpen && showStatusFilter && (
-        <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-white px-3 py-2.5 shadow-sm">
-          <span className="shrink-0 text-xs font-medium text-zinc-400">Status</span>
-          <select
-            value={status}
-            onChange={(e) => updateParams({ status: e.target.value })}
-            className="h-8 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {status && (
-            <button
-              onClick={() => updateParams({ status: "" })}
-              className="flex h-8 items-center gap-1 rounded-lg px-2 text-xs text-zinc-500 hover:text-zinc-900"
+        <div className="rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <span className="shrink-0 text-xs font-medium text-zinc-400">Status</span>
+            <select
+              value={status}
+              onChange={(e) => updateParams({ status: e.target.value })}
+              className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none sm:flex-1"
             >
-              <X className="h-3 w-3" />
-              Clear
-            </button>
-          )}
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {status && (
+              <button
+                onClick={() => updateParams({ status: "" })}
+                className="flex h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs text-zinc-500 hover:text-zinc-900 sm:justify-start"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

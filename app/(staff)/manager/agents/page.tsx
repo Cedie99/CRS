@@ -224,7 +224,7 @@ export default async function ManagerAgentsPage() {
                 </div>
 
                 {/* Member since / Last active */}
-                <div className="mx-5 mb-3 flex items-center gap-3 rounded-lg bg-zinc-50 px-3 py-2 text-[11px] text-zinc-500">
+                <div className="mx-5 mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-[11px] text-zinc-500">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3 shrink-0 text-zinc-400" />
                     Since {formatDate(new Date(agent.createdAt))}
@@ -239,7 +239,7 @@ export default async function ManagerAgentsPage() {
                 </div>
 
                 {/* Stats chips */}
-                <div className="grid grid-cols-3 gap-1 px-3 pb-3 text-center sm:px-5">
+                <div className="grid grid-cols-2 gap-1 px-3 pb-3 text-center sm:grid-cols-3 sm:px-5">
                   <div className="rounded-lg bg-zinc-50 px-2 py-2">
                     <p className="text-lg font-bold tabular-nums text-zinc-900">{stats.total}</p>
                     <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">

@@ -174,9 +174,9 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
               <p className="text-sm font-semibold text-zinc-900">
                 {config?.label ?? event.action}
               </p>
-              <div className="mt-1 flex items-center gap-1.5">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <ActorAvatar name={event.actorName} avatarUrl={event.actorAvatarUrl} />
-                <p className="text-xs text-zinc-500">
+                <p className="wrap-break-word text-xs text-zinc-500">
                   <span className="font-medium text-zinc-700">{event.actorName}</span>
                   {event.actorRole && (
                     <>
@@ -197,7 +197,7 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
                 return (
                   <>
                     {humanLines && (
-                      <p className="mt-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600">
+                      <p className="mt-2 wrap-break-word rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600">
                         {humanLines}
                       </p>
                     )}

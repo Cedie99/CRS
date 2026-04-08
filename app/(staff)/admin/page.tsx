@@ -5,10 +5,9 @@ import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/status-badge";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
-import { buttonVariants } from "@/lib/button-variants";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "@/lib/utils";
-import { Users, FileText, Activity, CheckCircle2, XCircle, UserPlus } from "lucide-react";
+import { FileText, Activity, CheckCircle2, XCircle, UserPlus } from "lucide-react";
 
 export const metadata = { title: "Admin — All Submissions — CRS" };
 
@@ -54,19 +53,15 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">All Submissions</h1>
+          <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">All Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
             Overview of all customer submissions across the entire system.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <DashboardRefreshButton className="bg-zinc-50" />
-          <Link href="/admin/users" className={buttonVariants({ variant: "outline" })}>
-            <Users className="mr-1.5 h-4 w-4" />
-            Manage Users
-          </Link>
         </div>
       </div>
 
@@ -74,7 +69,7 @@ export default async function AdminDashboard() {
       {pendingCount > 0 && (
         <Link
           href="/admin/users"
-          className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100"
+          className="flex flex-col items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 transition-colors hover:bg-amber-100 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
         >
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-amber-100 p-2">
@@ -99,14 +94,14 @@ export default async function AdminDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="rounded-xl border bg-white p-5">
-            <div className="flex items-start justify-between gap-3">
+          <div key={label} className="rounded-xl border bg-white p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-zinc-900">{value}</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-900 sm:text-3xl">{value}</p>
               </div>
-              <div className={`rounded-xl p-2.5 ${iconBg}`}>
-                <Icon className={`h-5 w-5 ${iconColor}`} />
+              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
+                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
               </div>
             </div>
           </div>
@@ -118,8 +113,45 @@ export default async function AdminDashboard() {
         <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3.5">
           <h2 className="text-sm font-semibold text-zinc-700">All Submissions</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-[560px] w-full text-sm">
+
+        <div className="space-y-3 p-3 md:hidden">
+          {submissions.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-zinc-200 px-4 py-10 text-center text-sm text-zinc-400">
+              No submissions yet.
+            </div>
+          ) : (
+            submissions.map((s) => (
+              <Link
+                key={s.id}
+                href={`/admin/${s.id}`}
+                className="block rounded-lg border border-zinc-200 bg-white p-3 transition-colors hover:bg-zinc-50"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-semibold text-zinc-900">
+                    {s.tradeName ?? <span className="font-normal italic text-zinc-400">Untitled</span>}
+                  </p>
+                  <StatusBadge status={s.status as any} />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-600">
+                    {s.agentCode}
+                  </span>
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      CUSTOMER_TYPE_COLORS[s.customerType] ?? "bg-zinc-100 text-zinc-600"
+                    }`}
+                  >
+                    {CUSTOMER_TYPE_LABELS[s.customerType] ?? s.customerType}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-zinc-400">Submitted {formatDistanceToNow(s.createdAt)} ago</p>
+              </Link>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
+          <table className="min-w-140 w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100 text-left">
                 <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">

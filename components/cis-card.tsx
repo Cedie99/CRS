@@ -106,23 +106,20 @@ export function CisCard({
 
         <CardHeader className="pb-2 pt-4">
           {/* Row 1: Short ID + agent info + Status Badge */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+            <div className="min-w-0 flex-1">
               <span className="font-mono text-[11px] font-semibold tracking-wide text-zinc-400">
                 #{shortId}
               </span>
               {agentName && (
-                <>
-                  <span className="text-zinc-200">·</span>
-                  <span className="text-xs text-zinc-400">{agentName}</span>
-                </>
+                <p className="mt-0.5 truncate text-xs text-zinc-400">{agentName}</p>
               )}
             </div>
-            <StatusBadge status={status} />
+            <StatusBadge status={status} className="self-start sm:self-auto" />
           </div>
 
           {/* Row 2: Trade name + hover chevron */}
-          <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="mt-2 flex items-start justify-between gap-2">
             <p className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-[#2d6e1e]">
               {tradeName ?? (
                 <span className="font-normal italic text-zinc-400">Untitled</span>
@@ -140,7 +137,7 @@ export function CisCard({
 
         <CardContent className="pb-4 pt-0">
           {/* Row 3: Contact person + Customer type pill */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="flex min-w-0 items-center gap-1 text-sm text-zinc-500">
               <User className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
               <span className="truncate">{contactPerson ?? "—"}</span>
@@ -159,8 +156,8 @@ export function CisCard({
           {/* Divider */}
           <div className="my-3 h-px bg-zinc-100" />
 
-          {/* Row 4: Workflow track + timestamp */}
-          <div className="flex items-center justify-between gap-3 mt-4 mb-4">
+              {/* Row 4: Workflow track + timestamp */}
+          <div className="mt-4 mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             {isTerminal ? (
               <span
                 className={cn(
@@ -171,36 +168,41 @@ export function CisCard({
                 {NEXT_STEP[status]}
               </span>
             ) : (
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalSteps }).map((_, i) => {
-                  const done = isComplete || i < currentStep;
-                  const active = !isComplete && i === currentStep;
-                  return (
-                    <span key={i} className="flex items-center gap-1">
-                      <span
-                        className={cn(
-                          "inline-block h-2.5 w-2.5 rounded-full transition-all duration-400",
-                          done && "bg-[#2d6e1e]",
-                          active && "bg-[#2d6e1e] ring-2 ring-[#2d6e1e]/25",
-                          !done && !active && "bg-zinc-200"
-                        )}
-                      />
-                      {i < totalSteps - 1 && (
+              <>
+                <div className="text-[11px] font-medium text-zinc-500 sm:hidden">
+                  Progress {isComplete ? "Done" : `${Math.max(1, currentStep + 1)}/${totalSteps}`}
+                </div>
+                <div className="hidden items-center gap-1 sm:flex">
+                  {Array.from({ length: totalSteps }).map((_, i) => {
+                    const done = isComplete || i < currentStep;
+                    const active = !isComplete && i === currentStep;
+                    return (
+                      <span key={i} className="flex items-center gap-1">
                         <span
                           className={cn(
-                            "inline-block h-px w-2.5",
-                            done ? "bg-[#2d6e1e]" : "bg-zinc-200"
+                            "inline-block h-2.5 w-2.5 rounded-full transition-all duration-400",
+                            done && "bg-[#2d6e1e]",
+                            active && "bg-[#2d6e1e] ring-2 ring-[#2d6e1e]/25",
+                            !done && !active && "bg-zinc-200"
                           )}
                         />
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
+                        {i < totalSteps - 1 && (
+                          <span
+                            className={cn(
+                              "inline-block h-px w-2.5",
+                              done ? "bg-[#2d6e1e]" : "bg-zinc-200"
+                            )}
+                          />
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             {/* Timestamp — shows "Updated" if record was modified after submission */}
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               {isLatest && (
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
                   Latest

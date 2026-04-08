@@ -150,8 +150,8 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-[#1a1a1a]">
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2">
+      <div className="flex h-14 items-center justify-between gap-2 px-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <button
             onClick={onMenuToggle}
             className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none lg:hidden"
@@ -159,13 +159,13 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
           >
             <Menu className="h-4 w-4" />
           </button>
-        <Link href={homeHref} className="flex items-center gap-3">
+        <Link href={homeHref} className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Image
             src="/oracle-logo.png"
             alt="Oracle Petroleum"
             width={120}
             height={36}
-            className="h-9 w-auto object-contain"
+            className="h-8 w-auto object-contain sm:h-9"
             priority
           />
           <span className="hidden h-5 w-px bg-zinc-600 sm:block" />

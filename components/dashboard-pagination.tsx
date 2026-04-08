@@ -70,22 +70,22 @@ export function DashboardPagination({
   });
 
   return (
-    <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3">
-      <p className="text-sm text-zinc-500">
+    <div className="mt-4 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-center text-sm text-zinc-500 sm:text-left">
         Page <span className="font-semibold text-zinc-800">{page}</span> of{" "}
         <span className="font-semibold text-zinc-800">{totalPages}</span>
       </p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         {page > 1 ? (
           <Link
             href={prevHref}
-            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+            className="flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-center text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:flex-none"
           >
             Previous
           </Link>
         ) : (
-          <span className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-300">
+          <span className="flex-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-sm text-zinc-300 sm:flex-none">
             Previous
           </span>
         )}
@@ -93,12 +93,12 @@ export function DashboardPagination({
         {page < totalPages ? (
           <Link
             href={nextHref}
-            className="rounded-lg border border-[#2d6e1e] bg-[#2d6e1e] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#245919]"
+            className="flex-1 rounded-lg border border-[#2d6e1e] bg-[#2d6e1e] px-3 py-1.5 text-center text-sm font-medium text-white transition-colors hover:bg-[#245919] sm:flex-none"
           >
             Next
           </Link>
         ) : (
-          <span className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-300">
+          <span className="flex-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-sm text-zinc-300 sm:flex-none">
             Next
           </span>
         )}

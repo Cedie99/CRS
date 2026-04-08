@@ -149,7 +149,7 @@ export default async function AgentCisDetailPage({
           <p className="text-xs text-amber-600">
             Copy the link below and send it to your customer. Once they complete and submit the form, it will automatically move to the approval process.
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <CopyLinkButton token={cis.publicToken} />
             <DeleteDraftButton cisId={cis.id} />
           </div>
@@ -158,7 +158,7 @@ export default async function AgentCisDetailPage({
 
       {(cis.status === "returned" || cis.status === "denied") && (
         <div
-          className={`print:hidden flex gap-3 rounded-xl border px-5 py-4 ${
+          className={`print:hidden flex flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:px-5 ${
             cis.status === "returned"
               ? "border-rose-200 bg-rose-50"
               : "border-red-200 bg-red-50"
@@ -194,16 +194,16 @@ export default async function AgentCisDetailPage({
               </p>
             )}
           </div>
-          <div className="ml-auto shrink-0 self-start">
+          <div className="shrink-0 self-start sm:ml-auto">
             <DismissButton cisId={cis.id} />
           </div>
         </div>
       )}
 
       {/* Two-column layout */}
-      <div className="grid gap-5 lg:grid-cols-5">
+      <div className="grid gap-5 xl:grid-cols-5">
         {/* Main */}
-        <div className="space-y-5 lg:col-span-3 print:col-span-full">
+        <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
             tradeName={cis.tradeName}
@@ -280,7 +280,7 @@ export default async function AgentCisDetailPage({
         </div>
 
         {/* Sidebar */}
-        <div className="print:hidden space-y-5 lg:col-span-2">
+        <div className="print:hidden space-y-5 xl:col-span-2">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>

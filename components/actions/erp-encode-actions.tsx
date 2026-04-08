@@ -57,19 +57,20 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
         </p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {!confirming ? (
-          <Button onClick={() => setConfirming(true)} className="gap-2">
+          <Button onClick={() => setConfirming(true)} className="w-full gap-2 sm:w-auto">
             <Database className="h-4 w-4" />
             Mark as Onboarded
           </Button>
         ) : (
-          <div className="flex gap-2">
-            <Button onClick={handleEncode} disabled={isLoading}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={handleEncode} disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? "Saving…" : "Yes, Mark as Onboarded"}
             </Button>
             <Button
               variant="ghost"
               onClick={() => setConfirming(false)}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>

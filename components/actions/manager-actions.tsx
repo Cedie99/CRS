@@ -91,15 +91,15 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
         <p className="text-xs text-zinc-500">
           Review the customer information above, then choose an action.
         </p>
-        <div className="flex gap-3">
-          <Button onClick={() => openDialog("endorse")} className="gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <Button onClick={() => openDialog("endorse")} className="w-full gap-2 sm:w-auto">
             <CheckCircle className="h-4 w-4" />
             Approve &amp; Forward
           </Button>
           <Button
             variant="outline"
             onClick={() => openDialog("return")}
-            className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            className="w-full gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto"
           >
             <RotateCcw className="h-4 w-4" />
             Send Back to Agent

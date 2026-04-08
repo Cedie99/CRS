@@ -106,15 +106,15 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
         <p className="text-xs text-zinc-500">
           This is the final step before the customer is onboarded. Review carefully before deciding.
         </p>
-        <div className="flex gap-3">
-          <Button onClick={() => openDialog("approve")} className="gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <Button onClick={() => openDialog("approve")} className="w-full gap-2 sm:w-auto">
             <CheckCircle className="h-4 w-4" />
             Approve
           </Button>
           <Button
             variant="outline"
             onClick={() => openDialog("deny")}
-            className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
             Deny

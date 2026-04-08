@@ -90,8 +90,9 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
       <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-zinc-400">
         Workflow Progress
       </p>
-      <div className="flex items-center">
-        {steps.map((step, i) => {
+      <div className="overflow-x-auto pb-1">
+        <div className="flex min-w-120 items-center">
+          {steps.map((step, i) => {
           const isCompleted = i < currentIndex;
           const isCurrent = i === currentIndex;
           const isFuture = i > currentIndex;
@@ -146,7 +147,8 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
               )}
             </div>
           );
-        })}
+          })}
+        </div>
       </div>
     </div>
   );

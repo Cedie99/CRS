@@ -57,8 +57,8 @@ export default async function LegalCisDetailPage({
         Back to queue
       </Link>
 
-      <div className="grid gap-5 lg:grid-cols-5">
-        <div className="space-y-5 lg:col-span-3 print:col-span-full">
+      <div className="grid gap-5 xl:grid-cols-5">
+        <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
             tradeName={cis.tradeName}
@@ -134,7 +134,7 @@ export default async function LegalCisDetailPage({
           {canAct && <LegalActions cisId={id} />}
         </div>
 
-        <div className="print:hidden space-y-5 lg:col-span-2">
+        <div className="print:hidden space-y-5 xl:col-span-2">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>

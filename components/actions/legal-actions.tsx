@@ -91,15 +91,15 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         <p className="text-xs text-zinc-500">
           Review the customer information above, then choose an action.
         </p>
-        <div className="flex gap-3">
-          <Button onClick={() => openDialog("forward")} className="gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <Button onClick={() => openDialog("forward")} className="w-full gap-2 sm:w-auto">
             <ArrowRight className="h-4 w-4" />
             Forward to Finance
           </Button>
           <Button
             variant="outline"
             onClick={() => openDialog("deny")}
-            className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
             Deny

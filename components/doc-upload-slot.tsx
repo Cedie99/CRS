@@ -389,16 +389,16 @@ export function DocUploadSlot({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-medium text-zinc-900">{label}</p>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {requiresExpiration && (
             <input
               type="date"
               value={expirationDate}
               onChange={(e) => setExpirationDate(e.target.value)}
               disabled={disabled || uploading}
-              className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700"
+              className="h-8 w-full rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 sm:w-auto"
               aria-label={`${label} expiration date`}
             />
           )}
@@ -406,7 +406,7 @@ export function DocUploadSlot({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={disabled || uploading}
-            className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 sm:flex-none"
           >
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Upload
@@ -417,7 +417,7 @@ export function DocUploadSlot({
               void openCamera();
             }}
             disabled={disabled || uploading}
-            className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 sm:flex-none"
           >
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
             Take Photo
@@ -465,14 +465,14 @@ export function DocUploadSlot({
             className="w-full rounded-md border border-zinc-200 bg-black"
           />
           {cameraError && <p className="text-xs text-red-600">{cameraError}</p>}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => {
                 void capturePhoto();
               }}
               disabled={disabled || uploading}
-              className="rounded-md border border-[#2d6e1e] bg-[#2d6e1e] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#245919] disabled:opacity-50"
+              className="h-8 flex-1 rounded-md border border-[#2d6e1e] bg-[#2d6e1e] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#245919] disabled:opacity-50 sm:flex-none"
             >
               Capture Photo
             </button>
@@ -482,7 +482,7 @@ export function DocUploadSlot({
                 void switchCamera();
               }}
               disabled={disabled || uploading}
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+              className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:flex-none"
             >
               <RefreshCw className="h-3 w-3" />
               Switch Camera
@@ -491,7 +491,7 @@ export function DocUploadSlot({
               type="button"
               onClick={closeCamera}
               disabled={uploading}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
+              className="h-8 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:flex-none"
             >
               Cancel
             </button>

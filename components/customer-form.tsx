@@ -63,7 +63,7 @@ const STEP_LABELS = [
 function StepIndicator({ current, total, labels }: { current: number; total: number; labels: string[] }) {
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-xs text-zinc-400">Step {current} of {total}</span>
         <span className="text-sm font-semibold text-zinc-800">{labels[current - 1]}</span>
       </div>
@@ -438,9 +438,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const submitDisabled = isLoading || !businessType || signatureEmpty || !declarationChecked;
 
   return (
-    <Card ref={cardRef}>
+    <Card ref={cardRef} className="overflow-hidden">
       <CardHeader className="pb-4">
-        <CardTitle>Customer Registration Sheet</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl">Customer Registration Sheet</CardTitle>
         <CardDescription>
           Fields marked with <span className="font-medium text-zinc-700">*</span> are required.
           <span className="mt-1 block text-xs text-zinc-400">
@@ -968,40 +968,29 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             </section>
           </div>
 
-          {/* ── DEBUG PANEL (temporary) ── */}
-          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-mono text-amber-800 space-y-0.5">
-            <p>DEBUG — step: {currentStep}</p>
-            <p>businessType: &quot;{businessType}&quot; ({!businessType ? "MISSING" : "OK"})</p>
-            <p>signatureEmpty: {String(signatureEmpty)} ({signatureEmpty ? "EMPTY" : "OK"})</p>
-            <p>declarationChecked: {String(declarationChecked)} ({!declarationChecked ? "UNCHECKED" : "OK"})</p>
-            <p>isLoading: {String(isLoading)}</p>
-            <p>submitDisabled: {String(submitDisabled)}</p>
-            <p>debugStep: {debugStep}</p>
-            <p>errors: {JSON.stringify(errors)}</p>
-          </div>
-
           {/* ── Navigation ── */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-2 sm:backdrop-blur-none">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
             {currentStep > 1 && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleBack}
                 disabled={isLoading}
-                className="gap-1.5"
+                className="w-full gap-1.5 sm:w-auto"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </Button>
             )}
-            <div className="flex-1" />
+            <div className="hidden flex-1 sm:block" />
             {currentStep < TOTAL_STEPS ? (
-              <Button type="button" onClick={handleNext} disabled={isLoading} className="gap-1.5">
+              <Button type="button" onClick={handleNext} disabled={isLoading} className="w-full gap-1.5 sm:w-auto">
                 Continue
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button type="button" onClick={handleSubmit} disabled={submitDisabled}>
+              <Button type="button" onClick={handleSubmit} disabled={submitDisabled} className="w-full sm:w-auto">
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1010,6 +999,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 ) : "Submit My Information"}
               </Button>
             )}
+            </div>
           </div>
 
         </CardContent>

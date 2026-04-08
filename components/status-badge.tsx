@@ -15,7 +15,7 @@ export type CisStatus =
 
 const STATUS_CONFIG: Record<
   CisStatus,
-  { label: string; className: string; dot: string; pulse?: boolean }
+  { label: string; mobileLabel?: string; className: string; dot: string; pulse?: boolean }
 > = {
   draft: {
     label: "Draft",
@@ -30,24 +30,28 @@ const STATUS_CONFIG: Record<
   },
   pending_endorsement: {
     label: "Manager Review",
+    mobileLabel: "Manager",
     className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
     dot: "bg-amber-400",
     pulse: true,
   },
   pending_legal_review: {
     label: "Legal Review",
+    mobileLabel: "Legal",
     className: "bg-purple-100 text-purple-700 hover:bg-purple-100",
     dot: "bg-purple-400",
     pulse: true,
   },
   pending_finance_review: {
     label: "Finance Review",
+    mobileLabel: "Finance",
     className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
     dot: "bg-amber-500",
     pulse: true,
   },
   pending_approval: {
     label: "Final Approval",
+    mobileLabel: "Approval",
     className: "bg-orange-100 text-orange-700 hover:bg-orange-100",
     dot: "bg-orange-400",
     pulse: true,
@@ -82,7 +86,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status];
   return (
-    <Badge className={cn("font-medium border-0 gap-1.5", config.className, className)}>
+    <Badge className={cn("max-w-[46vw] min-w-0 border-0 font-medium gap-1.5 sm:max-w-none", config.className, className)}>
       <span
         className={cn(
           "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
@@ -90,7 +94,8 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
           config.pulse && "animate-pulse"
         )}
       />
-      {config.label}
+      <span className="truncate sm:hidden">{config.mobileLabel ?? config.label}</span>
+      <span className="hidden sm:inline">{config.label}</span>
     </Badge>
   );
 }

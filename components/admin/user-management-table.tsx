@@ -166,6 +166,21 @@ export function UserManagementTable({
 
   const isAgentRole = (role: string) => role === "sales_agent" || role === "rsr";
 
+  const managerOptions = managers.map((m) => ({
+    id: m.id,
+    label: `${m.fullName} (${ROLE_LABELS[m.role] ?? m.role})`,
+  }));
+
+  if (form.managerId && !managerOptions.some((m) => m.id === form.managerId)) {
+    managerOptions.unshift({
+      id: form.managerId,
+      label: `Assigned manager (${form.managerId.slice(0, 8)}...)`,
+    });
+  }
+
+  const selectedManagerLabel =
+    managerOptions.find((m) => m.id === form.managerId)?.label ?? "";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -193,8 +208,80 @@ export function UserManagementTable({
       )}
 
       <div className="overflow-hidden rounded-xl border bg-white">
-        <div className="overflow-x-auto">
-        <table className="min-w-[640px] w-full text-sm">
+        <div className="md:hidden">
+          <div className="space-y-4 p-4">
+            {users.map((user) => (
+              <div
+                key={user.id}
+                className={`rounded-xl border p-4 ${!user.isActive ? "border-amber-200 bg-amber-50/40" : "border-zinc-200 bg-white"}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-semibold leading-tight text-zinc-900">{user.fullName}</p>
+                    <p className="truncate text-sm text-zinc-500">{user.email}</p>
+                  </div>
+                  {user.isActive ? (
+                    <Badge className="shrink-0 border-0 bg-green-100 px-2.5 py-1 text-xs text-green-700 hover:bg-green-100">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge className="shrink-0 border-0 bg-amber-100 px-2.5 py-1 text-xs text-amber-700 hover:bg-amber-100">
+                      Pending
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-zinc-100 pt-3 text-xs">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Role</p>
+                    <p className="mt-0.5 text-sm text-zinc-700">{ROLE_LABELS[user.role] ?? user.role}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Agent Code</p>
+                    <p className="mt-0.5 font-mono text-sm text-zinc-700">{user.agentCode ?? "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Submissions</p>
+                    <p className="mt-0.5 text-sm text-zinc-700">
+                      {isAgentRole(user.role) ? (submissionCounts[user.id] ?? 0) : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Joined</p>
+                    <p className="mt-0.5 text-sm text-zinc-700">{formatDistanceToNow(user.createdAt)} ago</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-2 border-t border-zinc-100 pt-3 sm:grid-cols-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
+                    onClick={() => openEdit(user)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                    {user.isActive ? "Edit" : "Activate"}
+                  </Button>
+                  {user.isActive && user.id !== currentUserId && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-sm text-red-500 hover:bg-red-50 hover:text-red-600"
+                      onClick={() => handleDeactivate(user.id)}
+                      disabled={isLoading}
+                    >
+                      <UserX className="h-3 w-3" />
+                      Deactivate
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
+        <table className="min-w-160 w-full text-sm">
           <thead>
             <tr className="border-b bg-zinc-50 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">
               <th className="px-4 py-3">Name</th>
@@ -273,12 +360,12 @@ export function UserManagementTable({
 
       {/* Edit / Activate dialog */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="box-border w-[calc(100vw-2.5rem)] max-w-sm overflow-x-hidden p-3.5 sm:w-full sm:max-w-md sm:p-4">
           <DialogHeader>
             <DialogTitle>
               {editingUser?.isActive ? "Edit User" : "Activate User"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="wrap-break-word">
               {editingUser?.isActive
                 ? `Update role and settings for ${editingUser.fullName}.`
                 : `Activate ${editingUser?.fullName}'s account and assign their role.`}
@@ -286,14 +373,14 @@ export function UserManagementTable({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
+            <div className="min-w-0 space-y-1.5">
               <Label>Role</Label>
               <Select
                 value={form.role}
                 onValueChange={(v) => setForm((f) => ({ ...f, role: v ?? "" }))}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role…" />
+                <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden [&>span]:truncate">
+                  <SelectValue className="min-w-0 truncate" placeholder="Select role…" />
                 </SelectTrigger>
                 <SelectContent>
                   {ALL_ROLES.map(([value, label]) => (
@@ -307,7 +394,7 @@ export function UserManagementTable({
 
             {isAgentRole(form.role) && (
               <>
-                <div className="space-y-1.5">
+                <div className="min-w-0 space-y-1.5">
                   <Label>Agent code</Label>
                   {editingUser?.agentCode ? (
                     <div className="flex h-9 items-center rounded-md border bg-zinc-50 px-3 font-mono text-sm text-zinc-700">
@@ -319,14 +406,14 @@ export function UserManagementTable({
                     </div>
                   )}
                 </div>
-                <div className="space-y-1.5">
+                <div className="min-w-0 space-y-1.5">
                   <Label>Agent type</Label>
                   <Select
                     value={form.agentType}
                     onValueChange={(v) => setForm((f) => ({ ...f, agentType: v ?? "" }))}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select agent type…" />
+                    <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden [&>span]:truncate">
+                      <SelectValue className="min-w-0 truncate" placeholder="Select agent type…" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="sales_agent">Sales Agent</SelectItem>
@@ -334,22 +421,21 @@ export function UserManagementTable({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="min-w-0 space-y-1.5">
                   <Label>Manager</Label>
                   <Select
                     value={form.managerId}
                     onValueChange={(v) => setForm((f) => ({ ...f, managerId: v ?? "" }))}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Assign to manager…" />
+                    <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden [&>span]:truncate">
+                      <SelectValue className="min-w-0 truncate" placeholder="Assign to manager…">
+                        {selectedManagerLabel}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {managers.map((m) => (
+                      {managerOptions.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
-                          {m.fullName}{" "}
-                          <span className="text-zinc-400">
-                            ({ROLE_LABELS[m.role] ?? m.role})
-                          </span>
+                          <span className="truncate">{m.label}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -360,8 +446,8 @@ export function UserManagementTable({
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <div className="flex gap-2 pt-1">
-              <Button onClick={handleSave} disabled={isLoading || !form.role} className="gap-2">
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+              <Button onClick={handleSave} disabled={isLoading || !form.role} className="w-full gap-2 sm:w-auto">
                 <UserCheck className="h-4 w-4" />
                 {isLoading
                   ? "Saving…"
@@ -373,6 +459,7 @@ export function UserManagementTable({
                 variant="ghost"
                 onClick={() => setEditingUser(null)}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>

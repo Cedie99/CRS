@@ -123,14 +123,14 @@ export default async function SupportDashboard({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="rounded-xl border bg-white p-5">
-            <div className="flex items-start justify-between gap-3">
+          <div key={label} className="rounded-xl border bg-white p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-zinc-900">{value}</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-900 sm:text-3xl">{value}</p>
               </div>
-              <div className={`rounded-xl p-2.5 ${iconBg}`}>
-                <Icon className={`h-5 w-5 ${iconColor}`} />
+              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
+                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
               </div>
             </div>
           </div>

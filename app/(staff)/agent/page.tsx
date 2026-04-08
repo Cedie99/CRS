@@ -191,8 +191,8 @@ export default async function AgentDashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-zinc-900">My Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
             View and track all customer forms you&apos;ve submitted.
@@ -203,7 +203,9 @@ export default async function AgentDashboard({
             )}
           </p>
         </div>
-        <CurrentDate />
+        <div className="self-start sm:self-auto sm:text-right">
+          <CurrentDate />
+        </div>
       </div>
 
       <DashboardFilters
@@ -224,20 +226,20 @@ export default async function AgentDashboard({
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
           <div
             key={label}
-            className="relative overflow-hidden rounded-xl border bg-white p-5 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm"
+            className="relative overflow-hidden rounded-xl border bg-white p-4 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm sm:p-5"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   {label}
                 </p>
-                <p className={`mt-1.5 text-3xl font-bold tabular-nums ${valueColor}`}>
+                <p className={`mt-2 text-2xl font-bold tabular-nums sm:text-3xl ${valueColor}`}>
                   {value}
                 </p>
-                <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">{sub}</p>
               </div>
-              <div className={`rounded-xl p-2.5 ${iconBg}`}>
-                <Icon className={`h-5 w-5 ${iconColor}`} />
+              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
+                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
               </div>
             </div>
             {/* Colored fill bar at bottom showing proportion */}
