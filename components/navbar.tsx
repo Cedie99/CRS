@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, Menu, UserPlus } from "lucide-react";
+import { Bell, BellRing, CheckCheck, Menu, Sparkles, UserPlus } from "lucide-react";
+import { sileo as toast } from "sileo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,8 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const seenNotificationIdsRef = useRef<Set<string>>(new Set());
+  const initializedRealtimeRef = useRef(false);
 
   const isAdmin = userRole === "admin";
   const homeHref = ROLE_HREFS[userRole] ?? "/";
@@ -99,6 +102,42 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
     const interval = setInterval(fetchPendingRegistrations, 30_000);
     return () => clearInterval(interval);
   }, [isAdmin, fetchPendingRegistrations]);
+
+  useEffect(() => {
+    if (!initializedRealtimeRef.current) {
+      seenNotificationIdsRef.current = new Set(notifications.map((n) => n.id));
+      initializedRealtimeRef.current = true;
+      return;
+    }
+
+    const freshNotifications = notifications.filter((n) => !n.isRead && !seenNotificationIdsRef.current.has(n.id));
+    freshNotifications.slice(0, 3).forEach((n) => {
+      toast.info({
+        title: "New update",
+        description: n.message,
+        icon: <BellRing className="h-4 w-4" />,
+        button: {
+          title: "View",
+          onClick: () => router.push(`${homeHref}/${n.cisId}`),
+        },
+      });
+    });
+    seenNotificationIdsRef.current = new Set(notifications.map((n) => n.id));
+  }, [notifications, router, homeHref]);
+
+  useEffect(() => {
+    const shouldShowWelcome = sessionStorage.getItem("crs:showWelcomeToast") === "1";
+    if (!shouldShowWelcome) return;
+
+    sessionStorage.removeItem("crs:showWelcomeToast");
+    toast.success({
+      title: "Welcome back",
+      description: `Signed in as ${ROLE_LABELS[userRole] ?? userRole}.`,
+      icon: <Sparkles className="h-4 w-4" />,
+      duration: 5200,
+      autopilot: { expand: 120, collapse: 3600 },
+    });
+  }, [userRole]);
 
   async function handleOpenNotifications(open: boolean) {
     setNotifOpen(open);
@@ -150,7 +189,10 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
                 </span>
               )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-1rem)]">
+            <DropdownMenuContent
+              align="end"
+              className="w-80 max-w-[calc(100vw-1rem)] rounded-2xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-[0_20px_45px_-30px_rgba(10,10,10,0.65)] backdrop-blur-md"
+            >
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-sm font-semibold text-zinc-900">Notifications</span>
                 {(notifications.length + pendingRegistrations.length) > 0 && (
@@ -173,7 +215,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
                   {pendingRegistrations.map((u) => (
                     <DropdownMenuItem
                       key={u.id}
-                      className="flex cursor-pointer flex-col items-start gap-1 px-3 py-2.5"
+                      className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
                       onClick={() => {
                         setNotifOpen(false);
                         router.push("/admin/users");
@@ -181,7 +223,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
                     >
                       <div className="flex w-full items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                        <p className="flex-1 text-s    font-medium leading-relaxed text-zinc-900">
+                        <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
                           {u.fullName} registered and needs activation
                         </p>
                       </div>
@@ -204,7 +246,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
                   {notifications.map((n) => (
                     <DropdownMenuItem
                       key={n.id}
-                      className="flex cursor-pointer flex-col items-start gap-1 px-3 py-2.5"
+                      className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
                       onClick={() => {
                         setNotifOpen(false);
                         router.push(`${homeHref}/${n.cisId}`);

@@ -23,7 +23,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ArrowRight, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 import {
   FINANCE_EU_OPTIONS,
   FINANCE_DR_OPTIONS,
@@ -174,9 +174,13 @@ export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
       }
 
       setOpen(false);
-      toast.success(
-        action === "forward" ? "Forwarded to Senior Approver." : "Submission denied."
-      );
+      toast.success({
+        title: action === "forward" ? "Forwarded to Senior Approver." : "Submission denied.",
+        description:
+          action === "forward"
+            ? "Final approver has been notified to review this account."
+            : "The submission has been closed as denied.",
+      });
       router.push("/finance");
       router.refresh();
     } catch {

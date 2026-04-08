@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 export function DismissButton({ cisId }: { cisId: string }) {
   const router = useRouter();
@@ -17,11 +17,17 @@ export function DismissButton({ cisId }: { cisId: string }) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Archive failed");
       }
-      toast.success("Dismissed from active view");
+      toast.success({
+        title: "Dismissed from active view",
+        description: "You can still find it in the archived submissions list.",
+      });
       router.push("/agent");
       router.refresh();
     } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+      toast.error({
+        title: "Archive failed",
+        description: err.message ?? "Something went wrong",
+      });
       setLoading(false);
     }
   }

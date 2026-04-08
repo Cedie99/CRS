@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
-import { Toaster } from "sonner";
+import { Toaster } from "sileo";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -23,7 +23,19 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <Providers>{children}</Providers>
-        <Toaster richColors position="top-right" />
+        <Toaster
+          position="top-center"
+          theme="system"
+          options={{
+            roundness: 16,
+            duration: 6000,
+            autopilot: { expand: 180, collapse: 4200 },
+            styles: {
+              title: "text-sm font-semibold",
+              description: "text-xs text-zinc-500",
+            },
+          }}
+        />
       </body>
     </html>
   );

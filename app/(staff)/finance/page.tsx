@@ -85,6 +85,8 @@ export default async function FinanceDashboard({
         )}
       </div>
 
+      <DashboardFilters showStatusFilter={false} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
@@ -120,8 +122,6 @@ export default async function FinanceDashboard({
           </div>
         </div>
       </div>
-
-      <DashboardFilters showStatusFilter={false} />
 
       {filteredCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">

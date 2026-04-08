@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CheckCircle, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 interface ManagerActionsProps {
   cisId: string;
@@ -64,7 +64,13 @@ export function ManagerActions({ cisId }: ManagerActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "endorse" ? "Approved and forwarded to Finance." : "Sent back to agent.");
+      toast.success({
+        title: action === "endorse" ? "Approved and forwarded to Finance." : "Sent back to agent.",
+        description:
+          action === "endorse"
+            ? "Finance reviewers can now continue the workflow."
+            : "The assigned agent has been notified to make corrections.",
+      });
       router.push("/manager");
       router.refresh();
     } catch {

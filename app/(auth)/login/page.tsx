@@ -51,6 +51,8 @@ export default function LoginPage() {
         return;
       }
 
+      sessionStorage.setItem("crs:showWelcomeToast", "1");
+
       router.push("/");
       router.refresh();
     } catch {

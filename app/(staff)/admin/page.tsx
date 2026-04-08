@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/status-badge";
+import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import { buttonVariants } from "@/lib/button-variants";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "@/lib/utils";
@@ -60,10 +61,13 @@ export default async function AdminDashboard() {
             Overview of all customer submissions across the entire system.
           </p>
         </div>
-        <Link href="/admin/users" className={buttonVariants({ variant: "outline" })}>
-          <Users className="mr-1.5 h-4 w-4" />
-          Manage Users
-        </Link>
+        <div className="flex items-center gap-2">
+          <DashboardRefreshButton className="bg-zinc-50" />
+          <Link href="/admin/users" className={buttonVariants({ variant: "outline" })}>
+            <Users className="mr-1.5 h-4 w-4" />
+            Manage Users
+          </Link>
+        </div>
       </div>
 
       {/* Pending activations banner */}

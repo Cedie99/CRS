@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, Copy, Check, Link as LinkIcon, Building2, Flame, Star, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 const CUSTOMER_TYPES = [
   {
@@ -71,7 +71,10 @@ export default function NewCisPage() {
       }
       const link = `${window.location.origin}/form/${json.publicToken}`;
       setGeneratedLink(link);
-      toast.success("Customer form link generated.");
+      toast.success({
+        title: "Customer form link generated.",
+        description: "Send the link to your customer to start their submission.",
+      });
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -82,7 +85,10 @@ export default function NewCisPage() {
   async function handleCopy() {
     await navigator.clipboard.writeText(generatedLink);
     setCopied(true);
-    toast.success("Link copied to clipboard.");
+    toast.success({
+      title: "Link copied to clipboard.",
+      description: "Ready to share via chat or email.",
+    });
     setTimeout(() => setCopied(false), 2000);
   }
 

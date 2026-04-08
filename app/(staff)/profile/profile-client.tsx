@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Camera, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 const ROLE_LABELS: Record<string, string> = {
   sales_agent: "Sales Agent",
@@ -67,7 +67,10 @@ export function ProfileClient({
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("File must be under 2MB");
+      toast.error({
+        title: "File must be under 2MB",
+        description: "Choose a smaller image and try again.",
+      });
       return;
     }
 
@@ -79,15 +82,24 @@ export function ProfileClient({
       const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error ?? "Upload failed");
+        toast.error({
+          title: "Upload failed",
+          description: json.error ?? "Please try a different file.",
+        });
         return;
       }
       setAvatarUrl(json.avatarUrl);
-      toast.success("Avatar updated.");
+      toast.success({
+        title: "Avatar updated.",
+        description: "Your new profile photo is now visible.",
+      });
       await updateSession({ avatarUrl: json.avatarUrl });
       startTransition(() => router.refresh());
     } catch {
-      toast.error("Upload failed. Please try again.");
+      toast.error({
+        title: "Upload failed",
+        description: "Please try again.",
+      });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -99,15 +111,24 @@ export function ProfileClient({
     try {
       const res = await fetch("/api/profile/avatar", { method: "DELETE" });
       if (!res.ok) {
-        toast.error("Failed to remove avatar");
+        toast.error({
+          title: "Failed to remove avatar",
+          description: "Please try again.",
+        });
         return;
       }
       setAvatarUrl(null);
-      toast.success("Avatar removed.");
+      toast.success({
+        title: "Avatar removed.",
+        description: "Your initials will be shown until you upload a new photo.",
+      });
       await updateSession({ avatarUrl: null });
       startTransition(() => router.refresh());
     } catch {
-      toast.error("Something went wrong.");
+      toast.error({
+        title: "Something went wrong.",
+        description: "Please try again.",
+      });
     } finally {
       setUploading(false);
     }
@@ -126,14 +147,23 @@ export function ProfileClient({
       const json = await res.json();
       if (!res.ok) {
         setProfileErrors(json.error ?? {});
-        toast.error("Failed to update profile.");
+        toast.error({
+          title: "Failed to update profile.",
+          description: "Check the form fields and try again.",
+        });
         return;
       }
-      toast.success("Profile updated.");
+      toast.success({
+        title: "Profile updated.",
+        description: "Your account details were saved.",
+      });
       await updateSession({ name: json.fullName, email: json.email });
       startTransition(() => router.refresh());
     } catch {
-      toast.error("Something went wrong.");
+      toast.error({
+        title: "Something went wrong.",
+        description: "Please try again.",
+      });
     } finally {
       setSavingProfile(false);
     }
@@ -152,15 +182,24 @@ export function ProfileClient({
       const json = await res.json();
       if (!res.ok) {
         setPasswordErrors(json.error ?? {});
-        toast.error("Failed to update password.");
+        toast.error({
+          title: "Failed to update password.",
+          description: "Please verify your current password and retry.",
+        });
         return;
       }
-      toast.success("Password updated.");
+      toast.success({
+        title: "Password updated.",
+        description: "Use your new password the next time you sign in.",
+      });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      toast.error("Something went wrong.");
+      toast.error({
+        title: "Something went wrong.",
+        description: "Please try again.",
+      });
     } finally {
       setSavingPassword(false);
     }

@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ArrowRight, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 interface LegalActionsProps {
   cisId: string;
@@ -64,7 +64,13 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "forward" ? "Forwarded to Finance." : "Submission denied.");
+      toast.success({
+        title: action === "forward" ? "Forwarded to Finance." : "Submission denied.",
+        description:
+          action === "forward"
+            ? "Finance can now review this submission."
+            : "The requester will see the denial status update.",
+      });
       router.push("/legal");
       router.refresh();
     } catch {

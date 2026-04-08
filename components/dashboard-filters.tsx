@@ -4,6 +4,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useCallback, useState } from "react";
 import { Search, SlidersHorizontal, X, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -143,6 +144,8 @@ export function DashboardFilters({
             />
             <Search className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
           </div>
+
+          <DashboardRefreshButton />
 
           {/* Archived toggle */}
           {showArchivedToggle && (

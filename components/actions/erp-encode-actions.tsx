@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 interface ErpEncodeActionsProps {
   cisId: string;
@@ -31,7 +31,10 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
         setConfirming(false);
         return;
       }
-      toast.success("Customer marked as onboarded.");
+      toast.success({
+        title: "Customer marked as onboarded.",
+        description: "This submission is now completed in the workflow.",
+      });
       router.push(backHref);
       router.refresh();
     } catch {

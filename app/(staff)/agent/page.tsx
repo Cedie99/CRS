@@ -206,6 +206,19 @@ export default async function AgentDashboard({
         <CurrentDate />
       </div>
 
+      <DashboardFilters
+        quickFilters={!showArchived ? [
+          { value: "", label: "All" },
+          { value: "draft", label: "Draft" },
+          { value: "submitted", label: "Submitted" },
+          { value: "approved", label: "Approved" },
+          { value: "erp_encoded", label: "Onboarded" },
+        ] : undefined}
+        showStatusFilter={!effectiveShowArchived}
+        showArchivedToggle={supportsArchived}
+        archivedCount={archivedCount}
+      />
+
       {/* Stats — hidden in archived view */}
       {!effectiveShowArchived && <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
@@ -237,19 +250,6 @@ export default async function AgentDashboard({
           </div>
         ))}
       </div>}
-
-      <DashboardFilters
-        quickFilters={!showArchived ? [
-          { value: "", label: "All" },
-          { value: "draft", label: "Draft" },
-          { value: "submitted", label: "Submitted" },
-          { value: "approved", label: "Approved" },
-          { value: "erp_encoded", label: "Onboarded" },
-        ] : undefined}
-        showStatusFilter={!effectiveShowArchived}
-        showArchivedToggle={supportsArchived}
-        archivedCount={archivedCount}
-      />
 
       {submissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">

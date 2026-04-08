@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -19,7 +19,7 @@ export async function GET() {
     })
     .from(users)
     .where(eq(users.isActive, false))
-    .orderBy(users.createdAt);
+    .orderBy(desc(users.createdAt));
 
   return NextResponse.json(pending);
 }

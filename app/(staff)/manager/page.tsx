@@ -250,6 +250,8 @@ export default async function ManagerDashboard({
         )}
       </div>
 
+      <DashboardFilters showStatusFilter />
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
@@ -342,8 +344,6 @@ export default async function ManagerDashboard({
             {historyTotal} submission{historyTotal !== 1 ? "s" : ""}
           </span>
         </div>
-
-        <DashboardFilters showStatusFilter />
 
         {historyTotal === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-16 text-center">

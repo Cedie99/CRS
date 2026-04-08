@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 export function CopyLinkButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
@@ -18,7 +18,10 @@ export function CopyLinkButton({ token }: { token: string }) {
       `${window.location.origin}/form/${token}`
     );
     setCopied(true);
-    toast.success("Link copied to clipboard.");
+    toast.success({
+      title: "Link copied to clipboard.",
+      description: "You can now paste and share the customer form link.",
+    });
     setTimeout(() => setCopied(false), 2000);
   }
 

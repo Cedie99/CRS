@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, UserCheck, UserX, Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 import { formatDistanceToNow } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -121,7 +121,10 @@ export function UserManagementTable({
             : u
         )
       );
-      toast.success("User updated.");
+          toast.success({
+            title: "User updated.",
+            description: "Role and assignment changes were saved.",
+          });
       setEditingUser(null);
       router.refresh();
     } catch {
@@ -137,16 +140,25 @@ export function UserManagementTable({
     try {
       const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
       if (!res.ok) {
-        toast.error("Failed to deactivate user.");
+        toast.error({
+          title: "Failed to deactivate user.",
+          description: "Please try again or refresh the page.",
+        });
         return;
       }
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, isActive: false } : u))
       );
-      toast.success("User deactivated.");
+      toast.success({
+        title: "User deactivated.",
+        description: "The account can no longer sign in.",
+      });
       router.refresh();
     } catch {
-      toast.error("Something went wrong.");
+      toast.error({
+        title: "Something went wrong.",
+        description: "Please try again in a moment.",
+      });
     } finally {
       setIsLoading(false);
     }

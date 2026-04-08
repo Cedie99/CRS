@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
 import { CheckCircle, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { sileo as toast } from "sileo";
 
 interface ApproverActionsProps {
   cisId: string;
@@ -79,7 +79,13 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success(action === "approve" ? "Customer approved." : "Submission denied.");
+      toast.success({
+        title: action === "approve" ? "Customer approved." : "Submission denied.",
+        description:
+          action === "approve"
+            ? "Sales Support can now onboard this customer."
+            : "The submission was closed with a denied status.",
+      });
       router.push("/approver");
       router.refresh();
     } catch {

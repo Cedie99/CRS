@@ -118,6 +118,8 @@ export default async function SupportDashboard({
         </p>
       </div>
 
+      <DashboardFilters showStatusFilter={false} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
@@ -134,8 +136,6 @@ export default async function SupportDashboard({
           </div>
         ))}
       </div>
-
-      <DashboardFilters showStatusFilter={false} />
 
       {/* Pending ERP encoding */}
       <section className="space-y-4">
