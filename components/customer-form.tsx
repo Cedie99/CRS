@@ -217,6 +217,15 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [businessActivity, setBusinessActivity] = useState("");
   const [paymentTerms, setPaymentTerms]         = useState("");
 
+  // Controlled phone/sanitized inputs — direct DOM mutation (e.currentTarget.value = …)
+  // doesn't update @base-ui/react InputPrimitive's internal state, so values get
+  // reset on re-renders when the step div transitions to display:none.
+  const [contactNumber, setContactNumber]       = useState("");
+  const [telephoneNumber, setTelephoneNumber]   = useState("");
+  const [deliveryMobile, setDeliveryMobile]     = useState("");
+  const [deliveryTelephone, setDeliveryTelephone] = useState("");
+  const [tinNumber, setTinNumber]               = useState("");
+
   // Delivery same as office
   const [deliverySameAsOffice, setDeliverySameAsOffice] = useState(false);
 
@@ -267,7 +276,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       if (!fd.get("tradeName")) errs.tradeName = "Required";
       if (!fd.get("contactPerson")) errs.contactPerson = "Required";
       if (!fd.get("emailAddress")) errs.emailAddress = "Required";
-      if (!fd.get("contactNumber")) errs.contactNumber = "Required";
+      if (!contactNumber) errs.contactNumber = "Required";
     }
     if (step === 2) {
       if (!fd.get("businessAddress")) errs.businessAddress = "Required";
@@ -338,8 +347,8 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
 
       contactPerson:    fd.get("contactPerson") as string,
       emailAddress:     fd.get("emailAddress") as string,
-      contactNumber:    fd.get("contactNumber") as string,
-      telephoneNumber:  (fd.get("telephoneNumber") as string) || undefined,
+      contactNumber,
+      telephoneNumber:  telephoneNumber || undefined,
       website:          (fd.get("website") as string) || undefined,
 
       businessAddress:  fd.get("businessAddress") as string,
@@ -349,15 +358,15 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       deliverySameAsOffice,
       deliveryAddress:   deliverySameAsOffice ? undefined : (fd.get("deliveryAddress") as string) || undefined,
       deliveryLandmarks: deliverySameAsOffice ? undefined : (fd.get("deliveryLandmarks") as string) || undefined,
-      deliveryMobile:    deliverySameAsOffice ? undefined : (fd.get("deliveryMobile") as string) || undefined,
-      deliveryTelephone: deliverySameAsOffice ? undefined : (fd.get("deliveryTelephone") as string) || undefined,
+      deliveryMobile:    deliverySameAsOffice ? undefined : deliveryMobile || undefined,
+      deliveryTelephone: deliverySameAsOffice ? undefined : deliveryTelephone || undefined,
 
       lineOfBusiness:        lineOfBusiness || undefined,
       lineOfBusinessOther:   (fd.get("lineOfBusinessOther") as string) || undefined,
       businessActivity:      businessActivity || undefined,
       businessActivityOther: (fd.get("businessActivityOther") as string) || undefined,
       businessType,
-      tinNumber:             (fd.get("tinNumber") as string) || undefined,
+      tinNumber:             tinNumber || undefined,
 
       owners:       cleanOwners.length ? cleanOwners : undefined,
       officers:     cleanOfficers.length ? cleanOfficers : undefined,
@@ -494,9 +503,8 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     placeholder="09XX XXX XXXX"
                     inputMode="tel"
                     title="Use numbers and phone symbols only"
-                    onChange={(e) => {
-                      e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
-                    }}
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(sanitizePhoneInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.contactNumber && <p className="text-xs text-red-600">{errors.contactNumber}</p>}
@@ -509,9 +517,8 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     placeholder="(02) XXXX-XXXX"
                     inputMode="tel"
                     title="Use numbers and phone symbols only"
-                    onChange={(e) => {
-                      e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
-                    }}
+                    value={telephoneNumber}
+                    onChange={(e) => setTelephoneNumber(sanitizePhoneInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.telephoneNumber && <p className="text-xs text-red-600">{errors.telephoneNumber}</p>}
@@ -577,11 +584,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                         name="deliveryMobile"
                         placeholder="09XX XXX XXXX"
                         inputMode="tel"
-                        pattern="[0-9+\(\) -]*"
                         title="Use numbers and phone symbols only"
-                        onChange={(e) => {
-                          e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
-                        }}
+                        value={deliveryMobile}
+                        onChange={(e) => setDeliveryMobile(sanitizePhoneInput(e.target.value))}
                         disabled={isLoading}
                       />
                       {errors.deliveryMobile && <p className="text-xs text-red-600">{errors.deliveryMobile}</p>}
@@ -593,11 +598,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                         name="deliveryTelephone"
                         placeholder="(02) XXXX-XXXX"
                         inputMode="tel"
-                        pattern="[0-9+\(\) -]*"
                         title="Use numbers and phone symbols only"
-                        onChange={(e) => {
-                          e.currentTarget.value = sanitizePhoneInput(e.currentTarget.value);
-                        }}
+                        value={deliveryTelephone}
+                        onChange={(e) => setDeliveryTelephone(sanitizePhoneInput(e.target.value))}
                         disabled={isLoading}
                       />
                       {errors.deliveryTelephone && <p className="text-xs text-red-600">{errors.deliveryTelephone}</p>}
@@ -667,11 +670,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     name="tinNumber"
                     placeholder="000-000-000-000"
                     inputMode="numeric"
-                    pattern="[0-9-]*"
                     title="Use numbers and hyphens only"
-                    onChange={(e) => {
-                      e.currentTarget.value = sanitizeTinInput(e.currentTarget.value);
-                    }}
+                    value={tinNumber}
+                    onChange={(e) => setTinNumber(sanitizeTinInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.tinNumber && <p className="text-xs text-red-600">{errors.tinNumber}</p>}
