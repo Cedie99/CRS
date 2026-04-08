@@ -15,6 +15,8 @@ export interface SignaturePadRef {
   clear: () => void;
   toDataURL: () => string;
   isEmpty: () => boolean;
+  /** Explicitly size the canvas — call when the pad becomes visible after being hidden. */
+  init: () => void;
 }
 
 interface SignaturePadProps {
@@ -69,40 +71,39 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       onChangeRef.current?.(true);
     }, []);
 
+    // ── Canvas sizing ──────────────────────────────────────────────────────────
+    const initCanvas = useCallback(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      const newW = Math.round(rect.width * dpr);
+      const newH = Math.round(rect.height * dpr);
+      // Skip if dimensions haven't changed (avoids clearing a drawn signature
+      // on minor layout shifts or repeated observer callbacks).
+      if (canvas.width === newW && canvas.height === newH) return;
+      canvas.width = newW;
+      canvas.height = newH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(dpr, dpr);
+    }, []);
+
     useImperativeHandle(ref, () => ({
       clear,
       toDataURL: () => canvasRef.current?.toDataURL("image/png") ?? "",
       isEmpty: () => emptyRef.current,
+      init: initCanvas,
     }));
 
-    // ── Canvas sizing ──────────────────────────────────────────────────────────
-    // Uses ResizeObserver so the canvas is correctly sized even when it starts
-    // inside a hidden (display:none) step and becomes visible later.
     useEffect(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-
-      const initCanvas = () => {
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width === 0) return;
-        const dpr = window.devicePixelRatio || 1;
-        const newW = Math.round(rect.width * dpr);
-        const newH = Math.round(rect.height * dpr);
-        // Skip if dimensions haven't changed (avoids clearing a drawn signature
-        // on minor layout shifts or repeated observer callbacks).
-        if (canvas.width === newW && canvas.height === newH) return;
-        canvas.width = newW;
-        canvas.height = newH;
-        const ctx = canvas.getContext("2d")!;
-        ctx.scale(dpr, dpr);
-      };
-
       const observer = new ResizeObserver(initCanvas);
       observer.observe(canvas);
       initCanvas(); // Immediate attempt (works when canvas is already visible)
-
       return () => observer.disconnect();
-    }, []);
+    }, [initCanvas]);
 
     // ── Drawing event listeners ────────────────────────────────────────────────
     useEffect(() => {

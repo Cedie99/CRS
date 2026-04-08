@@ -238,6 +238,17 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [declarationError, setDeclarationError] = useState("");
 
+  // When the user navigates to the signature step, explicitly size the canvas.
+  // ResizeObserver alone is unreliable when a parent transitions from display:none
+  // in some production browser environments.
+  useEffect(() => {
+    if (currentStep === TOTAL_STEPS) {
+      requestAnimationFrame(() => {
+        signatureRef.current?.init();
+      });
+    }
+  }, [currentStep]);
+
   function setDocFiles(key: string, files: FileEntry[]) {
     setDocs((prev) => ({ ...prev, [key]: files }));
   }
