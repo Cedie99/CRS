@@ -25,20 +25,26 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user, trigger, session }: any) {
       if (user) {
         token.id = user.id;
+        token.name = user.name ?? token.name;
+        token.email = user.email ?? token.email;
         token.role = user.role;
         token.agentCode = user.agentCode ?? null;
         token.agentType = user.agentType ?? null;
         token.avatarUrl = user.avatarUrl ?? null;
       }
-      // Called from client via useSession().update({ avatarUrl })
-      if (trigger === "update" && session?.avatarUrl !== undefined) {
-        token.avatarUrl = session.avatarUrl;
+      // Called from client via useSession().update({ ... })
+      if (trigger === "update") {
+        if (session?.name !== undefined) token.name = session.name;
+        if (session?.email !== undefined) token.email = session.email;
+        if (session?.avatarUrl !== undefined) token.avatarUrl = session.avatarUrl;
       }
       return token;
     },
     session({ session, token }: any) {
       if (token) {
         session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
         session.user.role = token.role;
         session.user.agentCode = token.agentCode ?? null;
         session.user.agentType = token.agentType ?? null;
