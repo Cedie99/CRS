@@ -237,6 +237,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const onSignatureChange = useCallback((isEmpty: boolean) => setSignatureEmpty(isEmpty), []);
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [declarationError, setDeclarationError] = useState("");
+  const [debugStep, setDebugStep] = useState("idle");
 
   // When the user navigates to the signature step, explicitly size the canvas.
   // ResizeObserver alone is unreliable when a parent transitions from display:none
@@ -302,22 +303,26 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   }
 
   async function handleSubmit() {
+    setDebugStep("started");
     setErrors({});
     setDeclarationError("");
 
     const fd = new FormData(formRef.current!);
 
     if (signatureRef.current?.isEmpty()) {
+      setDebugStep("blocked:sig-ref-empty");
       setErrors({ customerSignature: "Signature is required" });
       return;
     }
 
     if (!declarationChecked) {
+      setDebugStep("blocked:declaration");
       setDeclarationError("Please confirm the declaration before submitting.");
       return;
     }
 
     const customerSignature = signatureRef.current?.toDataURL() ?? "";
+    setDebugStep("got-signature-len:" + customerSignature.length);
 
     // Filter out empty rows
     const cleanOwners   = owners.filter((r) => r.name.trim());
@@ -373,10 +378,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     const parsed = cisFormSchema.safeParse(data);
     if (!parsed.success) {
       const fe = parsed.error.flatten().fieldErrors;
+      setDebugStep("blocked:zod:" + Object.keys(fe).join(","));
       setErrors(Object.fromEntries(Object.entries(fe).map(([k, v]) => [k, v?.[0]])));
       return;
     }
 
+    setDebugStep("fetching");
     setIsLoading(true);
     try {
       const res = await fetch(`/api/form/${token}`, {
@@ -932,6 +939,8 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             <p>declarationChecked: {String(declarationChecked)} ({!declarationChecked ? "UNCHECKED" : "OK"})</p>
             <p>isLoading: {String(isLoading)}</p>
             <p>submitDisabled: {String(submitDisabled)}</p>
+            <p>debugStep: {debugStep}</p>
+            <p>errors: {JSON.stringify(errors)}</p>
           </div>
 
           {/* ── Navigation ── */}
