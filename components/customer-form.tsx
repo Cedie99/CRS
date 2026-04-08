@@ -924,6 +924,16 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             </section>
           </div>
 
+          {/* ── DEBUG PANEL (temporary) ── */}
+          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-mono text-amber-800 space-y-0.5">
+            <p>DEBUG — step: {currentStep}</p>
+            <p>businessType: &quot;{businessType}&quot; ({!businessType ? "MISSING" : "OK"})</p>
+            <p>signatureEmpty: {String(signatureEmpty)} ({signatureEmpty ? "EMPTY" : "OK"})</p>
+            <p>declarationChecked: {String(declarationChecked)} ({!declarationChecked ? "UNCHECKED" : "OK"})</p>
+            <p>isLoading: {String(isLoading)}</p>
+            <p>submitDisabled: {String(submitDisabled)}</p>
+          </div>
+
           {/* ── Navigation ── */}
           <div className="flex items-center gap-3 pt-2">
             {currentStep > 1 && (
