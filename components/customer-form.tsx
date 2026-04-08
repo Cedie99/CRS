@@ -202,6 +202,21 @@ function sanitizeTinInput(value: string) {
   return value.replace(/[^0-9-]/g, "");
 }
 
+function sanitizeDigitsInput(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function sanitizeDecimalInput(value: string) {
+  const cleaned = value.replace(/[^0-9.]/g, "");
+  const firstDot = cleaned.indexOf(".");
+  if (firstDot === -1) return cleaned;
+  return `${cleaned.slice(0, firstDot + 1)}${cleaned.slice(firstDot + 1).replace(/\./g, "")}`;
+}
+
+function sanitizeAccountNumberInput(value: string) {
+  return value.replace(/[^0-9\-\s]/g, "");
+}
+
 export function CustomerForm({ token, agentCode, customerType }: CustomerFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -225,6 +240,10 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [deliveryMobile, setDeliveryMobile]     = useState("");
   const [deliveryTelephone, setDeliveryTelephone] = useState("");
   const [tinNumber, setTinNumber]               = useState("");
+  const [numberOfEmployees, setNumberOfEmployees] = useState("");
+  const [businessLife, setBusinessLife] = useState("");
+  const [howLongAtAddress, setHowLongAtAddress] = useState("");
+  const [numberOfBranches, setNumberOfBranches] = useState("");
 
   // Delivery same as office
   const [deliverySameAsOffice, setDeliverySameAsOffice] = useState(false);
@@ -343,7 +362,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       corporateName:     fd.get("corporateName") as string,
       tradeName:         fd.get("tradeName") as string,
       dateOfBusinessReg: (fd.get("dateOfBusinessReg") as string) || undefined,
-      numberOfEmployees: (fd.get("numberOfEmployees") as string) || undefined,
+      numberOfEmployees: numberOfEmployees || undefined,
 
       contactPerson:    fd.get("contactPerson") as string,
       emailAddress:     fd.get("emailAddress") as string,
@@ -372,9 +391,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       officers:     cleanOfficers.length ? cleanOfficers : undefined,
       paymentTerms: paymentTerms || undefined,
 
-      businessLife:      (fd.get("businessLife") as string) || undefined,
-      howLongAtAddress:  (fd.get("howLongAtAddress") as string) || undefined,
-      numberOfBranches:  (fd.get("numberOfBranches") as string) || undefined,
+      businessLife:      businessLife || undefined,
+      howLongAtAddress:  howLongAtAddress || undefined,
+      numberOfBranches:  numberOfBranches || undefined,
       tradeReferences:   cleanTradeRefs.length ? cleanTradeRefs : undefined,
       bankReferences:    cleanBankRefs.length ? cleanBankRefs : undefined,
       achievements:      (fd.get("achievements") as string) || undefined,
@@ -468,11 +487,13 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   <Input
                     id="numberOfEmployees"
                     name="numberOfEmployees"
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    title="Use numbers only"
                     placeholder="e.g. 10"
+                    value={numberOfEmployees}
+                    onChange={(e) => setNumberOfEmployees(sanitizeDigitsInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.numberOfEmployees && <p className="text-xs text-red-600">{errors.numberOfEmployees}</p>}
@@ -670,6 +691,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     name="tinNumber"
                     placeholder="000-000-000-000"
                     inputMode="numeric"
+                    pattern="[0-9-]*"
                     title="Use numbers and hyphens only"
                     value={tinNumber}
                     onChange={(e) => setTinNumber(sanitizeTinInput(e.target.value))}
@@ -697,12 +719,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     key: "percentage",
                     label: "% ownership",
                     placeholder: "50",
-                    type: "number",
+                    type: "text",
                     inputMode: "decimal",
-                    min: 0,
-                    max: 100,
-                    step: 0.01,
+                    pattern: "^100(\\.0+)?$|^\\d{1,2}(\\.\\d+)?$",
                     title: "Enter a value from 0 to 100",
+                    sanitize: sanitizeDecimalInput,
                   },
                   {
                     key: "contact",
@@ -788,11 +809,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   <Input
                     id="businessLife"
                     name="businessLife"
-                    type="number"
-                    min={0}
-                    step={0.1}
+                    type="text"
                     inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     placeholder="e.g. 5"
+                    value={businessLife}
+                    onChange={(e) => setBusinessLife(sanitizeDecimalInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.businessLife && <p className="text-xs text-red-600">{errors.businessLife}</p>}
@@ -802,11 +824,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   <Input
                     id="howLongAtAddress"
                     name="howLongAtAddress"
-                    type="number"
-                    min={0}
-                    step={0.1}
+                    type="text"
                     inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     placeholder="e.g. 3"
+                    value={howLongAtAddress}
+                    onChange={(e) => setHowLongAtAddress(sanitizeDecimalInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.howLongAtAddress && <p className="text-xs text-red-600">{errors.howLongAtAddress}</p>}
@@ -816,11 +839,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   <Input
                     id="numberOfBranches"
                     name="numberOfBranches"
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="e.g. 2"
+                    value={numberOfBranches}
+                    onChange={(e) => setNumberOfBranches(sanitizeDigitsInput(e.target.value))}
                     disabled={isLoading}
                   />
                   {errors.numberOfBranches && <p className="text-xs text-red-600">{errors.numberOfBranches}</p>}
@@ -850,11 +874,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                       key: "years",
                       label: "Years known",
                       placeholder: "2",
-                      type: "number",
+                      type: "text",
                       inputMode: "decimal",
-                      min: 0,
-                      step: 0.1,
+                      pattern: "[0-9]*[.]?[0-9]*",
                       title: "Enter years as a number",
+                      sanitize: sanitizeDecimalInput,
                     },
                   ]}
                 />
@@ -870,8 +894,20 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   columns={[
                     { key: "bank",        label: "Bank name",    placeholder: "BDO" },
                     { key: "branch",      label: "Branch",       placeholder: "Makati Branch" },
-                    { key: "accountType", label: "Account type", placeholder: "Savings" },
-                    { key: "accountNo",   label: "Account no.",  placeholder: "1234-5678-9012" },
+                    {
+                      key: "accountType",
+                      label: "Account type",
+                      placeholder: "Savings",
+                    },
+                    {
+                      key: "accountNo",
+                      label: "Account no.",
+                      placeholder: "1234-5678-9012",
+                      inputMode: "numeric",
+                      pattern: "[0-9\\-\\s]*",
+                      title: "Use digits, spaces, or hyphens only",
+                      sanitize: sanitizeAccountNumberInput,
+                    },
                   ]}
                 />
               </div>

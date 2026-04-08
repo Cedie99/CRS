@@ -5,6 +5,12 @@ const DIGITS_OPTIONAL_DECIMAL = /^\d+(\.\d+)?$/;
 const PERCENTAGE = /^(100(\.0+)?|\d{1,2}(\.\d+)?)%?$/;
 const PHONE_CHARS = /^[0-9+()\-\s]*$/;
 const TIN_FORMAT = /^[0-9-]+$/;
+const ACCOUNT_NUMBER_FORMAT = /^[0-9\-\s]+$/;
+const ACCOUNT_TYPE_FORMAT = /^[A-Za-z0-9\s/&()\-]+$/;
+
+function digitCount(value: string) {
+  return value.replace(/\D/g, "").length;
+}
 
 const numericString = (label: string) =>
   z
@@ -24,7 +30,22 @@ const phoneLikeString = (label: string, min = 7) =>
     .trim()
     .min(min, `${label} is required`)
     .max(50)
-    .regex(PHONE_CHARS, `${label} must contain numbers and phone symbols only`);
+    .regex(PHONE_CHARS, `${label} must contain numbers and phone symbols only`)
+    .refine((value) => digitCount(value) >= min, {
+      message: `${label} must include at least ${min} digits`,
+    });
+
+const optionalPhoneLikeString = (label: string, min = 7) =>
+  z
+    .string()
+    .trim()
+    .max(50)
+    .regex(PHONE_CHARS, `${label} must contain numbers and phone symbols only`)
+    .refine((value) => value === "" || digitCount(value) >= min, {
+      message: `${label} must include at least ${min} digits`,
+    })
+    .optional()
+    .or(z.literal(""));
 
 export const initiateSchema = z.object({
   customerType: z.enum(["standard", "fs_petroleum", "special"]),
@@ -85,8 +106,24 @@ const tradeRefRowSchema = z.object({
 const bankRefRowSchema = z.object({
   bank: z.string().max(255),
   branch: z.string().max(255),
-  accountType: z.string().max(100),
-  accountNo: z.string().max(100),
+  accountType: z
+    .string()
+    .trim()
+    .min(2, "Account type is required")
+    .max(100)
+    .regex(ACCOUNT_TYPE_FORMAT, "Account type contains invalid characters"),
+  accountNo: z
+    .string()
+    .trim()
+    .min(6, "Account number must be at least 6 characters")
+    .max(30, "Account number is too long")
+    .regex(ACCOUNT_NUMBER_FORMAT, "Account number must contain digits, spaces, or hyphens only")
+    .refine((value) => {
+      const digits = digitCount(value);
+      return digits >= 6 && digits <= 20;
+    }, {
+      message: "Account number must contain 6 to 20 digits",
+    }),
 });
 
 export const cisFormSchema = z.object({
@@ -100,7 +137,7 @@ export const cisFormSchema = z.object({
   contactPerson: z.string().min(2, "Contact person is required").max(255),
   emailAddress: z.string().email("Invalid email address"),
   contactNumber: phoneLikeString("Contact number"),
-  telephoneNumber: z.string().trim().max(50).regex(PHONE_CHARS, "Telephone number must contain numbers and phone symbols only").optional(),
+  telephoneNumber: optionalPhoneLikeString("Telephone number"),
   website: z.string().max(255).optional().or(z.literal("")),
 
   // Office Address
@@ -112,8 +149,8 @@ export const cisFormSchema = z.object({
   deliverySameAsOffice: z.boolean().optional(),
   deliveryAddress: z.string().max(500).optional(),
   deliveryLandmarks: z.string().max(500).optional(),
-  deliveryMobile: z.string().trim().max(50).regex(PHONE_CHARS, "Delivery mobile must contain numbers and phone symbols only").optional(),
-  deliveryTelephone: z.string().trim().max(50).regex(PHONE_CHARS, "Delivery telephone must contain numbers and phone symbols only").optional(),
+  deliveryMobile: optionalPhoneLikeString("Delivery mobile"),
+  deliveryTelephone: optionalPhoneLikeString("Delivery telephone"),
 
   // Business Classification
   lineOfBusiness: z.string().max(100).optional(),
@@ -127,7 +164,20 @@ export const cisFormSchema = z.object({
     "cooperative",
     "other",
   ]),
-  tinNumber: z.string().trim().max(50).regex(TIN_FORMAT, "TIN must contain numbers and hyphens only").optional(),
+  tinNumber: z
+    .string()
+    .trim()
+    .max(50)
+    .regex(TIN_FORMAT, "TIN must contain numbers and hyphens only")
+    .refine((value) => {
+      if (!value) return true;
+      const digits = digitCount(value);
+      return digits >= 9 && digits <= 15;
+    }, {
+      message: "TIN must contain 9 to 15 digits",
+    })
+    .optional()
+    .or(z.literal("")),
 
   // Ownership
   owners: z.array(ownerRowSchema).optional(),
