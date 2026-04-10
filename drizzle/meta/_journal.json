@@ -15,6 +15,13 @@
       "when": 1774600386230,
       "tag": "0001_tan_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775786207530,
+      "tag": "0002_cloudy_nocturne",
+      "breakpoints": true
     }
   ]
 }

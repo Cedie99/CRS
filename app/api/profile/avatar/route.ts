@@ -3,16 +3,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import path from "path";
-import fs from "fs/promises";
+import { put, del } from "@vercel/blob";
 
-const AVATAR_DIR = path.join(process.cwd(), "public", "uploads", "avatars");
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-
-async function ensureDir() {
-  await fs.mkdir(AVATAR_DIR, { recursive: true });
-}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -40,13 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const filename = `${session.user.id}.${ext}`;
-  const filepath = path.join(AVATAR_DIR, filename);
-
-  await ensureDir();
-  await fs.writeFile(filepath, Buffer.from(bytes));
-
-  const avatarUrl = `/uploads/avatars/${filename}`;
+  const { url: avatarUrl } = await put(`avatars/${session.user.id}.${ext}`, file, { access: "public" });
 
   await db
     .update(users)
@@ -70,12 +58,10 @@ export async function DELETE() {
     .limit(1);
 
   if (user?.avatarUrl) {
-    const filename = path.basename(user.avatarUrl);
-    const filepath = path.join(AVATAR_DIR, filename);
     try {
-      await fs.unlink(filepath);
+      await del(user.avatarUrl);
     } catch {
-      // File might already be gone — ignore
+      // Blob might already be gone — ignore
     }
   }
 

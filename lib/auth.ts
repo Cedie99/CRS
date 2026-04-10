@@ -21,6 +21,9 @@ const STAFF_ROUTES: Record<string, string> = {
 export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  cookies: {
+    sessionToken: { name: "cis.session-token" },
+  },
   callbacks: {
     jwt({ token, user, trigger, session }: any) {
       if (user) {

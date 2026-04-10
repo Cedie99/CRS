@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { eq, desc, or, inArray, and } from "drizzle-orm";
+import { eq, desc, inArray, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users, workflowEvents, notifications } from "@/lib/db/schema";
 import { cisFormSchema, initiateSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 
+type CisStatus = typeof cisSubmissions.status._.data;
+
 // Role → which statuses to show in their queue
-const ROLE_STATUS_FILTER: Record<string, string[]> = {
+const ROLE_STATUS_FILTER: Record<string, CisStatus[]> = {
   sales_agent: ["draft", "submitted", "pending_endorsement", "pending_legal_review", "pending_finance_review", "pending_approval", "approved", "erp_encoded", "denied", "returned"],
   rsr: ["draft", "submitted", "pending_endorsement", "pending_legal_review", "pending_finance_review", "pending_approval", "approved", "erp_encoded", "denied", "returned"],
   sales_manager: ["pending_endorsement"],
@@ -78,6 +80,8 @@ export async function GET() {
       .orderBy(desc(cisSubmissions.createdAt));
   } else {
     // All other staff roles: filter by their allowed statuses
+    if (allowedStatuses.length === 0) return NextResponse.json([]);
+
     rows = await db
       .select({
         id: cisSubmissions.id,
@@ -92,9 +96,8 @@ export async function GET() {
       })
       .from(cisSubmissions)
       .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+      .where(inArray(cisSubmissions.status, allowedStatuses))
       .orderBy(desc(cisSubmissions.createdAt));
-
-    rows = rows.filter((r) => allowedStatuses.includes(r.status));
   }
 
   return NextResponse.json(rows);

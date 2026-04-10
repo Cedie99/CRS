@@ -8,6 +8,7 @@ import {
   pgEnum,
   jsonb,
   integer,
+  index,
 } from "drizzle-orm/pg-core";
 
 // --- Enums ---
@@ -86,7 +87,9 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(false), // Admin activates
   avatarUrl: varchar("avatar_url", { length: 500 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("users_manager_id_idx").on(t.managerId),
+]);
 
 export const cisSubmissions = pgTable("cis_submissions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -204,7 +207,11 @@ export const cisSubmissions = pgTable("cis_submissions", {
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("cis_agent_id_created_at_idx").on(t.agentId, t.createdAt.desc()),
+  index("cis_agent_id_status_created_at_idx").on(t.agentId, t.status, t.createdAt.desc()),
+  index("cis_status_updated_at_idx").on(t.status, t.updatedAt.desc()),
+]);
 
 export const workflowEvents = pgTable("workflow_events", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -217,7 +224,9 @@ export const workflowEvents = pgTable("workflow_events", {
   action: workflowActionEnum("action").notNull(),
   note: text("note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("workflow_events_cis_id_created_at_idx").on(t.cisId, t.createdAt),
+]);
 
 export const notifications = pgTable("notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -232,7 +241,9 @@ export const notifications = pgTable("notifications", {
   isRead: boolean("is_read").notNull().default(false),
   status: notifStatusEnum("status").notNull().default("pending"),
   sentAt: timestamp("sent_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("notifications_recipient_id_sent_at_idx").on(t.recipientId, t.sentAt.desc()),
+]);
 
 // --- Inferred types ---
 

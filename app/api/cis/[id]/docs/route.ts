@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import path from "path";
-import fs from "fs/promises";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
@@ -13,6 +11,7 @@ import {
   type DocType,
   type FileEntry,
 } from "@/lib/doc-types";
+import { put, del } from "@vercel/blob";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -115,11 +114,8 @@ export async function POST(
   }
 
   const safeFilename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "cis", cis.id, docType);
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, safeFilename), Buffer.from(bytes));
+  const { url } = await put(`cis/${cis.id}/${docType}/${safeFilename}`, file, { access: "public" });
 
-  const url = `/uploads/cis/${cis.id}/${docType}/${safeFilename}`;
   const entry: FileEntry = {
     name: file.name,
     url,
@@ -193,13 +189,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const relativePath = url.replace(/^\//, "");
-  const filePath = path.join(process.cwd(), "public", relativePath);
-  try {
-    await fs.unlink(filePath);
-  } catch {
-    // File may have already been removed.
-  }
+  try { await del(url); } catch { /* already gone */ }
 
   const colKey = DOC_COLUMN_MAP[docType as DocType];
   const existing = (cis[colKey] as FileEntry[] | null) ?? [];
