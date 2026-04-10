@@ -1,6 +1,6 @@
 # CRS Scalability Gaps and Findings Tracker
 
-Last updated: 2026-04-08
+Last updated: 2026-04-10
 Status legend: [ ] Not started, [~] In progress, [x] Done
 
 ## Purpose
@@ -12,7 +12,8 @@ It is intended to be updated regularly as improvements are implemented.
 
 - Current architecture is workable for early production.
 - Not yet ready for sustained high scale (tens to hundreds of thousands) without targeted hardening.
-- Highest risks are file durability, missing indexes, unbounded reads, and non-transactional workflow writes.
+- ~~Highest risks are file durability, missing indexes, unbounded reads, and non-transactional workflow writes.~~
+- File durability, missing indexes, and in-memory filtering (P0) are resolved. Remaining risks are unbounded reads and non-transactional workflow writes.
 
 ## Priority Roadmap
 
@@ -20,7 +21,7 @@ It is intended to be updated regularly as improvements are implemented.
 
 #### 1) Replace local filesystem uploads with object storage
 
-- Status: [ ]
+- Status: [x]
 - Priority: P0
 - Why it matters:
   - Serverless local disk is ephemeral and not suitable for durable multi-instance production storage.
@@ -40,7 +41,7 @@ It is intended to be updated regularly as improvements are implemented.
 
 #### 2) Add missing database indexes for hot query paths
 
-- Status: [ ]
+- Status: [x]
 - Priority: P0
 - Why it matters:
   - Frequent filters/sorts on large tables will degrade significantly without indexes.
@@ -60,7 +61,7 @@ It is intended to be updated regularly as improvements are implemented.
 
 #### 3) Remove in-memory filtering after broad DB fetches
 
-- Status: [ ]
+- Status: [x]
 - Priority: P0
 - Why it matters:
   - Pulling broad datasets and filtering in app memory increases DB, network, and memory load.
@@ -171,6 +172,32 @@ It is intended to be updated regularly as improvements are implemented.
 ## Update Log
 
 Use this section to record progress every time we complete part of the plan.
+
+### 2026-04-10
+
+- Area: P0.1 — File storage
+- Change made: Replaced all local disk writes with Vercel Blob. Installed @vercel/blob. All PUT/DELETE operations now go through `put()` and `del()` from @vercel/blob. Added `images.remotePatterns` to next.config.ts. Added `BLOB_READ_WRITE_TOKEN` to env.
+- Files touched: app/api/profile/avatar/route.ts, app/api/form/[token]/upload/route.ts, app/api/cis/[id]/docs/route.ts, next.config.ts, .env.local
+- Migration run: No
+- Validation performed: Dev server tested with avatar upload
+- Result: Files stored in Vercel Blob (crs-blob, Singapore sin1). DB now stores full https://...blob.vercel-storage.com URLs.
+- Follow-up actions: Existing rows with old /uploads/... URLs will render broken images — no data migration needed until real prod data exists.
+
+- Area: P0.2 — Database indexes
+- Change made: Added 6 indexes to schema.ts across all 4 tables. Generated migration SQL via drizzle-kit generate. Applied indexes directly via postgres client (Neon pooler blocks DDL through drizzle-kit migrate).
+- Files touched: lib/db/schema.ts, drizzle/0002_cloudy_nocturne.sql
+- Migration run: Yes (applied directly, not via drizzle-kit migrate)
+- Validation performed: Confirmed all 6 indexes present in pg_indexes.
+- Result: Indexes live in DB — cis_agent_id_created_at_idx, cis_agent_id_status_created_at_idx, cis_status_updated_at_idx, users_manager_id_idx, notifications_recipient_id_sent_at_idx, workflow_events_cis_id_created_at_idx.
+- Follow-up actions: drizzle migration tracking table is empty (migrations were applied outside drizzle). Consider reconciling __drizzle_migrations table before next migration.
+
+- Area: P0.3 — In-memory filtering
+- Change made: Added CisStatus type alias. Added early return guard for empty allowedStatuses. Replaced JS .filter() with WHERE status IN (...) pushed to DB query. Removed unused `or` import.
+- Files touched: app/api/cis/route.ts
+- Migration run: No
+- Validation performed: TypeScript check passed (tsc --noEmit)
+- Result: Role-based status filtering now happens in SQL for all staff roles.
+- Follow-up actions: None.
 
 ### 2026-04-08
 
