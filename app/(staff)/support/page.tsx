@@ -14,12 +14,12 @@ export const metadata = { title: "Sales Support — CRS" };
 export default async function SupportDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, page } = await searchParams;
+  const { q, status, page } = await searchParams;
   const currentPage = getPageNumber(page);
   const pageSize = 12;
   const offset = (currentPage - 1) * pageSize;
@@ -33,6 +33,10 @@ export default async function SupportDashboard({
         ilike(cisSubmissions.contactPerson, `%${q}%`)
       )
     );
+  }
+
+  if (status) {
+    searchConditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
   const pendingConditions = [eq(cisSubmissions.status, "approved"), ...searchConditions];
@@ -118,7 +122,7 @@ export default async function SupportDashboard({
         </p>
       </div>
 
-      <DashboardFilters showStatusFilter={false} />
+      <DashboardFilters />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -173,7 +177,7 @@ export default async function SupportDashboard({
               currentPage={currentPage}
               totalItems={pendingTotal}
               pageSize={pageSize}
-              searchParams={{ q }}
+              searchParams={{ q, status }}
             />
           </>
         )}
@@ -229,10 +233,10 @@ export default async function SupportDashboard({
             <FileText className="h-8 w-8 text-zinc-400" />
           </div>
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
-            {q ? "No matching submissions" : "No submissions yet"}
+            {q || status ? "No matching submissions" : "No submissions yet"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q ? "Try adjusting your search." : "Approved submissions will appear here."}
+            {q || status ? "Try adjusting your search or filters." : "Approved submissions will appear here."}
           </p>
         </div>
       )}

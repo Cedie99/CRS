@@ -14,12 +14,12 @@ export const metadata = { title: "Legal Review Queue — CRS" };
 export default async function LegalDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, page } = await searchParams;
+  const { q, status, page } = await searchParams;
   const currentPage = getPageNumber(page);
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
@@ -33,6 +33,10 @@ export default async function LegalDashboard({
         ilike(cisSubmissions.contactPerson, `%${q}%`)
       )
     );
+  }
+
+  if (status) {
+    conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
   const [submissions, filteredCountRow, history] = await Promise.all([
@@ -85,7 +89,7 @@ export default async function LegalDashboard({
         )}
       </div>
 
-      <DashboardFilters showStatusFilter={false} />
+      <DashboardFilters />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -129,10 +133,10 @@ export default async function LegalDashboard({
             <FileText className="h-8 w-8 text-zinc-400" />
           </div>
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
-            {q ? "No matching submissions" : "Queue is clear"}
+            {q || status ? "No matching submissions" : "Queue is clear"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q ? "Try adjusting your search." : "No submissions awaiting legal review."}
+            {q || status ? "Try adjusting your search or filters." : "No submissions awaiting legal review."}
           </p>
         </div>
       ) : (
@@ -149,7 +153,7 @@ export default async function LegalDashboard({
             currentPage={currentPage}
             totalItems={filteredCount}
             pageSize={pageSize}
-            searchParams={{ q }}
+            searchParams={{ q, status }}
           />
         </>
       )}

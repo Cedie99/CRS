@@ -6,9 +6,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Copy, Check, Link as LinkIcon, Building2, Flame, Star, Scale } from "lucide-react";
+import { ArrowLeft, Copy, Check, Link as LinkIcon, Building2, Flame, Star, Scale, QrCode, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sileo as toast } from "sileo";
+import QRCode from "qrcode";
 
 const CUSTOMER_TYPES = [
   {
@@ -52,6 +53,7 @@ export default function NewCisPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
+  const [generatedQr, setGeneratedQr] = useState("");
   const [copied, setCopied] = useState(false);
 
   async function handleGenerate() {
@@ -70,7 +72,12 @@ export default function NewCisPage() {
         return;
       }
       const link = `${window.location.origin}/form/${json.publicToken}`;
+      const qrDataUrl = await QRCode.toDataURL(link, {
+        width: 220,
+        margin: 1,
+      });
       setGeneratedLink(link);
+      setGeneratedQr(qrDataUrl);
       toast.success({
         title: "Customer form link generated.",
         description: "Send the link to your customer to start their submission.",
@@ -90,6 +97,14 @@ export default function NewCisPage() {
       description: "Ready to share via chat or email.",
     });
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleDownloadQr() {
+    if (!generatedQr) return;
+    const a = document.createElement("a");
+    a.href = generatedQr;
+    a.download = "customer-form-qr.png";
+    a.click();
   }
 
   return (
@@ -207,6 +222,37 @@ export default function NewCisPage() {
                 </div>
               </div>
 
+              {generatedQr && (
+                <div className="space-y-2">
+                  <Label>QR code</Label>
+                  <div className="rounded-lg border border-zinc-200 bg-white p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs text-zinc-600">
+                        <QrCode className="h-4 w-4" />
+                        Customer can scan this QR code to open the form instantly.
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={handleDownloadQr}
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </Button>
+                    </div>
+                    <div className="mt-3 flex justify-center">
+                      <img
+                        src={generatedQr}
+                        alt="QR code for customer form link"
+                        className="h-44 w-44 rounded-md border border-zinc-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 pt-1">
                 <Button onClick={() => router.push("/agent")}>
                   Back to Dashboard
@@ -215,6 +261,7 @@ export default function NewCisPage() {
                   variant="outline"
                   onClick={() => {
                     setGeneratedLink("");
+                    setGeneratedQr("");
                     setCustomerType("");
                   }}
                 >

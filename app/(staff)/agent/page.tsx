@@ -226,14 +226,6 @@ export default async function AgentDashboard({
       </div>
 
       <DashboardFilters
-        quickFilters={!showArchived ? [
-          { value: "", label: "All" },
-          { value: "draft", label: "Draft" },
-          { value: "submitted", label: "Submitted" },
-          { value: "approved", label: "Approved" },
-          { value: "erp_encoded", label: "Onboarded" },
-        ] : undefined}
-        showStatusFilter={!effectiveShowArchived}
         showArchivedToggle={supportsArchived}
         archivedCount={archivedCount}
       />

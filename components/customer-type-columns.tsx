@@ -60,12 +60,15 @@ export function CustomerTypeColumns({ submissions, hrefPrefix }: CustomerTypeCol
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
+    <div className="grid gap-4 md:grid-cols-2 md:items-start xl:grid-cols-3">
       {CUSTOMER_TYPE_COLUMNS.map((column) => {
         const items = grouped[column.key];
         return (
-          <section key={column.key} className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
-            <div className="mb-3 flex items-center justify-between">
+          <section
+            key={column.key}
+            className="flex min-h-52 flex-col rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 md:min-h-72"
+          >
+            <div className="mb-3 flex items-center justify-between border-b border-zinc-200/70 pb-2">
               <h3 className="text-sm font-semibold text-zinc-800">{column.label}</h3>
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${column.badgeClassName}`}>
                 {items.length}
@@ -73,11 +76,11 @@ export function CustomerTypeColumns({ submissions, hrefPrefix }: CustomerTypeCol
             </div>
 
             {items.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-zinc-200 bg-white px-3 py-6 text-center text-xs text-zinc-400">
+              <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-white px-3 py-6 text-center text-xs text-zinc-400">
                 No submissions
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 md:max-h-[70vh] md:overflow-y-auto md:pr-1">
                 {items.map((s) => (
                   <CisCard
                     key={s.id}

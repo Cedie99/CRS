@@ -1,10 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useTransition, useCallback, useState } from "react";
-import { Search, SlidersHorizontal, X, Download } from "lucide-react";
+import { useTransition, useCallback, useState, useRef } from "react";
+import { Search, SlidersHorizontal, X, Download, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -20,13 +29,7 @@ const STATUS_OPTIONS = [
   { value: "returned", label: "Sent Back" },
 ];
 
-interface QuickFilter {
-  value: string;
-  label: string;
-}
-
 interface DashboardFiltersProps {
-  quickFilters?: QuickFilter[];
   statusOptions?: typeof STATUS_OPTIONS;
   showStatusFilter?: boolean;
   showArchivedToggle?: boolean;
@@ -46,7 +49,6 @@ function getExportScope(pathname: string): string | null {
 }
 
 export function DashboardFilters({
-  quickFilters,
   statusOptions = STATUS_OPTIONS,
   showStatusFilter = true,
   showArchivedToggle = false,
@@ -58,6 +60,7 @@ export function DashboardFilters({
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   const [filterOpen, setFilterOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const q = searchParams.get("q") ?? "";
   const status = searchParams.get("status") ?? "";
@@ -96,28 +99,7 @@ export function DashboardFilters({
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
 
-        {/* Quick filter tabs */}
-        {quickFilters && (
-          <div className="hidden sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-1.5">
-            {quickFilters.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => updateParams({ status: tab.value })}
-                className={cn(
-                  "shrink-0 whitespace-nowrap rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
-                  status === tab.value
-                    ? "border-[#2d6e1e] bg-[#2d6e1e] text-white"
-                    : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Right-side controls */}
-        <div className={cn("flex w-full flex-wrap items-center gap-2 sm:w-auto", quickFilters && "sm:ml-auto")}>
+        <div className="flex w-full flex-wrap items-center gap-2">
           {/* Filter icon — only when status filtering is enabled */}
           {showStatusFilter && (
             <button
@@ -136,13 +118,25 @@ export function DashboardFilters({
           {/* Search bar */}
           <div className="relative w-full sm:w-auto">
             <input
+              ref={searchInputRef}
               type="search"
               placeholder="Search a name…"
               defaultValue={q}
               onChange={(e) => updateParams({ q: e.target.value })}
               className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-80"
             />
-            <Search className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+            <button
+              type="button"
+              aria-label="Search"
+              onClick={() => {
+                const value = searchInputRef.current?.value ?? "";
+                searchInputRef.current?.focus();
+                updateParams({ q: value });
+              }}
+              className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-zinc-400 transition-colors hover:text-zinc-700"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
           </div>
 
           <div className="flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:overflow-visible sm:pb-0">
@@ -164,29 +158,25 @@ export function DashboardFilters({
             )}
 
             {showExportButtons && exportScope && (
-              <>
-                <button
-                  onClick={() => handleExport("csv")}
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
+                  aria-label="Export submissions"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  CSV
-                </button>
-                <button
-                  onClick={() => handleExport("excel")}
-                  className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Excel
-                </button>
-                <button
-                  onClick={() => handleExport("pdf")}
-                  className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 sm:h-9"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  PDF
-                </button>
-              </>
+                  Export
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Download as</DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport("csv")}>CSV (.csv)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("excel")}>Excel (.xlsx)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")}>PDF (.pdf)</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
