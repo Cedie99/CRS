@@ -1,4 +1,4 @@
-import { eq, ne, desc, and, inArray, ilike, or, count } from "drizzle-orm";
+import { eq, ne, desc, and, inArray, ilike, or, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
@@ -91,21 +91,23 @@ export default async function ManagerDashboard({
     );
   }
 
-  // Stats (unfiltered)
-  const allSubmissions = await db
-    .select({ status: cisSubmissions.status })
+  // Stats (unfiltered, SQL aggregate)
+  const [statsRow] = await db
+    .select({
+      total: count(),
+      pendingCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'pending_endorsement' THEN 1 END`),
+      inProgressCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+      erpCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+      deniedCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+    })
     .from(cisSubmissions)
     .where(inArray(cisSubmissions.agentId, agentIds));
 
-  const total = allSubmissions.length;
-  const pendingCount = allSubmissions.filter((s) => s.status === "pending_endorsement").length;
-  const inProgressCount = allSubmissions.filter((s) =>
-    IN_PROGRESS_STATUSES.includes(s.status as CisStatus)
-  ).length;
-  const erpCount = allSubmissions.filter((s) => s.status === "erp_encoded").length;
-  const deniedCount = allSubmissions.filter(
-    (s) => s.status === "denied" || s.status === "returned"
-  ).length;
+  const total = Number(statsRow?.total ?? 0);
+  const pendingCount = Number(statsRow?.pendingCount ?? 0);
+  const inProgressCount = Number(statsRow?.inProgressCount ?? 0);
+  const erpCount = Number(statsRow?.erpCount ?? 0);
+  const deniedCount = Number(statsRow?.deniedCount ?? 0);
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
 
   const stats = [

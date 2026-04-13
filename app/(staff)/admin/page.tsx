@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, count, sql, ilike, or, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/status-badge";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
+import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "@/lib/utils";
 import { FileText, Activity, CheckCircle2, XCircle, UserPlus } from "lucide-react";
+import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Admin — All Submissions — CRS" };
 
@@ -23,12 +26,58 @@ const CUSTOMER_TYPE_COLORS: Record<string, string> = {
   special: "bg-amber-50 text-amber-700",
 };
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; q?: string; status?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [submissions, pendingUsers] = await Promise.all([
-    db.select().from(cisSubmissions).orderBy(desc(cisSubmissions.createdAt)),
+  const { page, q, status } = await searchParams;
+  const pageSize = 20;
+  const currentPage = getPageNumber(page);
+  const offset = (currentPage - 1) * pageSize;
+
+  // Stats — single aggregate query, no filters
+  const [statsRow] = await db
+    .select({
+      total: count(),
+      active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval') THEN 1 END`),
+      done: count(sql`CASE WHEN ${cisSubmissions.status} IN ('approved','erp_encoded') THEN 1 END`),
+      closed: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+    })
+    .from(cisSubmissions);
+
+  const total = Number(statsRow?.total ?? 0);
+  const active = Number(statsRow?.active ?? 0);
+  const done = Number(statsRow?.done ?? 0);
+  const closed = Number(statsRow?.closed ?? 0);
+
+  // Submissions — filtered + paginated
+  const conditions: any[] = [];
+  if (q) {
+    conditions.push(
+      or(
+        ilike(cisSubmissions.tradeName, `%${q}%`),
+        ilike(cisSubmissions.contactPerson, `%${q}%`)
+      )!
+    );
+  }
+  if (status) {
+    conditions.push(eq(cisSubmissions.status, status as CisStatus));
+  }
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [submissions, countRow, pendingUsers] = await Promise.all([
+    db
+      .select()
+      .from(cisSubmissions)
+      .where(whereClause)
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(offset),
+    db.select({ total: count() }).from(cisSubmissions).where(whereClause),
     db
       .select({ id: users.id, fullName: users.fullName, email: users.email, createdAt: users.createdAt })
       .from(users)
@@ -36,13 +85,8 @@ export default async function AdminDashboard() {
       .orderBy(users.createdAt),
   ]);
 
+  const totalSubmissions = Number(countRow[0]?.total ?? 0);
   const pendingCount = pendingUsers.length;
-  const total = submissions.length;
-  const active = submissions.filter((s) =>
-    ["submitted", "pending_endorsement", "pending_legal_review", "pending_finance_review", "pending_approval"].includes(s.status)
-  ).length;
-  const done = submissions.filter((s) => ["approved", "erp_encoded"].includes(s.status)).length;
-  const closed = submissions.filter((s) => ["denied", "returned"].includes(s.status)).length;
 
   const stats = [
     { label: "Total", value: total, icon: FileText, iconBg: "bg-zinc-100", iconColor: "text-zinc-500" },
@@ -108,10 +152,17 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
+      <DashboardFilters showStatusFilter />
+
       {/* Table */}
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-zinc-700">All Submissions</h2>
+          <h2 className="text-sm font-semibold text-zinc-700">
+            All Submissions
+            {(q || status) && totalSubmissions !== total && (
+              <span className="ml-2 font-normal text-zinc-400">({totalSubmissions} matching)</span>
+            )}
+          </h2>
         </div>
 
         <div className="space-y-3 p-3 md:hidden">
@@ -220,6 +271,14 @@ export default async function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      <DashboardPagination
+        basePath="/admin"
+        currentPage={currentPage}
+        totalItems={totalSubmissions}
+        pageSize={pageSize}
+        searchParams={{ q, status }}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq, desc, and, ilike, or, ne, count } from "drizzle-orm";
+import { eq, desc, and, ilike, or, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
@@ -38,7 +38,7 @@ export default async function AgentDashboard({
   let supportsArchived = true;
   let submissions: Submission[] = [];
   let filteredCount = 0;
-  let all: Submission[] = [];
+  let statsCounts = { total: 0, active: 0, completed: 0, denied: 0 };
   let archivedCount = 0;
 
   try {
@@ -78,16 +78,27 @@ export default async function AgentDashboard({
       .limit(pageSize)
       .offset(offset);
 
-    all = await db
-      .select()
+    const [statsRow] = await db
+      .select({
+        total: count(),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+        completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+        denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+      })
       .from(cisSubmissions)
       .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true)));
+    statsCounts = {
+      total: Number(statsRow?.total ?? 0),
+      active: Number(statsRow?.active ?? 0),
+      completed: Number(statsRow?.completed ?? 0),
+      denied: Number(statsRow?.denied ?? 0),
+    };
 
-    archivedCount = await db
-      .select({ id: cisSubmissions.id })
+    const [archivedRow] = await db
+      .select({ total: count() })
       .from(cisSubmissions)
-      .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true)))
-      .then((r) => r.length);
+      .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true)));
+    archivedCount = Number(archivedRow?.total ?? 0);
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
       throw error;
@@ -124,20 +135,26 @@ export default async function AgentDashboard({
       .limit(pageSize)
       .offset(offset);
 
-    all = await db
-      .select()
+    const [fallbackStatsRow] = await db
+      .select({
+        total: count(),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+        completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+        denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+      })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.agentId, session!.user.id));
+    statsCounts = {
+      total: Number(fallbackStatsRow?.total ?? 0),
+      active: Number(fallbackStatsRow?.active ?? 0),
+      completed: Number(fallbackStatsRow?.completed ?? 0),
+      denied: Number(fallbackStatsRow?.denied ?? 0),
+    };
   }
 
   const effectiveShowArchived = supportsArchived && showArchived;
 
-  const total = all.length;
-  const active = all.filter((s) =>
-    ["submitted", "pending_endorsement", "pending_legal_review", "pending_finance_review", "pending_approval", "approved"].includes(s.status)
-  ).length;
-  const completed = all.filter((s) => s.status === "erp_encoded").length;
-  const denied = all.filter((s) => s.status === "denied" || s.status === "returned").length;
+  const { total, active, completed, denied } = statsCounts;
 
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
 

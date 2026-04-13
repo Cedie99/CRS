@@ -4,6 +4,7 @@ import { cisSubmissions, workflowEvents, notifications, users } from "@/lib/db/s
 
 type CisStatus = typeof cisSubmissions.$inferSelect["status"];
 type WorkflowAction = typeof workflowEvents.$inferSelect["action"];
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export async function transitionCis({
   cisId,
@@ -20,31 +21,35 @@ export async function transitionCis({
   note?: string;
   managerId?: string | null;
 }) {
-  await db
-    .update(cisSubmissions)
-    .set({ status: toStatus, updatedAt: new Date() })
-    .where(eq(cisSubmissions.id, cisId));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(cisSubmissions)
+      .set({ status: toStatus, updatedAt: new Date() })
+      .where(eq(cisSubmissions.id, cisId));
 
-  await db.insert(workflowEvents).values({
-    cisId,
-    actorId,
-    action,
-    note: note ?? null,
+    await tx.insert(workflowEvents).values({
+      cisId,
+      actorId,
+      action,
+      note: note ?? null,
+    });
+
+    await notifyParties({ cisId, action, managerId, tx });
   });
-
-  await notifyParties({ cisId, action, managerId });
 }
 
 async function notifyParties({
   cisId,
   action,
   managerId,
+  tx,
 }: {
   cisId: string;
   action: WorkflowAction;
   managerId?: string | null;
+  tx: Tx;
 }) {
-  const [cis] = await db
+  const [cis] = await tx
     .select({ agentId: cisSubmissions.agentId, tradeName: cisSubmissions.tradeName })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, cisId))
@@ -56,7 +61,7 @@ async function notifyParties({
   const rows: (typeof notifications.$inferInsert)[] = [];
 
   const notifyRole = async (role: string, message: string) => {
-    const recipients = await db
+    const recipients = await tx
       .select({ id: users.id })
       .from(users)
       .where(eq(users.role, role as any));
@@ -117,6 +122,6 @@ async function notifyParties({
   }
 
   if (rows.length > 0) {
-    await db.insert(notifications).values(rows);
+    await tx.insert(notifications).values(rows);
   }
 }
