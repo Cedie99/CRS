@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { z } from "zod";
 import { registerSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,12 @@ export default function RegisterPage() {
   if (submitted) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-4">
-        <div className="w-full max-w-sm text-center">
+        <motion.div
+          className="w-full max-w-sm text-center"
+          initial={{ opacity: 0, scale: 0.95, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#2d6e1e]/10">
             <CheckCircle className="h-7 w-7 text-[#2d6e1e]" />
           </div>
@@ -89,15 +95,20 @@ export default function RegisterPage() {
           >
             Back to sign in
           </Link>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-hidden">
       {/* Left panel — branding */}
-      <div className="relative hidden flex-col items-center bg-[#1a1a1a] px-12 py-10 lg:flex lg:w-[45%]">
+      <motion.div
+        className="relative hidden flex-col items-center bg-[#1a1a1a] px-12 py-10 lg:flex lg:w-[45%]"
+        initial={{ opacity: 0, x: -28 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
         <Image
           src="/oracle-logo.png"
           alt="Oracle Petroleum"
@@ -140,10 +151,15 @@ export default function RegisterPage() {
           <span className="text-xs text-zinc-600">No. 1 Toll Blender in the Country</span>
           <div className="h-px flex-1 bg-zinc-800" />
         </div>
-      </div>
+      </motion.div>
 
       {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-10 sm:py-12">
+      <motion.div
+        className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-10 sm:py-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut", delay: 0.08 }}
+      >
         {/* Mobile-only intro */}
         <div className="mb-6 w-full max-w-sm lg:hidden">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#f5d220]" />
@@ -260,7 +276,7 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

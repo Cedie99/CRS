@@ -132,6 +132,7 @@ export async function POST(req: Request) {
       agentCode,
       agentType,
       customerType: parsed.data.customerType,
+      tradeName: parsed.data.tradeName || null,
       status: "draft",
     })
     .returning({ id: cisSubmissions.id, publicToken: cisSubmissions.publicToken });

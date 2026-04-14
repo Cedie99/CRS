@@ -49,6 +49,7 @@ const optionalPhoneLikeString = (label: string, min = 7) =>
 
 export const initiateSchema = z.object({
   customerType: z.enum(["standard", "fs_petroleum", "special"]),
+  tradeName: z.string().max(255).optional().or(z.literal("")),
 });
 
 export const LINE_OF_BUSINESS_OPTIONS = [

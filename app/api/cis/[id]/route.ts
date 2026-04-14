@@ -17,6 +17,7 @@ export async function GET(
   const [row] = await db
     .select({
       id: cisSubmissions.id,
+      publicToken: cisSubmissions.publicToken,
       agentId: cisSubmissions.agentId,
       agentCode: cisSubmissions.agentCode,
       agentType: cisSubmissions.agentType,

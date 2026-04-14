@@ -90,7 +90,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
       <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-zinc-400">
         Workflow Progress
       </p>
-      <div className="overflow-x-auto pb-1">
+      <div className="overflow-x-auto py-4">
         <div className="flex min-w-120 items-center">
           {steps.map((step, i) => {
           const isCompleted = i < currentIndex;
@@ -109,12 +109,18 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                       <Check className="h-5 w-5 stroke-[2.5]" />
                     </div>
                   </div>
+                ) : isCurrent ? (
+                  <div className="relative flex h-10 w-10 items-center justify-center">
+                    <span className="absolute inset-0 rounded-full bg-[#2d6e1e] animate-ping opacity-25" />
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6e1e] text-white shadow-md ring-4 ring-[#2d6e1e]/30 text-xs font-semibold">
+                      <span>{i + 1}</span>
+                    </div>
+                  </div>
                 ) : (
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all",
                       isCompleted && "bg-[#2d6e1e] text-white shadow-sm",
-                      isCurrent && "bg-[#2d6e1e] text-white ring-4 ring-[#2d6e1e]/20",
                       isFuture && "bg-zinc-100 text-zinc-400"
                     )}
                   >

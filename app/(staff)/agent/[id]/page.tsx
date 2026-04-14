@@ -6,13 +6,11 @@ import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
-import { CopyLinkButton } from "@/components/copy-link-button";
-import { DeleteDraftButton } from "@/components/delete-draft-button";
 import { DismissButton } from "@/components/dismiss-button";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle, Clock, History } from "lucide-react";
+import { ArrowLeft, AlertTriangle, History } from "lucide-react";
 
 export default async function AgentCisDetailPage({
   params,
@@ -106,6 +104,7 @@ export default async function AgentCisDetailPage({
 
   if (!cis) notFound();
   if (cis.agentId !== session.user.id) notFound();
+  if (cis.status === "draft") redirect(`/agent/new?id=${id}`);
 
   const canAgentUploadDocs =
     session.user.id === cis.agentId &&
@@ -140,22 +139,6 @@ export default async function AgentCisDetailPage({
       </Link>
 
       {/* Status banners */}
-      {cis.status === "draft" && (
-        <div className="print:hidden rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
-            <Clock className="h-4 w-4" />
-            Waiting for your customer to fill out the form
-          </div>
-          <p className="text-xs text-amber-600">
-            Copy the link below and send it to your customer. Once they complete and submit the form, it will automatically move to the approval process.
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <CopyLinkButton token={cis.publicToken} />
-            <DeleteDraftButton cisId={cis.id} />
-          </div>
-        </div>
-      )}
-
       {(cis.status === "returned" || cis.status === "denied") && (
         <div
           className={`print:hidden flex flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:px-5 ${

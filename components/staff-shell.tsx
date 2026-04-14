@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { PageTransition } from "@/components/page-transition";
 
 interface StaffShellProps {
   userName: string;
@@ -40,7 +41,9 @@ export function StaffShell({
           />
         </div>
         <main className="min-w-0 flex-1 bg-zinc-50">
-          <div className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</div>
+          <div className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
       </div>
     </div>

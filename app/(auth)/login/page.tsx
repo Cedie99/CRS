@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { z } from "zod";
 import { loginSchema } from "@/lib/validations/auth";
@@ -63,9 +64,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-hidden">
       {/* Left panel — branding */}
-      <div className="relative hidden flex-col items-center bg-[#1a1a1a] px-12 py-10 lg:flex lg:w-[45%]">
+      <motion.div
+        className="relative hidden flex-col items-center bg-[#1a1a1a] px-12 py-10 lg:flex lg:w-[45%]"
+        initial={{ opacity: 0, x: -28 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
         {/* Top: logo */}
         <Image
           src="/oracle-logo.png"
@@ -110,10 +116,15 @@ export default function LoginPage() {
           <span className="text-xs text-zinc-600">No. 1 Toll Blender in the Country</span>
           <div className="h-px flex-1 bg-zinc-800" />
         </div>
-      </div>
+      </motion.div>
 
       {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-10 sm:py-12">
+      <motion.div
+        className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-10 sm:py-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut", delay: 0.08 }}
+      >
         {/* Mobile-only intro */}
         <div className="mb-6 w-full max-w-sm lg:hidden">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#f5d220]" />
@@ -200,7 +211,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
