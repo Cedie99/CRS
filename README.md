@@ -163,6 +163,8 @@ AUTH_SECRET=your-nextauth-secret
 NEXTAUTH_URL=http://localhost:3001
 SIGNATURE_HMAC_SECRET=your-hmac-secret
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
+RESEND_API_KEY=re_...
+EMAIL_FROM=CRS Notifications <notifications@yourdomain.com>
 ```
 
 - `DATABASE_URL` — Neon (or any PostgreSQL) connection string
@@ -170,6 +172,8 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 - `NEXTAUTH_URL` — base URL of the app (use port 3001 locally)
 - `SIGNATURE_HMAC_SECRET` — secret for signature integrity hashing
 - `BLOB_READ_WRITE_TOKEN` — from Vercel dashboard → Storage → your Blob store → `.env.local` tab
+- `RESEND_API_KEY` — Resend API key for transactional workflow email
+- `EMAIL_FROM` — verified sender identity in Resend (single email or domain sender)
 
 ### 4. Push the database schema
 
@@ -241,6 +245,8 @@ Deployed on Vercel. Required environment variables in Vercel dashboard (Settings
 - `NEXTAUTH_URL` (set to your production URL)
 - `SIGNATURE_HMAC_SECRET`
 - `BLOB_READ_WRITE_TOKEN`
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
 
 ---
 

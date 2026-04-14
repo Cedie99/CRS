@@ -14,6 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -80,6 +87,9 @@ export function DashboardFilters({
   );
 
   const filterIconActive = filterOpen || status !== "";
+  const statusValue = status || "__all__";
+  const selectedStatusLabel =
+    statusOptions.find((opt) => opt.value === status)?.label ?? "All Statuses";
 
   const handleExport = useCallback(
     (format: "csv" | "excel" | "pdf") => {
@@ -184,24 +194,28 @@ export function DashboardFilters({
 
       {/* Advanced filter panel */}
       {filterOpen && showStatusFilter && (
-        <div className="rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="w-full rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm sm:w-auto">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <span className="shrink-0 text-xs font-medium text-zinc-400">Status</span>
-            <select
-              value={status}
-              onChange={(e) => updateParams({ status: e.target.value })}
-              className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none sm:flex-1"
+            <Select
+              value={statusValue}
+              onValueChange={(v) => updateParams({ status: v === "__all__" ? "" : (v ?? "") })}
             >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9 w-full sm:w-64 md:w-72">
+                <SelectValue>{selectedStatusLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value || "__all__"} value={opt.value || "__all__"}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {status && (
               <button
                 onClick={() => updateParams({ status: "" })}
-                className="flex h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs text-zinc-500 hover:text-zinc-900 sm:justify-start"
+                className="flex h-8 items-center justify-center gap-1 rounded-lg border border-zinc-200 px-2 text-xs text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
               >
                 <X className="h-3 w-3" />
                 Clear

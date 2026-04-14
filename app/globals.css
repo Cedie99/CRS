@@ -133,8 +133,12 @@
 
 @media print {
   @page {
-    margin: 2cm 2.2cm;
+    margin: 1.4cm 1.6cm;
     size: A4 portrait;
+  }
+
+  html {
+    font-size: 12px !important;
   }
 
   * {
@@ -148,6 +152,14 @@
 
   body {
     background: white !important;
+    color: #18181b !important;
+    line-height: 1.35 !important;
+  }
+
+  main,
+  .container {
+    max-width: none !important;
+    width: 100% !important;
   }
 
   /* Flatten card chrome */
@@ -161,5 +173,41 @@
   .bg-zinc-50,
   .bg-zinc-100 {
     background-color: white !important;
+  }
+
+  /* Keep tabular data readable on paper */
+  table {
+    width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+  }
+
+  /* Avoid clipped print output from scroll wrappers */
+  [class*="overflow-x-auto"] {
+    overflow: visible !important;
+  }
+
+  /* Reduce awkward section splits between pages */
+  section,
+  table,
+  thead,
+  tbody,
+  tr,
+  img,
+  iframe {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }

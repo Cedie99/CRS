@@ -209,6 +209,7 @@ export function DocUploadSlot({
   const [expirationDate, setExpirationDate] = useState("");
   const requiresExpiration = docTypeRequiresExpiration(docType);
   const sortedFiles = sortFilesByUploadedAtDesc(files);
+  const hasAcceptedFiles = sortedFiles.length > 0;
 
   function stopCameraStream() {
     if (streamRef.current) {
@@ -390,7 +391,21 @@ export function DocUploadSlot({
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-medium text-zinc-900">{label}</p>
+        <div className="flex items-center gap-2">
+          <p
+            className={hasAcceptedFiles
+              ? "text-sm font-medium text-green-700 line-through decoration-2 decoration-green-600"
+              : "text-sm font-medium text-zinc-900"}
+          >
+            {label}
+          </p>
+          {hasAcceptedFiles && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
+              <Check className="h-3 w-3" />
+              Finished
+            </span>
+          )}
+        </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {requiresExpiration && (
             <input
