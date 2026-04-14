@@ -13,7 +13,7 @@ import {
 } from "@/lib/doc-types";
 import { put, del } from "@vercel/blob";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 async function getCis(id: string) {

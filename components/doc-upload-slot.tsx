@@ -408,14 +408,19 @@ export function DocUploadSlot({
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {requiresExpiration && (
-            <input
-              type="date"
-              value={expirationDate}
-              onChange={(e) => setExpirationDate(e.target.value)}
-              disabled={disabled || uploading}
-              className="h-8 w-full rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 sm:w-auto"
-              aria-label={`${label} expiration date`}
-            />
+            <div className="flex w-full flex-col gap-0.5 sm:w-auto">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">
+                Document Expiry Date
+              </span>
+              <input
+                type="date"
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+                disabled={disabled || uploading}
+                className="h-8 w-full rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:ring-1 focus:ring-amber-400 sm:w-auto"
+                aria-label={`${label} expiration date`}
+              />
+            </div>
           )}
           <button
             type="button"
@@ -442,7 +447,7 @@ export function DocUploadSlot({
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.docx"
           className="hidden"
           disabled={disabled || uploading}
           onChange={(e) => { void handleFiles(e.target.files); }}

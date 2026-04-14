@@ -31,6 +31,8 @@ import {
   Paperclip,
 } from "lucide-react";
 import { PrintButton } from "@/components/print-button";
+import { PdfPrintRenderer } from "@/components/pdf-print-renderer";
+import { DocxRenderer } from "@/components/docx-renderer";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "Standard",
@@ -115,6 +117,11 @@ function isImageFile(file: FileEntry) {
 function isPdfFile(file: FileEntry) {
   if (file.type?.toLowerCase() === "application/pdf") return true;
   return /\.pdf$/i.test(file.name) || /\.pdf$/i.test(file.url);
+}
+
+function isDocxFile(file: FileEntry) {
+  if (file.type?.toLowerCase() === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
+  return /\.docx$/i.test(file.name) || /\.docx$/i.test(file.url);
 }
 
 function formatUploadedAt(value?: string) {
@@ -800,6 +807,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                       {sortFilesByUploadedAtDesc(entry.files).map((f, index) => {
                         const isImage = isImageFile(f);
                         const isPdf = isPdfFile(f);
+                        const isDocx = isDocxFile(f);
                         const needsExpiration = docTypeRequiresExpiration(entry.key);
                         const expirationStatus = needsExpiration ? getFileExpirationStatus(f) : null;
                         return (
@@ -817,12 +825,13 @@ export function CisInfoCard(props: CisInfoCardProps) {
                               </a>
                             )}
                             {isPdf && (
-                              <div className="hidden print:block mb-2">
-                                <iframe
-                                  title={f.name}
-                                  src={`${f.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                                  className="h-260 w-full rounded border border-zinc-300"
-                                />
+                              <div className="mb-2">
+                                <PdfPrintRenderer url={f.url} name={f.name} />
+                              </div>
+                            )}
+                            {isDocx && (
+                              <div className="mb-2">
+                                <DocxRenderer url={f.url} name={f.name} />
                               </div>
                             )}
                             <a
@@ -850,11 +859,12 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 ))}
               </div>
 
-              <div className="hidden print:block">
+              <div className="h-0 overflow-hidden print:h-auto print:overflow-visible">
                 {docEntries.map((entry) =>
                   sortFilesByUploadedAtDesc(entry.files).map((f) => {
                     const isImage = isImageFile(f);
                     const isPdf = isPdfFile(f);
+                    const isDocx = isDocxFile(f);
                     const needsExpiration = docTypeRequiresExpiration(entry.key);
                     const expirationStatus = needsExpiration ? getFileExpirationStatus(f) : null;
 
@@ -882,13 +892,10 @@ export function CisInfoCard(props: CisInfoCardProps) {
                         )}
 
                         {isPdf && (
-                          <div className="mt-2">
-                            <iframe
-                              title={f.name}
-                              src={`${f.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                              className="h-240 w-full border border-zinc-300"
-                            />
-                          </div>
+                          <PdfPrintRenderer url={f.url} name={f.name} />
+                        )}
+                        {isDocx && (
+                          <DocxRenderer url={f.url} name={f.name} />
                         )}
                       </div>
                     );
@@ -956,13 +963,15 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   />
                 )}
               </div>
+              
           </SectionCard>
         )}
-
         {/* Screen footer */}
         <div className="print:hidden">
+
           <Separator />
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-400 sm:gap-x-8 mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-y-2 mt-6">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-400 sm:gap-x-8">
             <span>
               Submitted{" "}
               <span className="font-medium text-zinc-600">
@@ -976,6 +985,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </span>
             </span>
           </div>
+          <PrintButton />
+          </div>
+
         </div>
 
         {/* Print footer */}
