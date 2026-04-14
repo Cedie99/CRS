@@ -6,32 +6,32 @@ Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Divi
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16.2.1 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 + shadcn/ui (@base-ui/react) |
-| Auth | NextAuth v5 (JWT sessions) |
-| ORM | Drizzle ORM |
-| Database | PostgreSQL (Neon, via `postgres` npm package) |
-| File Storage | Vercel Blob |
-| Validation | Zod v4 |
-| Notifications | Sonner (toast) |
-| Font | DM Sans |
+| Layer         | Technology                                    |
+| ------------- | --------------------------------------------- |
+| Framework     | Next.js 16.2.1 (App Router)                   |
+| Language      | TypeScript                                    |
+| Styling       | Tailwind CSS v4 + shadcn/ui (@base-ui/react)  |
+| Auth          | NextAuth v5 (JWT sessions)                    |
+| ORM           | Drizzle ORM                                   |
+| Database      | PostgreSQL (Neon, via `postgres` npm package) |
+| File Storage  | Vercel Blob                                   |
+| Validation    | Zod v4                                        |
+| Notifications | Sonner (toast)                                |
+| Font          | DM Sans                                       |
 
 ---
 
 ## Roles
 
-| Role | Dashboard | Description |
-|---|---|---|
-| `sales_agent` / `rsr` | `/agent` | Initiates CRS forms and shares the customer link |
-| `sales_manager` / `rsr_manager` | `/manager` | Endorses or returns submissions from their agents |
-| `finance_reviewer` | `/finance` | Reviews customer credit and business standing |
-| `legal_approver` | `/legal` | Handles FS Petroleum and special customer types |
-| `senior_approver` | `/approver` | Final approval authority |
-| `sales_support` | `/support` | Notified on denial; assists agents |
-| `admin` | `/admin` | Full visibility; manages users, roles, and assignments |
+| Role                            | Dashboard   | Description                                            |
+| ------------------------------- | ----------- | ------------------------------------------------------ |
+| `sales_agent` / `rsr`           | `/agent`    | Initiates CRS forms and shares the customer link       |
+| `sales_manager` / `rsr_manager` | `/manager`  | Endorses or returns submissions from their agents      |
+| `finance_reviewer`              | `/finance`  | Reviews customer credit and business standing          |
+| `legal_approver`                | `/legal`    | Handles FS Petroleum and special customer types        |
+| `senior_approver`               | `/approver` | Final approval authority                               |
+| `sales_support`                 | `/support`  | Notified on denial; assists agents                     |
+| `admin`                         | `/admin`    | Full visibility; manages users, roles, and assignments |
 
 ---
 
@@ -216,23 +216,23 @@ Open [http://localhost:3001](http://localhost:3001).
 
 ## Database Schema
 
-| Table | Description |
-|---|---|
-| `users` | All platform users with role, agent code, manager assignment, and avatar URL |
-| `cis_submissions` | CRS form data, status, document URLs (JSONB), and routing metadata |
-| `workflow_events` | Full audit log of every action on every form |
-| `notifications` | In-app notification records per recipient |
+| Table             | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `users`           | All platform users with role, agent code, manager assignment, and avatar URL |
+| `cis_submissions` | CRS form data, status, document URLs (JSONB), and routing metadata           |
+| `workflow_events` | Full audit log of every action on every form                                 |
+| `notifications`   | In-app notification records per recipient                                    |
 
 ### Indexes
 
-| Index | Columns |
-|---|---|
-| `cis_agent_id_created_at_idx` | `agent_id, created_at DESC` |
-| `cis_agent_id_status_created_at_idx` | `agent_id, status, created_at DESC` |
-| `cis_status_updated_at_idx` | `status, updated_at DESC` |
-| `users_manager_id_idx` | `manager_id` |
-| `notifications_recipient_id_sent_at_idx` | `recipient_id, sent_at DESC` |
-| `workflow_events_cis_id_created_at_idx` | `cis_id, created_at` |
+| Index                                    | Columns                             |
+| ---------------------------------------- | ----------------------------------- |
+| `cis_agent_id_created_at_idx`            | `agent_id, created_at DESC`         |
+| `cis_agent_id_status_created_at_idx`     | `agent_id, status, created_at DESC` |
+| `cis_status_updated_at_idx`              | `status, updated_at DESC`           |
+| `users_manager_id_idx`                   | `manager_id`                        |
+| `notifications_recipient_id_sent_at_idx` | `recipient_id, sent_at DESC`        |
+| `workflow_events_cis_id_created_at_idx`  | `cis_id, created_at`                |
 
 ---
 

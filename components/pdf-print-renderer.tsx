@@ -32,7 +32,7 @@ export function PdfPrintRenderer({ url, name }: { url: string; name: string }) {
           canvas.height = viewport.height;
           const ctx = canvas.getContext("2d");
           if (!ctx) continue;
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({ canvasContext: ctx, canvas, viewport }).promise;
           rendered.push({
             dataUrl: canvas.toDataURL("image/png"),
             width: viewport.width,
