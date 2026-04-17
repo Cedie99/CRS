@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -67,20 +67,61 @@ export async function PATCH(
     docAgentOtherRequirements,
   } = parsed.data;
 
-  // Save agent fill-out fields
+  // Save agent fill-out fields using schema compatibility checks.
+  // Some deployments still run older cis_submissions schemas.
+  const columnRows = await db.execute<{ column_name: string }>(sql`
+    select column_name
+    from information_schema.columns
+    where table_schema = current_schema()
+      and table_name = 'cis_submissions'
+      and column_name in (
+        'agent_account_specialist_first',
+        'agent_account_specialist_last',
+        'agent_sales_specialist',
+        'agent_sales_manager',
+        'agent_tpc_first',
+        'agent_tpc_last',
+        'doc_agent_other_requirements'
+      )
+  `);
+
+  const existingColumns = new Set(
+    (Array.isArray(columnRows)
+      ? columnRows
+      : (columnRows as { rows?: Array<{ column_name: string }> }).rows ?? []
+    ).map((r) => r.column_name)
+  );
+
+  const updatePayload: Record<string, unknown> = {
+    customerType,
+    updatedAt: new Date(),
+  };
+
+  if (existingColumns.has("agent_account_specialist_first")) {
+    updatePayload.agentAccountSpecialistFirst = agentAccountSpecialistFirst || null;
+  }
+  if (existingColumns.has("agent_account_specialist_last")) {
+    updatePayload.agentAccountSpecialistLast = agentAccountSpecialistLast || null;
+  }
+  if (existingColumns.has("agent_sales_specialist")) {
+    updatePayload.agentSalesSpecialist = agentSalesSpecialist || null;
+  }
+  if (existingColumns.has("agent_sales_manager")) {
+    updatePayload.agentSalesManager = agentSalesManager || null;
+  }
+  if (existingColumns.has("agent_tpc_first")) {
+    updatePayload.agentTpcFirst = agentTpcFirst || null;
+  }
+  if (existingColumns.has("agent_tpc_last")) {
+    updatePayload.agentTpcLast = agentTpcLast || null;
+  }
+  if (existingColumns.has("doc_agent_other_requirements")) {
+    updatePayload.docAgentOtherRequirements = docAgentOtherRequirements ?? null;
+  }
+
   await db
     .update(cisSubmissions)
-    .set({
-      customerType,
-      agentAccountSpecialistFirst: agentAccountSpecialistFirst || null,
-      agentAccountSpecialistLast: agentAccountSpecialistLast || null,
-      agentSalesSpecialist: agentSalesSpecialist || null,
-      agentSalesManager: agentSalesManager || null,
-      agentTpcFirst: agentTpcFirst || null,
-      agentTpcLast: agentTpcLast || null,
-      docAgentOtherRequirements: docAgentOtherRequirements ?? null,
-      updatedAt: new Date(),
-    })
+    .set(updatePayload as never)
     .where(eq(cisSubmissions.id, id));
 
   // Route: dealer → legal_approver (Maam Cha), others → finance_reviewer (Maam Nida)

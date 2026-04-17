@@ -41,7 +41,7 @@ This matrix defines what each field should accept, what should be blocked, and w
 | officers[].name              | text           | Cond.    | Free text if row used                                     | Pedro Cruz                | -               | None                   | if row used, can require name            | max 255                  |
 | officers[].position          | text           | No       | Free text                                                 | President                 | -               | None                   | if present valid                         | max 100                  |
 | officers[].contact           | phone          | No       | Digits plus + ( ) - space                                 | 09123456789               | abc123          | sanitize phone         | pattern if present                       | no letters               |
-| paymentTerms                 | enum           | No       | cod/credit_30/credit_60/credit_90                         | cod                       | cash            | dropdown only          | must be allowed value                    | enum whitelist           |
+| paymentTerms                 | enum           | No       | cod/with_terms                                             | with_terms                | cash            | radio options          | must be allowed value                    | enum whitelist           |
 | businessLife                 | decimal        | No       | Digits with optional decimal, >= 0                        | 5 or 5.5                  | five            | type=number            | decimal only                             | decimal regex            |
 | howLongAtAddress             | decimal        | No       | Digits with optional decimal, >= 0                        | 3                         | three           | type=number            | decimal only                             | decimal regex            |
 | numberOfBranches             | integer        | No       | Digits only, >= 0                                         | 2                         | two             | type=number, step 1    | integer only                             | digits only              |
@@ -68,6 +68,7 @@ This matrix defines what each field should accept, what should be blocked, and w
 | deliverySameAsOffice = true | Ignore delivery fields on submit                                              |
 | Owners entered              | Optional: total ownership must be <= 100; strict mode can require exactly 100 |
 | Required document slots     | Block final submit if any required slot has 0 files                           |
+| paymentTerms = with_terms   | docValidId must include at least one uploaded file                             |
 
 ## Suggested Error Message Style
 

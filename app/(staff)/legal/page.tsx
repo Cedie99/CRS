@@ -6,7 +6,7 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { FileText, Scale } from "lucide-react";
+import { FileText, Scale, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Legal Review Queue — CRS" };
@@ -94,8 +94,9 @@ export default async function LegalDashboard({
           </div>
         </div>
         {filteredCount > 0 && (
-          <span className="shrink-0 rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
-            {filteredCount} pending
+          <span className="mt-7 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-purple-200 bg-linear-to-r from-purple-50 to-purple-100/80 px-3.5 py-1.5 text-sm font-semibold text-purple-800 shadow-sm sm:mt-8">
+            <Clock3 className="h-3.5 w-3.5 text-purple-700" />
+            <span>{filteredCount} Pending Review</span>
           </span>
         )}
       </div>

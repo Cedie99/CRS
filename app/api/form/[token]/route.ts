@@ -64,7 +64,7 @@ export async function POST(
   // Valid ID is required when payment terms is credit
   const paymentTerms = parsed.data.paymentTerms ?? "";
   if (
-    ["credit_30", "credit_60", "credit_90"].includes(paymentTerms) &&
+    ["with_terms", "credit_30", "credit_60", "credit_90"].includes(paymentTerms) &&
     (!body.docValidId || (Array.isArray(body.docValidId) && body.docValidId.length === 0))
   ) {
     return NextResponse.json(

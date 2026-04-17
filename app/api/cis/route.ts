@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq, desc, inArray, and } from "drizzle-orm";
+import { eq, desc, inArray, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users, workflowEvents, notifications } from "@/lib/db/schema";
@@ -106,38 +106,61 @@ export async function GET() {
 
 // POST /api/cis — agent creates a draft CIS and gets a shareable customer link
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { role, id: userId, agentCode, agentType } = session.user;
-  if (role !== "sales_agent" && role !== "rsr") {
-    return NextResponse.json({ error: "Only agents can create CIS forms" }, { status: 403 });
+    const { role, id: userId, agentCode, agentType } = session.user;
+    if (role !== "sales_agent" && role !== "rsr") {
+      return NextResponse.json({ error: "Only agents can create CIS forms" }, { status: 403 });
+    }
+    if (!agentCode || !agentType) {
+      return NextResponse.json(
+        { error: "Your account does not have an agent code assigned. Please contact Admin." },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const parsed = initiateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+
+    // Compatibility insert: only target core columns that exist in both older and newer schemas.
+    const rows = await db.execute<{ id: string; publicToken: string }>(sql`
+      insert into "cis_submissions" (
+        "agent_id",
+        "agent_code",
+        "agent_type",
+        "customer_type",
+        "status",
+        "trade_name"
+      )
+      values (
+        ${userId},
+        ${agentCode},
+        ${agentType},
+        ${"standard"},
+        ${"draft"},
+        ${parsed.data.tradeName || null}
+      )
+      returning "id", "public_token" as "publicToken"
+    `);
+
+    const inserted = Array.isArray(rows)
+      ? rows[0]
+      : (rows as { rows?: Array<{ id: string; publicToken: string }> }).rows?.[0];
+
+    if (!inserted?.publicToken) {
+      return NextResponse.json({ error: "Unable to generate a customer link right now." }, { status: 500 });
+    }
+
+    return NextResponse.json({ id: inserted.id, publicToken: inserted.publicToken }, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create CIS draft:", error);
+    return NextResponse.json({ error: "Unable to generate a customer link right now." }, { status: 500 });
   }
-  if (!agentCode || !agentType) {
-    return NextResponse.json(
-      { error: "Your account does not have an agent code assigned. Please contact Admin." },
-      { status: 400 }
-    );
-  }
-
-  const body = await req.json();
-  const parsed = initiateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
-  }
-
-  const [inserted] = await db
-    .insert(cisSubmissions)
-    .values({
-      agentId: userId,
-      agentCode,
-      agentType,
-      tradeName: parsed.data.tradeName || null,
-      status: "draft",
-    })
-    .returning({ id: cisSubmissions.id, publicToken: cisSubmissions.publicToken });
-
-  return NextResponse.json({ id: inserted.id, publicToken: inserted.publicToken }, { status: 201 });
 }
 
 async function getManagerId(agentId: string): Promise<string | null> {

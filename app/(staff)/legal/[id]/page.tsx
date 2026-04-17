@@ -23,7 +23,85 @@ export default async function LegalCisDetailPage({
   const { id } = await params;
 
   const [cis] = await db
-    .select()
+    .select({
+      id: cisSubmissions.id,
+      agentCode: cisSubmissions.agentCode,
+      agentType: cisSubmissions.agentType,
+      customerType: cisSubmissions.customerType,
+      status: cisSubmissions.status,
+      tradeName: cisSubmissions.tradeName,
+      contactPerson: cisSubmissions.contactPerson,
+      contactNumber: cisSubmissions.contactNumber,
+      emailAddress: cisSubmissions.emailAddress,
+      businessAddress: cisSubmissions.businessAddress,
+      cityMunicipality: cisSubmissions.cityMunicipality,
+      businessType: cisSubmissions.businessType,
+      tinNumber: cisSubmissions.tinNumber,
+      additionalNotes: cisSubmissions.additionalNotes,
+      createdAt: cisSubmissions.createdAt,
+      updatedAt: cisSubmissions.updatedAt,
+      customerSignature: cisSubmissions.customerSignature,
+      customerSignedAt: cisSubmissions.customerSignedAt,
+      customerSignatureSeal: cisSubmissions.customerSignatureSeal,
+      approverSignature: cisSubmissions.approverSignature,
+      approverSignedAt: cisSubmissions.approverSignedAt,
+      approverSignatureSeal: cisSubmissions.approverSignatureSeal,
+      petroleumLicenseNo: cisSubmissions.petroleumLicenseNo,
+      depotStationType: cisSubmissions.depotStationType,
+      tankCapacity: cisSubmissions.tankCapacity,
+      doeAccreditationNo: cisSubmissions.doeAccreditationNo,
+      specialAccountType: cisSubmissions.specialAccountType,
+      specialAccountRemarks: cisSubmissions.specialAccountRemarks,
+      paymentTerms: cisSubmissions.paymentTerms,
+      docGovCertifications: cisSubmissions.docGovCertifications,
+      corporateName: cisSubmissions.corporateName,
+      dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
+      numberOfEmployees: cisSubmissions.numberOfEmployees,
+      website: cisSubmissions.website,
+      telephoneNumber: cisSubmissions.telephoneNumber,
+      landmarks: cisSubmissions.landmarks,
+      deliverySameAsOffice: cisSubmissions.deliverySameAsOffice,
+      deliveryAddress: cisSubmissions.deliveryAddress,
+      deliveryLandmarks: cisSubmissions.deliveryLandmarks,
+      deliveryMobile: cisSubmissions.deliveryMobile,
+      deliveryTelephone: cisSubmissions.deliveryTelephone,
+      lineOfBusiness: cisSubmissions.lineOfBusiness,
+      lineOfBusinessOther: cisSubmissions.lineOfBusinessOther,
+      businessActivity: cisSubmissions.businessActivity,
+      businessActivityOther: cisSubmissions.businessActivityOther,
+      owners: cisSubmissions.owners,
+      officers: cisSubmissions.officers,
+      businessLife: cisSubmissions.businessLife,
+      howLongAtAddress: cisSubmissions.howLongAtAddress,
+      numberOfBranches: cisSubmissions.numberOfBranches,
+      govCertifications: cisSubmissions.govCertifications,
+      tradeReferences: cisSubmissions.tradeReferences,
+      bankReferences: cisSubmissions.bankReferences,
+      achievements: cisSubmissions.achievements,
+      otherMerits: cisSubmissions.otherMerits,
+      docValidId: cisSubmissions.docValidId,
+      docMayorsPermit: cisSubmissions.docMayorsPermit,
+      docSecDti: cisSubmissions.docSecDti,
+      docBirCertificate: cisSubmissions.docBirCertificate,
+      docLocationMap: cisSubmissions.docLocationMap,
+      docFinancialStatement: cisSubmissions.docFinancialStatement,
+      docBankStatement: cisSubmissions.docBankStatement,
+      docProofOfBilling: cisSubmissions.docProofOfBilling,
+      docLeaseContract: cisSubmissions.docLeaseContract,
+      docProofOfOwnership: cisSubmissions.docProofOfOwnership,
+      docStorePhoto: cisSubmissions.docStorePhoto,
+      docSupplierInvoice: cisSubmissions.docSupplierInvoice,
+      docSocialMedia: cisSubmissions.docSocialMedia,
+      docCertifications: cisSubmissions.docCertifications,
+      docOther: cisSubmissions.docOther,
+      financeEu: cisSubmissions.financeEu,
+      financeDl: cisSubmissions.financeDl,
+      financeDr: cisSubmissions.financeDr,
+      financePlTs: cisSubmissions.financePlTs,
+      financePossiblePoints: cisSubmissions.financePossiblePoints,
+      financeApprovedPoints: cisSubmissions.financeApprovedPoints,
+      financeCreditTerms: cisSubmissions.financeCreditTerms,
+    })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -139,7 +217,7 @@ export default async function LegalCisDetailPage({
           )}
         </div>
 
-        <div className="print:hidden space-y-5 xl:col-span-2">
+        <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>

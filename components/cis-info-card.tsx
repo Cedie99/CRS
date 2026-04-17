@@ -98,7 +98,8 @@ const BUSINESS_ACTIVITY_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_TERMS_LABELS: Record<string, string> = {
-  cod:       "COD (Cash on Delivery)",
+  cod:       "COD",
+  with_terms: "With Terms",
   credit_30: "Credit – 30 days",
   credit_60: "Credit – 60 days",
   credit_90: "Credit – 90 days",

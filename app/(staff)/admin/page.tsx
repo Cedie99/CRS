@@ -71,7 +71,14 @@ export default async function AdminDashboard({
 
   const [submissions, countRow, pendingUsers] = await Promise.all([
     db
-      .select()
+      .select({
+        id: cisSubmissions.id,
+        customerType: cisSubmissions.customerType,
+        status: cisSubmissions.status,
+        tradeName: cisSubmissions.tradeName,
+        agentCode: cisSubmissions.agentCode,
+        createdAt: cisSubmissions.createdAt,
+      })
       .from(cisSubmissions)
       .where(whereClause)
       .orderBy(desc(cisSubmissions.createdAt))

@@ -6,7 +6,7 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { FileText, DollarSign } from "lucide-react";
+import { FileText, DollarSign, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Finance Review Queue — CRS" };
@@ -94,8 +94,9 @@ export default async function FinanceDashboard({
           </div>
         </div>
         {filteredCount > 0 && (
-          <span className="self-start shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700 sm:self-auto">
-            {filteredCount} pending
+          <span className="mt-7 inline-flex self-start shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-linear-to-r from-amber-50 to-amber-100/80 px-3.5 py-1.5 text-sm font-semibold text-amber-800 shadow-sm sm:mt-8 sm:self-auto">
+            <Clock3 className="h-3.5 w-3.5 text-amber-700" />
+            <span>{filteredCount} Pending Review</span>
           </span>
         )}
       </div>

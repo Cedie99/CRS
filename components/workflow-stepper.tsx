@@ -88,73 +88,122 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
   }
 
   return (
-    <div className="rounded-xl border bg-white px-5 py-4">
-      <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-zinc-400">
+    <div className="animate-in slide-in-from-bottom-1 fade-in-0 rounded-xl border bg-white px-5 py-5 duration-500">
+      <p className="mb-4 text-[12px] font-semibold uppercase tracking-widest text-zinc-400">
         Workflow Progress
       </p>
-      <div className="overflow-x-auto py-4">
-        <div className="flex min-w-120 items-center">
+      <div className="md:hidden">
+        <div className="space-y-3">
           {steps.map((step, i) => {
-          const isCompleted = i < currentIndex;
-          const isCurrent = i === currentIndex;
-          const isFuture = i > currentIndex;
-          const isLast = i === steps.length - 1;
-          const isDone = isCurrent && isLast;
+            const isCompleted = i < currentIndex;
+            const isCurrent = i === currentIndex;
+            const isFuture = i > currentIndex;
+            const isLast = i === steps.length - 1;
+            const isDone = isCurrent && isLast;
 
-          return (
-            <div key={step.key} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center gap-1.5">
-                {isDone ? (
-                  <div className="relative flex h-10 w-10 items-center justify-center">
-                    <span className="absolute inset-0 rounded-full bg-[#2d6e1e] animate-ping opacity-25" />
-                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6e1e] text-white shadow-md ring-4 ring-[#2d6e1e]/30">
-                      <Check className="h-5 w-5 stroke-[2.5]" />
-                    </div>
-                  </div>
-                ) : isCurrent ? (
-                  <div className="relative flex h-10 w-10 items-center justify-center">
-                    <span className="absolute inset-0 rounded-full bg-[#2d6e1e] animate-ping opacity-25" />
-                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6e1e] text-white shadow-md ring-4 ring-[#2d6e1e]/30 text-xs font-semibold">
-                      <span>{i + 1}</span>
-                    </div>
-                  </div>
-                ) : (
+            return (
+              <div
+                key={step.key}
+                className="animate-in slide-in-from-left-1 fade-in-0 relative flex items-center gap-3 duration-500"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                  {isCurrent && <span className="absolute inset-0 rounded-full bg-[#2d6e1e]/20 animate-pulse" />}
                   <div
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all",
-                      isCompleted && "bg-[#2d6e1e] text-white shadow-sm",
+                      "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500",
+                      (isCompleted || isCurrent || isDone) && "bg-[#2d6e1e] text-white",
                       isFuture && "bg-zinc-100 text-zinc-400"
                     )}
                   >
-                    {isCompleted ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span>{i + 1}</span>
-                    )}
+                    {isCompleted || isDone ? <Check className="h-4 w-4" /> : <span>{i + 1}</span>}
                   </div>
-                )}
+                </div>
+
                 <span
                   className={cn(
-                    "hidden whitespace-nowrap text-[12px] font-semibold sm:block",
-                    isDone && "text-[#2d6e1e]",
-                    !isDone && isCompleted && "text-[#2d6e1e]",
-                    !isDone && isCurrent && "text-[#2d6e1e]",
+                    "text-sm font-semibold",
+                    (isDone || isCompleted || isCurrent) && "text-[#2d6e1e]",
                     isFuture && "text-zinc-400"
                   )}
                 >
                   {step.label}
                 </span>
+                {isCurrent && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
+                    Current
+                  </span>
+                )}
+
+                {!isLast && (
+                  <span
+                    className={cn(
+                      "absolute left-3.75 top-8 h-4 w-0.5 rounded-full transition-colors duration-500",
+                      i < currentIndex ? "bg-[#2d6e1e]" : "bg-zinc-200"
+                    )}
+                  />
+                )}
               </div>
-              {!isLast && (
-                <div
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="hidden md:block">
+        <div className="grid grid-cols-6 items-start gap-2 pt-2">
+          {steps.map((step, i) => {
+            const isCompleted = i < currentIndex;
+            const isCurrent = i === currentIndex;
+            const isFuture = i > currentIndex;
+            const isLast = i === steps.length - 1;
+            const isDone = isCurrent && isLast;
+
+            return (
+              <div
+                key={step.key}
+                className="animate-in slide-in-from-bottom-1 fade-in-0 relative flex flex-col items-center duration-500"
+                style={{ animationDelay: `${i * 90}ms` }}
+              >
+                {!isLast && (
+                  <span
+                    className={cn(
+                      "absolute left-1/2 top-5 h-0.5 w-full transition-colors duration-500",
+                      i < currentIndex ? "bg-[#2d6e1e]" : "bg-zinc-200"
+                    )}
+                  />
+                )}
+
+                <div className="relative z-10 flex h-10 w-10 items-center justify-center">
+                  {isCurrent && <span className="absolute inset-0 rounded-full bg-[#2d6e1e]/20 animate-pulse" />}
+                  <div
+                    className={cn(
+                      "relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500",
+                      (isCompleted || isCurrent || isDone) && "bg-[#2d6e1e] text-white shadow-sm",
+                      isFuture && "bg-zinc-100 text-zinc-400"
+                    )}
+                  >
+                    {isCompleted || isDone ? <Check className="h-4 w-4" /> : <span>{i + 1}</span>}
+                  </div>
+                </div>
+
+                <span
                   className={cn(
-                    "mx-1 mb-5 h-0.5 flex-1 rounded-full sm:mx-2",
-                    i < currentIndex ? "bg-[#2d6e1e]" : "bg-zinc-200"
+                    "mt-2 text-center text-[12px] font-semibold",
+                    (isDone || isCompleted || isCurrent) && "text-[#2d6e1e]",
+                    isFuture && "text-zinc-400"
                   )}
-                />
-              )}
-            </div>
-          );
+                >
+                  {step.label}
+                </span>
+                {isCurrent && (
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
+                    Current
+                  </span>
+                )}
+              </div>
+            );
           })}
         </div>
       </div>

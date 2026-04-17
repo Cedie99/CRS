@@ -7,7 +7,6 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
-import { CurrentDate } from "@/components/current-date";
 import { Plus, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -239,9 +238,6 @@ export default async function AgentDashboard({
               </span>
             )}
           </p>
-        </div>
-        <div className="self-start sm:self-auto sm:text-right">
-          <CurrentDate />
         </div>
       </div>
 

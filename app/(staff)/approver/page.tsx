@@ -6,7 +6,7 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { FileText, BadgeCheck } from "lucide-react";
+import { FileText, BadgeCheck, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Approval Queue — CRS" };
@@ -94,8 +94,9 @@ export default async function ApproverDashboard({
           </div>
         </div>
         {filteredCount > 0 && (
-          <span className="shrink-0 rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-700">
-            {filteredCount} pending
+          <span className="mt-7 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-orange-200 bg-linear-to-r from-orange-50 to-orange-100/80 px-3.5 py-1.5 text-sm font-semibold text-orange-800 shadow-sm sm:mt-8">
+            <Clock3 className="h-3.5 w-3.5 text-orange-700" />
+            <span>{filteredCount} Pending Review</span>
           </span>
         )}
       </div>

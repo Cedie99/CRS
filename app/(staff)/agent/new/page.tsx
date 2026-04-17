@@ -108,12 +108,31 @@ function NewCisContent() {
           tradeName: customerName.trim() || undefined,
         }),
       });
-      const json = await res.json();
+
+      let json: unknown = null;
+      try {
+        json = await res.json();
+      } catch {
+        json = null;
+      }
+
+      const data = json as { error?: unknown; publicToken?: unknown } | null;
+
       if (!res.ok) {
-        setError(typeof json.error === "string" ? json.error : "Failed to generate link.");
+        const errorMessage =
+          typeof data?.error === "string"
+            ? data.error
+            : "Unable to generate a customer link right now. Please try again.";
+        setError(errorMessage);
         return;
       }
-      const link = `${window.location.origin}/form/${json.publicToken}`;
+
+      if (typeof data?.publicToken !== "string" || data.publicToken.length === 0) {
+        setError("Unable to generate a customer link right now. Please try again.");
+        return;
+      }
+
+      const link = `${window.location.origin}/form/${data.publicToken}`;
       const qr = await QRCode.toDataURL(link, { width: 260, margin: 1 });
       setGeneratedLink(link);
       setGeneratedQr(qr);
@@ -123,7 +142,7 @@ function NewCisContent() {
         description: "Send the link to your customer to start their submission.",
       });
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Unable to generate a customer link right now. Please try again.");
     } finally {
       setIsLoading(false);
     }

@@ -100,13 +100,20 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col overflow-hidden bg-linear-to-b from-[#0c3b22] via-[#125a31] to-[#1f7a43] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(166,247,199,0.2),transparent_30%),radial-gradient(circle_at_90%_80%,rgba(220,252,231,0.18),transparent_35%)]" />
+
+      <div className="relative border-b border-white/15 px-4 py-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100/80">Oracle Petroleum</p>
+        <h2 className="mt-1 text-sm font-semibold tracking-wide text-emerald-50">Customer Request System</h2>
+      </div>
+
       {/* Mobile close button */}
       {onClose && (
-        <div className="flex items-center justify-end border-b border-zinc-100 px-3 py-3">
+        <div className="relative flex items-center justify-end border-b border-white/15 px-3 py-2.5">
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+            className="rounded-md p-1 text-emerald-100/80 hover:bg-white/15 hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -114,7 +121,7 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
       )}
 
       {/* Nav items */}
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
+      <nav className="relative flex-1 space-y-1 px-3 py-4">
         {items.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -127,16 +134,16 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
               href={item.href}
               onClick={onClose}
               className={cn(
-                "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-[#2d6e1e] text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  ? "bg-white/20 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]"
+                  : "text-emerald-50/90 hover:bg-white/12 hover:text-white"
               )}
             >
               <Icon
                 className={cn(
                   "h-4 w-4 shrink-0",
-                  isActive ? "text-white" : "text-zinc-400"
+                  isActive ? "text-white" : "text-emerald-100/70 group-hover:text-emerald-50"
                 )}
               />
               {item.label}
@@ -146,7 +153,7 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
       </nav>
 
       {/* User info + profile + logout */}
-      <div className="space-y-0.5 border-t border-zinc-100 bg-white px-3 py-3">
+      <div className="relative space-y-1 border-t border-white/15 bg-black/10 px-3 py-3 backdrop-blur-sm">
         {userName && (
           <Link
             href="/profile"
@@ -154,25 +161,25 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
             className={cn(
               "flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors",
               pathname === "/profile"
-                ? "bg-[#2d6e1e]/10"
-                : "hover:bg-zinc-100"
+                ? "bg-white/20"
+                : "hover:bg-white/12"
             )}
           >
             <Avatar className="h-7 w-7 shrink-0">
               {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-              <AvatarFallback className="bg-[#2d6e1e] text-[10px] text-white">
+              <AvatarFallback className="bg-emerald-100 text-[10px] font-semibold text-emerald-900">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-800">{userName}</p>
-              <p className="truncate text-xs text-zinc-400">{ROLE_LABELS[role] ?? role}</p>
+              <p className="truncate text-sm font-semibold text-white">{userName}</p>
+              <p className="truncate text-xs text-emerald-100/80">{ROLE_LABELS[role] ?? role}</p>
             </div>
           </Link>
         )}
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
+          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-emerald-100/90 transition-colors hover:bg-red-500/20 hover:text-red-100"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Logout
@@ -195,7 +202,7 @@ export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClos
     <>
       {/* Desktop */}
       <div className="hidden w-56 shrink-0 lg:block">
-        <aside className="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 border-r border-zinc-200 bg-white">
+        <aside className="fixed left-0 top-0 h-screen w-56 border-r border-emerald-900/40 shadow-[0_14px_36px_-24px_rgba(0,0,0,0.8)]">
           <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} />
         </aside>
       </div>
@@ -204,10 +211,10 @@ export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClos
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/55"
             onClick={onMobileClose}
           />
-          <div className="absolute left-0 top-0 z-50 h-full w-64 max-w-[80vw] bg-white shadow-xl">
+          <div className="absolute left-0 top-0 z-50 h-full w-64 max-w-[80vw] border-r border-emerald-900/40 shadow-2xl">
             <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} onClose={onMobileClose} />
           </div>
         </div>

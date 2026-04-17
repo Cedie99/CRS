@@ -42,11 +42,9 @@ const BUSINESS_TYPES = [
 ];
 
 const PAYMENT_TERMS = [
-  { value: "cod",       label: "COD (Cash on Delivery)" },
-  { value: "credit_30", label: "Credit – 30 days" },
-  { value: "credit_60", label: "Credit – 60 days" },
-  { value: "credit_90", label: "Credit – 90 days" },
-];
+  { value: "cod", label: "COD" },
+  { value: "with_terms", label: "With Terms" },
+] as const;
 
 const TOTAL_STEPS = 6;
 const STEP_LABELS = [
@@ -266,6 +264,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [declarationError, setDeclarationError] = useState("");
   const [debugStep, setDebugStep] = useState("idle");
+  const withTermsSelected = paymentTerms === "with_terms";
 
   // When the user navigates to the signature step, explicitly size the canvas.
   // ResizeObserver alone is unreliable when a parent transitions from display:none
@@ -308,6 +307,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       }
       if (businessActivity === "other" && !String(fd.get("businessActivityOther") ?? "").trim()) {
         errs.businessActivityOther = "Please specify";
+      }
+    }
+    if (step === 5 && withTermsSelected) {
+      const validIdFiles = docs.docValidId ?? [];
+      if (validIdFiles.length === 0) {
+        errs.docValidId = "Valid Government ID is required for With Terms.";
       }
     }
     if (Object.keys(errs).length > 0) {
@@ -766,14 +771,35 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
 
             <div className="max-w-xs space-y-1.5">
               <Label>Payment terms</Label>
-              <Select value={paymentTerms} onValueChange={(v) => setPaymentTerms(v ?? "")} disabled={isLoading}>
-                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_TERMS.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {PAYMENT_TERMS.map((t) => {
+                  const checked = paymentTerms === t.value;
+                  return (
+                    <label
+                      key={t.value}
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        checked
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                          : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentTermsRadio"
+                        value={t.value}
+                        checked={checked}
+                        onChange={(e) => setPaymentTerms(e.target.value)}
+                        disabled={isLoading}
+                        className="h-4 w-4 border-zinc-300 text-emerald-700"
+                      />
+                      <span className="font-medium">{t.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-zinc-500">
+                If With Terms is selected, additional document requirements apply.
+              </p>
             </div>
           </div>
 
@@ -784,10 +810,17 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               <p className="mb-4 text-sm text-zinc-500">
                 Upload PDF, JPG, or PNG files. Max 10MB per file.
               </p>
-              {["credit_30", "credit_60", "credit_90"].includes(paymentTerms) && (
+              {withTermsSelected && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  <strong>Valid Government ID required</strong> — Credit term accounts must include a valid government-issued ID.
+                  <p className="font-semibold">With Terms upload requirements</p>
+                  <p className="mt-1">Valid Government ID is required when payment terms are With Terms.</p>
+                  <p className="mt-1 text-xs">For COD, Valid Government ID is optional.</p>
                 </div>
+              )}
+              {errors.docValidId && (
+                <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {errors.docValidId}
+                </p>
               )}
               <div className="space-y-4">
                 {DOC_SLOTS.map((slot) => (

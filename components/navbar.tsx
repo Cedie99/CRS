@@ -149,12 +149,12 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#1a1a1a]">
+    <header className="sticky top-0 z-50 border-b border-emerald-900/40 bg-linear-to-r from-[#0a2f1d] via-[#0f3f26] to-[#145a34]">
       <div className="flex h-14 items-center justify-between gap-2 px-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <button
             onClick={onMenuToggle}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-emerald-100/85 hover:bg-white/12 hover:text-white focus-visible:outline-none lg:hidden"
             aria-label="Toggle menu"
           >
             <Menu className="h-4 w-4" />
@@ -168,11 +168,11 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
             className="h-8 w-auto object-contain sm:h-9"
             priority
           />
-          <span className="hidden h-5 w-px bg-zinc-600 sm:block" />
-          <span className="hidden text-[10px] uppercase tracking-widest text-zinc-400 sm:block">
+          <span className="hidden h-5 w-px bg-emerald-200/30 sm:block" />
+          <span className="hidden text-[10px] uppercase tracking-widest text-emerald-100/75 sm:block">
             Customer Request System
           </span>
-          <span className="hidden rounded-md bg-zinc-700 px-2 py-0.5 text-xs font-medium text-zinc-300 sm:block">
+          <span className="hidden rounded-md border border-emerald-200/20 bg-white/10 px-2 py-0.5 text-xs font-medium text-emerald-50 sm:block">
             {ROLE_LABELS[userRole] ?? userRole}
           </span>
         </Link>
@@ -181,7 +181,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
         <div className="flex items-center gap-2">
           {/* Notification bell */}
           <DropdownMenu open={notifOpen} onOpenChange={handleOpenNotifications}>
-            <DropdownMenuTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline-none cursor-pointer">
+            <DropdownMenuTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md text-emerald-100/85 hover:bg-white/12 hover:text-white focus-visible:outline-none cursor-pointer">
               <Bell className="h-4 w-4" />
               {totalBadgeCount > 0 && (
                 <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#ff0000] text-[12px] font-bold text-[#ffffff]">

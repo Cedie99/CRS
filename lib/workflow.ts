@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, notifications, users } from "@/lib/db/schema";
 import {
@@ -11,6 +11,33 @@ import {
 type CisStatus = typeof cisSubmissions.$inferSelect["status"];
 type WorkflowAction = typeof workflowEvents.$inferSelect["action"];
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+const WORKFLOW_ACTION_FALLBACK: Partial<Record<WorkflowAction, WorkflowAction>> = {
+  // Older DB enum does not include this value yet.
+  // Persist as "submitted" so transition can continue on legacy schemas.
+  agent_submitted: "submitted",
+};
+
+async function resolvePersistedWorkflowAction(tx: Tx, action: WorkflowAction): Promise<WorkflowAction> {
+  const rows = await tx.execute<{ enumlabel: string }>(sql`
+    select e.enumlabel
+    from pg_type t
+    join pg_enum e on e.enumtypid = t.oid
+    where t.typname = 'workflow_action'
+  `);
+
+  const values = new Set(
+    (Array.isArray(rows)
+      ? rows
+      : (rows as { rows?: Array<{ enumlabel: string }> }).rows ?? []
+    ).map((r) => r.enumlabel)
+  );
+
+  if (values.has(action)) return action;
+  const fallback = WORKFLOW_ACTION_FALLBACK[action];
+  if (fallback && values.has(fallback)) return fallback;
+  return action;
+}
 
 export async function transitionCis({
   cisId,
@@ -30,6 +57,8 @@ export async function transitionCis({
   isDealer?: boolean;
 }) {
   const emailJobs = await db.transaction(async (tx) => {
+    const persistedAction = await resolvePersistedWorkflowAction(tx, action);
+
     await tx
       .update(cisSubmissions)
       .set({ status: toStatus, updatedAt: new Date() })
@@ -38,7 +67,7 @@ export async function transitionCis({
     await tx.insert(workflowEvents).values({
       cisId,
       actorId,
-      action,
+      action: persistedAction,
       note: note ?? null,
     });
 
