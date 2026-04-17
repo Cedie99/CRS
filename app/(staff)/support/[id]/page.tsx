@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
-import { ErpEncodeActions } from "@/components/actions/erp-encode-actions";
+import { SalesSupportFillOutActions } from "@/components/actions/sales-support-fill-out-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +45,6 @@ export default async function SupportCisDetailPage({
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
 
-  const canEncode = cis.status === "approved";
 
   return (
     <div className="space-y-5">
@@ -131,7 +130,7 @@ export default async function SupportCisDetailPage({
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
           />
-          {canEncode && <ErpEncodeActions cisId={id} backHref="/support" />}
+          {cis.status === "approved" && <SalesSupportFillOutActions cisId={id} />}
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2">

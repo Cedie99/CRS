@@ -15,6 +15,7 @@ const STAFF_ROUTES: Record<string, string> = {
   legal_approver: "/legal",
   senior_approver: "/approver",
   sales_support: "/support",
+  project_development_specialist: "/specialist",
   admin: "/admin",
 };
 

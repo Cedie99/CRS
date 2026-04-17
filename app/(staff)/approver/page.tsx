@@ -2,8 +2,8 @@ import { eq, desc, and, ilike, or, inArray, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
-import { CustomerTypeColumns } from "@/components/customer-type-columns";
-import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
+import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import { FileText, BadgeCheck } from "lucide-react";
@@ -39,9 +39,20 @@ export default async function ApproverDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
+  const cardSelect = {
+    id: cisSubmissions.id,
+    tradeName: cisSubmissions.tradeName,
+    contactPerson: cisSubmissions.contactPerson,
+    customerType: cisSubmissions.customerType,
+    agentCode: cisSubmissions.agentCode,
+    status: cisSubmissions.status,
+    createdAt: cisSubmissions.createdAt,
+    updatedAt: cisSubmissions.updatedAt,
+  };
+
   const [submissions, filteredCountRow, history] = await Promise.all([
     db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...conditions))
       .orderBy(desc(cisSubmissions.createdAt))
@@ -127,6 +138,12 @@ export default async function ApproverDashboard({
         </div>
       </div>
 
+      <CustomerTypeNavCards
+        basePath="/approver"
+        searchParams={{ q, status }}
+        submissions={submissions}
+      />
+
       {filteredCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
           <div className="rounded-full bg-zinc-100 p-4">
@@ -140,22 +157,9 @@ export default async function ApproverDashboard({
           </p>
         </div>
       ) : (
-        <>
-          <CustomerTypeColumns
-            submissions={submissions.map((s) => ({
-              ...s,
-              status: s.status as CisStatus,
-            }))}
-            hrefPrefix="approver"
-          />
-          <DashboardPagination
-            basePath="/approver"
-            currentPage={currentPage}
-            totalItems={filteredCount}
-            pageSize={pageSize}
-            searchParams={{ q, status }}
-          />
-        </>
+        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
+          Select a customer type card to open its dedicated submissions page.
+        </div>
       )}
     </div>
   );

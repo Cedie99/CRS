@@ -16,6 +16,7 @@ const IN_PROGRESS_STATUSES: CisStatus[] = [
   "pending_finance_review",
   "pending_approval",
   "approved",
+  "pending_erp_encoding",
 ];
 
 function formatDate(date: Date): string {

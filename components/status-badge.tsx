@@ -9,6 +9,7 @@ export type CisStatus =
   | "pending_finance_review"
   | "pending_approval"
   | "approved"
+  | "pending_erp_encoding"
   | "erp_encoded"
   | "denied"
   | "returned";
@@ -61,6 +62,13 @@ const STATUS_CONFIG: Record<
     className: "bg-green-100 text-green-700 hover:bg-green-100",
     dot: "bg-green-500",
   },
+  pending_erp_encoding: {
+    label: "ERP Encoding",
+    mobileLabel: "Encoding",
+    className: "bg-indigo-100 text-indigo-700 hover:bg-indigo-100",
+    dot: "bg-indigo-500",
+    pulse: true,
+  },
   erp_encoded: {
     label: "Onboarded",
     className: "bg-green-200 text-green-800 hover:bg-green-200",
@@ -78,13 +86,25 @@ const STATUS_CONFIG: Record<
   },
 };
 
+const FALLBACK_STATUS_CONFIG = {
+  label: "Unknown",
+  className: "bg-zinc-100 text-zinc-600 hover:bg-zinc-100",
+  dot: "bg-zinc-400",
+} as const;
+
+function isCisStatus(value: string): value is CisStatus {
+  return Object.prototype.hasOwnProperty.call(STATUS_CONFIG, value);
+}
+
 interface StatusBadgeProps {
-  status: CisStatus;
+  status: CisStatus | string | null | undefined;
   className?: string;
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status];
+  const config = typeof status === "string" && isCisStatus(status)
+    ? STATUS_CONFIG[status]
+    : FALLBACK_STATUS_CONFIG;
   return (
     <Badge className={cn("max-w-[46vw] min-w-0 border-0 font-medium gap-1.5 sm:max-w-none", config.className, className)}>
       <span

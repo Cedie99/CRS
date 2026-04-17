@@ -9,59 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
-  ArrowLeft, Copy, Check, Link as LinkIcon, Building2, Flame, Star, Scale,
+  ArrowLeft, Copy, Check, Link as LinkIcon,
   QrCode, Download, MessageSquare, UserRound, FileText, GitBranch, Lightbulb,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { sileo as toast } from "sileo";
 import QRCode from "qrcode";
 import { DeleteDraftButton } from "@/components/delete-draft-button";
 
-const CUSTOMER_TYPES = [
-  {
-    value: "standard",
-    label: "Standard",
-    description: "Regular customer account. Goes through Manager → Finance → Final Approval.",
-    icon: Building2,
-    routeNote: null,
-    cardColor: "border-zinc-200 hover:border-zinc-400",
-    activeColor: "border-[#2d6e1e] bg-green-50 ring-2 ring-[#2d6e1e]/20",
-    iconBg: "bg-zinc-100",
-    iconColor: "text-zinc-600",
-    badgeCn: "bg-zinc-100 text-zinc-700",
-  },
-  {
-    value: "fs_petroleum",
-    label: "FS Petroleum",
-    description: "Fuel station account. Requires Legal Review before going to Finance.",
-    icon: Flame,
-    routeNote: "Legal Review required first",
-    cardColor: "border-zinc-200 hover:border-purple-300",
-    activeColor: "border-purple-400 bg-purple-50 ring-2 ring-purple-400/20",
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-    badgeCn: "bg-purple-50 text-purple-700 border border-purple-200",
-  },
-  {
-    value: "special",
-    label: "Special Account",
-    description: "Special or unique cases. Requires Legal Review before going to Finance.",
-    icon: Star,
-    routeNote: "Legal Review required first",
-    cardColor: "border-zinc-200 hover:border-amber-300",
-    activeColor: "border-amber-400 bg-amber-50 ring-2 ring-amber-400/20",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-    badgeCn: "bg-amber-50 text-amber-700 border border-amber-200",
-  },
-];
-
 const HOW_IT_WORKS = [
-  {
-    icon: UserRound,
-    title: "Select the customer type",
-    desc: "Choose Standard, FS Petroleum, or Special to set the approval route.",
-  },
   {
     icon: LinkIcon,
     title: "Generate a unique link",
@@ -73,9 +28,14 @@ const HOW_IT_WORKS = [
     desc: "They open the link and submit their business information directly.",
   },
   {
+    icon: UserRound,
+    title: "Agent fills out details",
+    desc: "After customer submits, you complete the account type and specialist details.",
+  },
+  {
     icon: GitBranch,
     title: "Auto-routed for approval",
-    desc: "The completed form moves through your organisation's review pipeline automatically.",
+    desc: "Based on the customer type you select, the form routes to Legal (Dealer) or Finance (others).",
   },
 ];
 
@@ -93,7 +53,6 @@ function NewCisContent() {
   const searchParams = useSearchParams();
   const draftId = searchParams.get("id");
 
-  const [customerType, setCustomerType] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -117,7 +76,6 @@ function NewCisContent() {
         const link = `${window.location.origin}/form/${data.publicToken}`;
         const qr = await QRCode.toDataURL(link, { width: 260, margin: 1 });
         setCustomerName(data.tradeName ?? "");
-        setCustomerType(data.customerType ?? "");
         setGeneratedLink(link);
         setGeneratedQr(qr);
         setExistingDraftId(draftId);
@@ -140,7 +98,6 @@ function NewCisContent() {
   ].join("\n");
 
   async function handleGenerate() {
-    if (!customerType) return;
     setError("");
     setIsLoading(true);
     try {
@@ -148,7 +105,6 @@ function NewCisContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerType,
           tradeName: customerName.trim() || undefined,
         }),
       });
@@ -199,14 +155,11 @@ function NewCisContent() {
     setGeneratedLink("");
     setGeneratedQr("");
     setExistingDraftId(null);
-    setCustomerType("");
     setCustomerName("");
     setCopied(false);
     setMessageCopied(false);
     router.replace("/agent/new");
   }
-
-  const selectedType = CUSTOMER_TYPES.find((t) => t.value === customerType);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -225,8 +178,8 @@ function NewCisContent() {
             <CardHeader>
               <CardTitle>New Customer Submission</CardTitle>
               <CardDescription>
-                Choose the customer type below. A unique form link will be generated
-                for you to share with your customer — they fill it out directly.
+                Enter an optional trade name, then generate a unique form link to share
+                with your customer. You&apos;ll fill in the customer type after they submit.
               </CardDescription>
             </CardHeader>
 
@@ -247,58 +200,6 @@ function NewCisContent() {
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       className="space-y-5"
                     >
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-zinc-700">
-                          What type of customer is this? *
-                        </Label>
-                        <div className="grid gap-2.5">
-                          {CUSTOMER_TYPES.map((t) => {
-                            const Icon = t.icon;
-                            const isSelected = customerType === t.value;
-                            return (
-                              <motion.button
-                                key={t.value}
-                                type="button"
-                                disabled={isLoading}
-                                onClick={() => setCustomerType(t.value)}
-                                whileHover={!isLoading ? { scale: 1.012 } : {}}
-                                whileTap={!isLoading ? { scale: 0.988 } : {}}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                className={cn(
-                                  "flex items-start gap-3 rounded-xl border px-4 py-3 text-left",
-                                  isSelected ? t.activeColor : t.cardColor,
-                                  "disabled:cursor-not-allowed disabled:opacity-60"
-                                )}
-                              >
-                                <span className={cn("mt-0.5 rounded-lg p-2", t.iconBg)}>
-                                  <Icon className={cn("h-4 w-4", t.iconColor)} />
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-zinc-900">{t.label}</span>
-                                    {t.routeNote && (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
-                                        <Scale className="h-3 w-3" />
-                                        {t.routeNote}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="mt-0.5 text-xs text-zinc-500">{t.description}</p>
-                                </div>
-                                <motion.span
-                                  animate={isSelected
-                                    ? { scale: 1, backgroundColor: "#2d6e1e", borderColor: "#2d6e1e" }
-                                    : { scale: 1, backgroundColor: "#ffffff", borderColor: "#d4d4d8" }
-                                  }
-                                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                  className="mt-1 h-4 w-4 shrink-0 rounded-full border-2"
-                                />
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
                       <div className="space-y-1.5">
                         <Label className="text-sm font-medium text-zinc-700">
                           Customer / Trade Name{" "}
@@ -330,7 +231,7 @@ function NewCisContent() {
                       </AnimatePresence>
 
                       <div className="flex flex-wrap gap-3">
-                        <Button onClick={handleGenerate} disabled={isLoading || !customerType}>
+                        <Button onClick={handleGenerate} disabled={isLoading}>
                           {isLoading ? "Generating…" : "Generate Customer Link"}
                         </Button>
                         <Button variant="outline" onClick={() => router.back()} disabled={isLoading}>
@@ -352,22 +253,15 @@ function NewCisContent() {
                         variants={itemVariants}
                         className="rounded-lg border border-green-200 bg-green-50 p-4"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-green-700">
-                            <LinkIcon className="h-4 w-4 shrink-0" />
-                            Link ready — share it with your customer!
-                          </div>
-                          {selectedType && (
-                            <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold", selectedType.badgeCn)}>
-                              {selectedType.label}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2 text-sm font-medium text-green-700">
+                          <LinkIcon className="h-4 w-4 shrink-0" />
+                          Link ready — share it with your customer!
                         </div>
                         {customerName.trim() && (
                           <p className="mt-1.5 text-sm font-semibold text-green-800">{customerName.trim()}</p>
                         )}
                         <p className="mt-1 text-xs text-green-600">
-                          Once your customer submits, the form automatically enters the approval pipeline.
+                          Once your customer submits, you&apos;ll fill in the customer type and account details.
                         </p>
                       </motion.div>
 

@@ -23,14 +23,14 @@ export function StaffShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
       <div className="print:hidden">
         <Navbar
           userRole={userRole}
           onMenuToggle={() => setSidebarOpen((o) => !o)}
         />
       </div>
-      <div className="flex flex-1">
+      <div className="flex min-h-0 flex-1">
         <div className="print:hidden">
           <AppSidebar
             role={userRole}
@@ -40,7 +40,7 @@ export function StaffShell({
             onMobileClose={() => setSidebarOpen(false)}
           />
         </div>
-        <main className="min-w-0 flex-1 bg-zinc-50">
+        <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50">
           <div className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">
             <PageTransition>{children}</PageTransition>
           </div>

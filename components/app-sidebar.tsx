@@ -15,6 +15,7 @@ import {
   Users,
   LogOut,
   X,
+  Database,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,9 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   sales_support: [
     { label: "Sales Support", href: "/support", icon: Inbox },
   ],
+  project_development_specialist: [
+    { label: "ERP Encoding Queue", href: "/specialist", icon: Database },
+  ],
   admin: [
     { label: "All Submissions", href: "/admin", icon: FileText, exact: true },
     { label: "Manage Users", href: "/admin/users", icon: Users },
@@ -70,6 +74,7 @@ const ROLE_LABELS: Record<string, string> = {
   legal_approver: "Legal Approver",
   senior_approver: "Senior Approver",
   sales_support: "Sales Support",
+  project_development_specialist: "Project Dev Specialist",
   admin: "Admin",
 };
 
@@ -141,7 +146,7 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
       </nav>
 
       {/* User info + profile + logout */}
-      <div className="space-y-0.5 border-t border-zinc-100 px-3 py-3">
+      <div className="space-y-0.5 border-t border-zinc-100 bg-white px-3 py-3">
         {userName && (
           <Link
             href="/profile"
@@ -189,9 +194,11 @@ export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClos
   return (
     <>
       {/* Desktop */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white lg:flex">
-        <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} />
-      </aside>
+      <div className="hidden w-56 shrink-0 lg:block">
+        <aside className="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 border-r border-zinc-200 bg-white">
+          <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} />
+        </aside>
+      </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (

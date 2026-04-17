@@ -689,7 +689,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   <Input
                     id="tinNumber"
                     name="tinNumber"
-                    placeholder="000-000-000-000"
+                    placeholder="Enter TIN (default: 0000000 if none)"
                     inputMode="numeric"
                     pattern="[0-9-]*"
                     title="Use numbers and hyphens only"
@@ -697,6 +697,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     onChange={(e) => setTinNumber(sanitizeTinInput(e.target.value))}
                     disabled={isLoading}
                   />
+                  <p className="text-xs text-zinc-400">Leave blank to use 0000000 as default.</p>
                   {errors.tinNumber && <p className="text-xs text-red-600">{errors.tinNumber}</p>}
                 </div>
               </div>
@@ -783,6 +784,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               <p className="mb-4 text-sm text-zinc-500">
                 Upload PDF, JPG, or PNG files. Max 10MB per file.
               </p>
+              {["credit_30", "credit_60", "credit_90"].includes(paymentTerms) && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  <strong>Valid Government ID required</strong> — Credit term accounts must include a valid government-issued ID.
+                </div>
+              )}
               <div className="space-y-4">
                 {DOC_SLOTS.map((slot) => (
                   <DocUploadSlot
@@ -793,6 +799,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     files={docs[slot.key]}
                     onChange={(files) => setDocFiles(slot.key, files)}
                     disabled={isLoading}
+                    allowDelete={slot.key !== "docMayorsPermit"}
                   />
                 ))}
               </div>

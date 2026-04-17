@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
-import { ManagerActions } from "@/components/actions/manager-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,8 +51,6 @@ export default async function ManagerCisDetailPage({
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
-
-  const canAct = cis.status === "pending_endorsement";
 
   return (
     <div className="space-y-5">
@@ -140,7 +137,6 @@ export default async function ManagerCisDetailPage({
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
           />
-          {canAct && <ManagerActions cisId={id} />}
         </div>
 
         {/* Sidebar */}

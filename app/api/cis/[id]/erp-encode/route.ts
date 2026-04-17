@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
-import { validateSubmissionDocumentExpirations } from "@/lib/document-expiration";
 import { transitionCis } from "@/lib/workflow";
 
 export async function PATCH(
@@ -12,26 +11,24 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (session.user.role !== "admin" && session.user.role !== "sales_support") {
+  if (
+    session.user.role !== "admin" &&
+    session.user.role !== "project_development_specialist"
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { id } = await params;
 
   const [cis] = await db
-    .select({ status: cisSubmissions.status, docMayorsPermit: cisSubmissions.docMayorsPermit })
+    .select({ status: cisSubmissions.status })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
 
   if (!cis) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (cis.status !== "approved") {
-    return NextResponse.json({ error: "CIS is not approved" }, { status: 409 });
-  }
-
-  const expirationCheck = validateSubmissionDocumentExpirations(cis);
-  if (!expirationCheck.ok) {
-    return NextResponse.json({ error: expirationCheck.errors.join(" ") }, { status: 422 });
+  if (cis.status !== "pending_erp_encoding") {
+    return NextResponse.json({ error: "CIS is not pending ERP encoding" }, { status: 409 });
   }
 
   await transitionCis({

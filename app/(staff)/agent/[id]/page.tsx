@@ -9,6 +9,7 @@ import { AuditTimeline } from "@/components/audit-timeline";
 import { DismissButton } from "@/components/dismiss-button";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
+import { AgentFillOutForm } from "@/components/actions/agent-fill-out-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, AlertTriangle, History } from "lucide-react";
 
@@ -181,6 +182,11 @@ export default async function AgentCisDetailPage({
             <DismissButton cisId={cis.id} />
           </div>
         </div>
+      )}
+
+      {/* Agent fill-out prompt — shown when customer has submitted but agent hasn't filled out */}
+      {cis.status === "submitted" && (
+        <AgentFillOutForm cisId={cis.id} />
       )}
 
       {/* Two-column layout */}

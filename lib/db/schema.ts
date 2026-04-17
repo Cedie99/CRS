@@ -22,6 +22,7 @@ export const roleEnum = pgEnum("role", [
   "legal_approver",
   "senior_approver",
   "sales_support",
+  "project_development_specialist",
   "admin",
 ]);
 
@@ -31,6 +32,11 @@ export const customerTypeEnum = pgEnum("customer_type", [
   "standard",
   "fs_petroleum",
   "special",
+  "dealer",
+  "distributor",
+  "private_label",
+  "toll_blend",
+  "end_user",
 ]);
 
 export const businessTypeEnum = pgEnum("business_type", [
@@ -49,6 +55,7 @@ export const cisStatusEnum = pgEnum("cis_status", [
   "pending_finance_review",
   "pending_approval",
   "approved",
+  "pending_erp_encoding",
   "erp_encoded",
   "denied",
   "returned",
@@ -56,6 +63,7 @@ export const cisStatusEnum = pgEnum("cis_status", [
 
 export const workflowActionEnum = pgEnum("workflow_action", [
   "submitted",
+  "agent_submitted",
   "endorsed",
   "returned",
   "forwarded_to_legal",
@@ -63,6 +71,7 @@ export const workflowActionEnum = pgEnum("workflow_action", [
   "forwarded_to_approver",
   "approved",
   "denied",
+  "sales_support_submitted",
   "erp_encoded",
 ]);
 
@@ -104,8 +113,8 @@ export const cisSubmissions = pgTable("cis_submissions", {
   agentCode: varchar("agent_code", { length: 50 }).notNull(),
   agentType: agentTypeEnum("agent_type").notNull(),
 
-  // Routing key — selected by agent at initiation
-  customerType: customerTypeEnum("customer_type").notNull(),
+  // Routing key — set by agent fill-out step (null until agent submits)
+  customerType: customerTypeEnum("customer_type"),
 
   // Status & stage
   status: cisStatusEnum("status").notNull().default("draft"),
@@ -177,6 +186,18 @@ export const cisSubmissions = pgTable("cis_submissions", {
   docCertifications: jsonb("doc_certifications"),
   docGovCertifications: jsonb("doc_gov_certifications"),
   docOther: jsonb("doc_other"),
+
+  // Agent fill-out fields (populated after customer submits)
+  agentAccountSpecialistFirst: varchar("agent_account_specialist_first", { length: 255 }),
+  agentAccountSpecialistLast: varchar("agent_account_specialist_last", { length: 255 }),
+  agentSalesSpecialist: varchar("agent_sales_specialist", { length: 255 }),
+  agentSalesManager: varchar("agent_sales_manager", { length: 255 }),
+  agentTpcFirst: varchar("agent_tpc_first", { length: 255 }),
+  agentTpcLast: varchar("agent_tpc_last", { length: 255 }),
+  docAgentOtherRequirements: jsonb("doc_agent_other_requirements"), // FileEntry[]
+
+  // Sales Support fill-out field
+  salesSupportNotes: text("sales_support_notes"),
 
   // FS Petroleum fields (kept in schema, no longer customer-filled)
   petroleumLicenseNo: varchar("petroleum_license_no", { length: 100 }),

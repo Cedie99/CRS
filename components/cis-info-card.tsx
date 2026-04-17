@@ -35,15 +35,25 @@ import { PdfPrintRenderer } from "@/components/pdf-print-renderer";
 import { DocxRenderer } from "@/components/docx-renderer";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "Standard",
+  standard: "End-User",
   fs_petroleum: "FS Petroleum",
   special: "Special",
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+  end_user: "End-User",
 };
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
-  standard: "bg-zinc-100 text-zinc-600",
+  standard: "bg-green-50 text-green-700 border border-green-100",
   fs_petroleum: "bg-purple-50 text-purple-700 border border-purple-100",
   special: "bg-amber-50 text-amber-700 border border-amber-100",
+  dealer: "bg-blue-50 text-blue-700 border border-blue-100",
+  distributor: "bg-teal-50 text-teal-700 border border-teal-100",
+  private_label: "bg-violet-50 text-violet-700 border border-violet-100",
+  toll_blend: "bg-orange-50 text-orange-700 border border-orange-100",
+  end_user: "bg-green-50 text-green-700 border border-green-100",
 };
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -184,7 +194,7 @@ interface CisInfoCardProps {
   businessType: string | null;
   tinNumber: string | null;
   additionalNotes: string | null;
-  customerType: string;
+  customerType?: string | null;
   agentCode: string;
   agentType: string | null;
   status: CisStatus;
@@ -528,7 +538,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
             </p>
             <div className="flex gap-5 mt-1 text-[10px] text-zinc-600">
               <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? status}</strong></span>
-              <span>Type: <strong className="text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType] ?? customerType}</strong></span>
+              <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "—"}</strong></span>
               <span>Agent: <strong className="font-mono text-zinc-900">{agentCode}</strong>{agentType && <span className="ml-1 text-zinc-500">({agentType === "sales_agent" ? "Sales" : "RSR"})</span>}</span>
             </div>
           </div>
@@ -562,9 +572,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-end">
             <PrintButton />
             <StatusBadge status={status} />
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
               <Building2 className="h-3 w-3" />
-              {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
+              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "Pending"}
             </span>
           </div>
         </div>

@@ -20,32 +20,40 @@ const ROLES: Record<string, RoleInfo> = {
     textColor: "text-zinc-700",
     borderColor: "border-zinc-200",
   },
+  sales_agent: {
+    label: "Sales Agent",
+    description: "Completing the agent fill-out section",
+    dotColor: "bg-blue-400",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-800",
+    borderColor: "border-blue-200",
+  },
   sales_manager: {
     label: "Sales Manager",
-    description: "Endorsement review",
+    description: "Notified for monitoring",
     dotColor: "bg-amber-400",
     bgColor: "bg-amber-50",
     textColor: "text-amber-800",
     borderColor: "border-amber-200",
   },
   legal_approver: {
-    label: "Legal Approver",
-    description: "Legal compliance review",
+    label: "Legal Approver (Maam Cha)",
+    description: "Credit evaluation for dealer accounts",
     dotColor: "bg-purple-400",
     bgColor: "bg-purple-50",
     textColor: "text-purple-800",
     borderColor: "border-purple-200",
   },
   finance_reviewer: {
-    label: "Finance Reviewer",
-    description: "Financial review",
+    label: "Finance Reviewer (Maam Nida)",
+    description: "Credit evaluation",
     dotColor: "bg-blue-400",
     bgColor: "bg-blue-50",
     textColor: "text-blue-800",
     borderColor: "border-blue-200",
   },
   senior_approver: {
-    label: "Senior Approver",
+    label: "Senior Approver (Sir Ed)",
     description: "Final approval decision",
     dotColor: "bg-orange-400",
     bgColor: "bg-orange-50",
@@ -54,11 +62,19 @@ const ROLES: Record<string, RoleInfo> = {
   },
   sales_support: {
     label: "Sales Support",
-    description: "Recording into the system",
+    description: "Fill-out before ERP encoding",
     dotColor: "bg-green-500",
     bgColor: "bg-green-50",
     textColor: "text-green-800",
     borderColor: "border-green-200",
+  },
+  project_development_specialist: {
+    label: "Project Dev Specialist",
+    description: "ERP system encoding",
+    dotColor: "bg-indigo-500",
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-800",
+    borderColor: "border-indigo-200",
   },
 };
 
@@ -68,40 +84,52 @@ interface HandoffConfig {
 }
 
 function getHandoff(status: CisStatus, customerType: string): HandoffConfig | null {
-  const isLegal = customerType === "fs_petroleum" || customerType === "special";
+  const isDealer = customerType === "dealer";
 
   switch (status) {
     case "draft":
       return {
         current: { role: "customer", action: "Filling out the form via the shared link" },
+        next: { role: "sales_agent", action: "Will complete agent fill-out section" },
+      };
+    case "submitted":
+      return {
+        current: { role: "sales_agent", action: "Filling out the agent section" },
         next: {
-          role: isLegal ? "legal_approver" : "sales_manager",
-          action: isLegal ? "Will review for legal compliance" : "Will endorse or return the form",
+          role: isDealer ? "legal_approver" : "finance_reviewer",
+          action: isDealer
+            ? "Will conduct credit evaluation (Dealer account)"
+            : "Will conduct credit evaluation",
         },
       };
     case "pending_endorsement":
       return {
-        current: { role: "sales_manager", action: "Reviewing the submission for endorsement" },
+        current: { role: "sales_manager", action: "Monitoring this submission" },
         next: { role: "finance_reviewer", action: "Will conduct a financial review" },
       };
     case "pending_legal_review":
       return {
-        current: { role: "legal_approver", action: "Reviewing the submission for legal compliance" },
-        next: { role: "finance_reviewer", action: "Will conduct a financial review" },
+        current: { role: "legal_approver", action: "Conducting credit evaluation (Dealer account)" },
+        next: { role: "senior_approver", action: "Will make the final approval decision" },
       };
     case "pending_finance_review":
       return {
-        current: { role: "finance_reviewer", action: "Conducting a financial review" },
+        current: { role: "finance_reviewer", action: "Conducting credit evaluation" },
         next: { role: "senior_approver", action: "Will make the final approval decision" },
       };
     case "pending_approval":
       return {
         current: { role: "senior_approver", action: "Making the final approval decision" },
-        next: { role: "sales_support", action: "Will encode the submission into ERP" },
+        next: { role: "sales_support", action: "Will complete the sales support fill-out" },
       };
     case "approved":
       return {
-        current: { role: "sales_support", action: "Entering the approved customer into the system" },
+        current: { role: "sales_support", action: "Completing the sales support fill-out" },
+        next: { role: "project_development_specialist", action: "Will encode into ERP system" },
+      };
+    case "pending_erp_encoding":
+      return {
+        current: { role: "project_development_specialist", action: "Encoding the customer into the ERP system" },
         next: null,
       };
     default:
@@ -152,11 +180,11 @@ function RolePill({ roleKey, action, label }: RolePillProps) {
 
 interface WorkflowHandoffProps {
   status: CisStatus;
-  customerType: string;
+  customerType?: string | null;
 }
 
 export function WorkflowHandoff({ status, customerType }: WorkflowHandoffProps) {
-  const handoff = getHandoff(status, customerType);
+  const handoff = getHandoff(status, customerType ?? "");
   if (!handoff) return null;
 
   return (

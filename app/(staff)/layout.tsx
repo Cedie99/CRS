@@ -11,6 +11,7 @@ const STAFF_ROLES = [
   "legal_approver",
   "senior_approver",
   "sales_support",
+  "project_development_specialist",
   "admin",
 ];
 

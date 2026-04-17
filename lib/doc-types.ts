@@ -38,8 +38,8 @@ export function sortFilesByUploadedAtDesc(files: FileEntry[]) {
   });
 }
 
-// Business permit must stay current and be reuploaded when expired.
-export const DOC_TYPES_REQUIRING_EXPIRATION: DocType[] = ["docMayorsPermit"];
+// No documents require expiration tracking in the new workflow.
+export const DOC_TYPES_REQUIRING_EXPIRATION: DocType[] = [];
 
 export function docTypeRequiresExpiration(docType: DocType) {
   return DOC_TYPES_REQUIRING_EXPIRATION.includes(docType);

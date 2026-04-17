@@ -1,25 +1,34 @@
 import { CisCard } from "@/components/cis-card";
 import type { CisStatus } from "@/components/status-badge";
+import {
+  DASHBOARD_CUSTOMER_TYPES,
+  CUSTOMER_TYPE_BADGE_CLASSES,
+  CUSTOMER_TYPE_LABELS,
+  normalizeDashboardCustomerType,
+  type DashboardCustomerType,
+} from "@/lib/customer-types";
 
-const CUSTOMER_TYPE_COLUMNS = [
-  { key: "standard", label: "Standard", badgeClassName: "bg-zinc-100 text-zinc-700" },
-  { key: "fs_petroleum", label: "FS Petroleum", badgeClassName: "bg-purple-100 text-purple-700" },
-  { key: "special", label: "Special", badgeClassName: "bg-amber-100 text-amber-700" },
-] as const;
+const CUSTOMER_TYPE_COLUMNS = DASHBOARD_CUSTOMER_TYPES.map((key) => ({
+  key,
+  label: CUSTOMER_TYPE_LABELS[key],
+  badgeClassName: CUSTOMER_TYPE_BADGE_CLASSES[key],
+}));
 
-type CustomerTypeKey = (typeof CUSTOMER_TYPE_COLUMNS)[number]["key"];
+type CustomerTypeKey = DashboardCustomerType;
 
 const CUSTOMER_TYPE_ORDER: Record<CustomerTypeKey, number> = {
-  standard: 0,
-  fs_petroleum: 1,
-  special: 2,
+  dealer: 0,
+  distributor: 1,
+  private_label: 2,
+  toll_blend: 3,
+  end_user: 4,
 };
 
 type CardSubmission = {
   id: string;
   tradeName: string | null;
   contactPerson: string | null;
-  customerType: string;
+  customerType?: string | null;
   agentCode: string;
   agentName?: string | null;
   status: CisStatus;
@@ -32,14 +41,11 @@ interface CustomerTypeColumnsProps {
   hrefPrefix: string;
 }
 
-function toCustomerTypeKey(customerType: string): CustomerTypeKey {
-  if (customerType === "fs_petroleum" || customerType === "special") {
-    return customerType;
-  }
-  return "standard";
+function toCustomerTypeKey(customerType?: string | null): CustomerTypeKey {
+  return normalizeDashboardCustomerType(customerType);
 }
 
-export function sortByCustomerType<T extends { customerType: string }>(submissions: T[]): T[] {
+export function sortByCustomerType<T extends { customerType?: string | null }>(submissions: T[]): T[] {
   return [...submissions].sort(
     (a, b) =>
       CUSTOMER_TYPE_ORDER[toCustomerTypeKey(a.customerType)] -
@@ -50,9 +56,11 @@ export function sortByCustomerType<T extends { customerType: string }>(submissio
 export function CustomerTypeColumns({ submissions, hrefPrefix }: CustomerTypeColumnsProps) {
   const sorted = sortByCustomerType(submissions);
   const grouped: Record<CustomerTypeKey, CardSubmission[]> = {
-    standard: [],
-    fs_petroleum: [],
-    special: [],
+    dealer: [],
+    distributor: [],
+    private_label: [],
+    toll_blend: [],
+    end_user: [],
   };
 
   for (const submission of sorted) {
@@ -60,7 +68,7 @@ export function CustomerTypeColumns({ submissions, hrefPrefix }: CustomerTypeCol
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:items-start xl:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 md:items-start xl:grid-cols-5">
       {CUSTOMER_TYPE_COLUMNS.map((column) => {
         const items = grouped[column.key];
         return (

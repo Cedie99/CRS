@@ -43,8 +43,8 @@ export default async function AdminDashboard({
   const [statsRow] = await db
     .select({
       total: count(),
-      active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval') THEN 1 END`),
-      done: count(sql`CASE WHEN ${cisSubmissions.status} IN ('approved','erp_encoded') THEN 1 END`),
+      active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+      done: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
       closed: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
     })
     .from(cisSubmissions);

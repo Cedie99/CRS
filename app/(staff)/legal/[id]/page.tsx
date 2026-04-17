@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
-import { LegalActions } from "@/components/actions/legal-actions";
+import { FinanceActions } from "@/components/actions/finance-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,8 +44,6 @@ export default async function LegalCisDetailPage({
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
-
-  const canAct = cis.status === "pending_legal_review";
 
   return (
     <div className="space-y-5">
@@ -131,7 +129,14 @@ export default async function LegalCisDetailPage({
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
           />
-          {canAct && <LegalActions cisId={id} />}
+          {cis.status === "pending_legal_review" && (
+            <FinanceActions
+              cisId={id}
+              cis={cis as any}
+              forwardEndpoint={`/api/cis/${id}/legal-forward`}
+              denyEndpoint={`/api/cis/${id}/legal-deny`}
+            />
+          )}
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2">

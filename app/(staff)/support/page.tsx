@@ -2,11 +2,11 @@ import { desc, and, ilike, or, count, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
-import { CustomerTypeColumns } from "@/components/customer-type-columns";
-import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
+import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { FileText, Database, XCircle, CheckCircle2, Clock, LayoutList } from "lucide-react";
+import { FileText, Database, XCircle, Clock, LayoutList } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Sales Support — CRS" };
@@ -43,9 +43,20 @@ export default async function SupportDashboard({
   const encodedConditions = [eq(cisSubmissions.status, "erp_encoded"), ...searchConditions];
   const deniedConditions = [eq(cisSubmissions.status, "denied"), ...searchConditions];
 
+  const cardSelect = {
+    id: cisSubmissions.id,
+    tradeName: cisSubmissions.tradeName,
+    contactPerson: cisSubmissions.contactPerson,
+    customerType: cisSubmissions.customerType,
+    agentCode: cisSubmissions.agentCode,
+    status: cisSubmissions.status,
+    createdAt: cisSubmissions.createdAt,
+    updatedAt: cisSubmissions.updatedAt,
+  };
+
   const [pendingEncoding, pendingCountRow, encoded, encodedCountRow, denied, deniedCountRow] = await Promise.all([
     db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...pendingConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
@@ -56,7 +67,7 @@ export default async function SupportDashboard({
       .from(cisSubmissions)
       .where(and(...pendingConditions)),
     db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...encodedConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
@@ -66,7 +77,7 @@ export default async function SupportDashboard({
       .from(cisSubmissions)
       .where(and(...encodedConditions)),
     db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...deniedConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
@@ -141,91 +152,11 @@ export default async function SupportDashboard({
         ))}
       </div>
 
-      {/* Pending ERP encoding */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-amber-50 p-1.5">
-            <Clock className="h-4 w-4 text-amber-500" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-zinc-800">Ready to Onboard</h2>
-            <p className="text-xs text-zinc-500">Approved customers waiting to be entered into the system</p>
-          </div>
-          {pendingTotal > 0 && (
-            <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-              {pendingTotal}
-            </span>
-          )}
-        </div>
-        {pendingTotal === 0 ? (
-          <div className="rounded-xl border border-dashed bg-white py-10 text-center">
-            <CheckCircle2 className="mx-auto h-8 w-8 text-green-300" />
-            <p className="mt-2 text-sm font-medium text-zinc-600">All clear!</p>
-            <p className="text-xs text-zinc-400">No approved customers are waiting to be onboarded.</p>
-          </div>
-        ) : (
-          <>
-            <CustomerTypeColumns
-              submissions={pendingEncoding.map((s) => ({
-                ...s,
-                status: s.status as CisStatus,
-              }))}
-              hrefPrefix="support"
-            />
-            <DashboardPagination
-              basePath="/support"
-              currentPage={currentPage}
-              totalItems={pendingTotal}
-              pageSize={pageSize}
-              searchParams={{ q, status }}
-            />
-          </>
-        )}
-      </section>
-
-      {/* Recently encoded */}
-      {encodedTotal > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-green-50 p-1.5">
-              <Database className="h-4 w-4 text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-zinc-800">Recently Onboarded</h2>
-              <p className="text-xs text-zinc-500">Last {Math.min(encodedTotal, 6)} completed customers</p>
-            </div>
-          </div>
-          <CustomerTypeColumns
-            submissions={encoded.slice(0, 6).map((s) => ({
-              ...s,
-              status: s.status as CisStatus,
-            }))}
-            hrefPrefix="support"
-          />
-        </section>
-      )}
-
-      {/* Denied */}
-      {deniedTotal > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-red-50 p-1.5">
-              <XCircle className="h-4 w-4 text-red-500" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-zinc-800">Denied Submissions</h2>
-              <p className="text-xs text-zinc-500">Last {Math.min(deniedTotal, 6)} denied submissions</p>
-            </div>
-          </div>
-          <CustomerTypeColumns
-            submissions={denied.slice(0, 6).map((s) => ({
-              ...s,
-              status: s.status as CisStatus,
-            }))}
-            hrefPrefix="support"
-          />
-        </section>
-      )}
+      <CustomerTypeNavCards
+        basePath="/support"
+        searchParams={{ q, status }}
+        submissions={[...pendingEncoding, ...encoded, ...denied]}
+      />
 
       {total === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
@@ -238,6 +169,12 @@ export default async function SupportDashboard({
           <p className="mt-1 text-sm text-zinc-500">
             {q || status ? "Try adjusting your search or filters." : "Approved submissions will appear here."}
           </p>
+        </div>
+      )}
+
+      {total > 0 && (
+        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
+          Select a customer type card to open its dedicated submissions page.
         </div>
       )}
     </div>

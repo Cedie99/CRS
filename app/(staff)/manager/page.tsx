@@ -1,13 +1,13 @@
-import { eq, ne, desc, and, inArray, ilike, or, count, sql } from "drizzle-orm";
+import { eq, desc, and, inArray, ilike, or, count, sql, ne } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
-import { CustomerTypeColumns } from "@/components/customer-type-columns";
-import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
+import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, ClipboardCheck, Clock, CheckCircle, XCircle, AlertCircle, X } from "lucide-react";
+import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Team Submissions — CRS" };
@@ -18,6 +18,7 @@ const IN_PROGRESS_STATUSES: CisStatus[] = [
   "pending_finance_review",
   "pending_approval",
   "approved",
+  "pending_erp_encoding",
 ];
 
 const SUBMISSION_COLS = {
@@ -36,17 +37,15 @@ const SUBMISSION_COLS = {
 export default async function ManagerDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; agentId?: string; queuePage?: string; historyPage?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; agentId?: string; queuePage?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, status, agentId, queuePage, historyPage } = await searchParams;
+  const { q, status, agentId, queuePage } = await searchParams;
   const queueCurrentPage = getPageNumber(queuePage);
-  const historyCurrentPage = getPageNumber(historyPage);
   const pageSize = 12;
   const queueOffset = (queueCurrentPage - 1) * pageSize;
-  const historyOffset = (historyCurrentPage - 1) * pageSize;
 
   const myAgents = await db
     .select({ id: users.id })
@@ -95,8 +94,8 @@ export default async function ManagerDashboard({
   const [statsRow] = await db
     .select({
       total: count(),
-      pendingCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'pending_endorsement' THEN 1 END`),
-      inProgressCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+      activeCount: count(sql`CASE WHEN ${cisSubmissions.status} NOT IN ('draft','erp_encoded','denied','returned') THEN 1 END`),
+      inProgressCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
       erpCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
       deniedCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
     })
@@ -104,7 +103,7 @@ export default async function ManagerDashboard({
     .where(inArray(cisSubmissions.agentId, agentIds));
 
   const total = Number(statsRow?.total ?? 0);
-  const pendingCount = Number(statsRow?.pendingCount ?? 0);
+  const activeCount = Number(statsRow?.activeCount ?? 0);
   const inProgressCount = Number(statsRow?.inProgressCount ?? 0);
   const erpCount = Number(statsRow?.erpCount ?? 0);
   const deniedCount = Number(statsRow?.deniedCount ?? 0);
@@ -112,15 +111,15 @@ export default async function ManagerDashboard({
 
   const stats = [
     {
-      label: "Needs Review",
-      value: pendingCount,
-      sub: total > 0 ? `${pct(pendingCount)}% of total` : "none yet",
+      label: "Active",
+      value: activeCount,
+      sub: total > 0 ? `${pct(activeCount)}% of total` : "none yet",
       icon: ClipboardCheck,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
       valueColor: "text-amber-700",
       barColor: "bg-amber-400",
-      percent: pct(pendingCount),
+      percent: pct(activeCount),
     },
     {
       label: "In Progress",
@@ -157,13 +156,16 @@ export default async function ManagerDashboard({
     },
   ];
 
-  // Section 1: Action queue — pending_endorsement only, search-aware
+  // Section 1: Active queue — all non-draft, non-archived submissions
   const actionConditions: any[] = [
     inArray(cisSubmissions.agentId, agentIds),
-    eq(cisSubmissions.status, "pending_endorsement"),
+    ne(cisSubmissions.status, "draft"),
   ];
   if (agentId && agentFilterName) {
     actionConditions.push(eq(cisSubmissions.agentId, agentId));
+  }
+  if (status) {
+    actionConditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
   if (q) {
     actionConditions.push(
@@ -180,51 +182,13 @@ export default async function ManagerDashboard({
       .from(cisSubmissions)
       .innerJoin(users, eq(cisSubmissions.agentId, users.id))
       .where(and(...actionConditions))
-      .orderBy(desc(cisSubmissions.createdAt))
-      .limit(pageSize)
-      .offset(queueOffset),
+      .orderBy(desc(cisSubmissions.createdAt)),
     db
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...actionConditions)),
   ]);
   const actionTotal = Number(actionCountRow[0]?.total ?? 0);
-
-  // Section 2: Team history — everything except pending_endorsement, with status + search filter
-  const historyConditions: any[] = [
-    inArray(cisSubmissions.agentId, agentIds),
-    ne(cisSubmissions.status, "pending_endorsement"),
-  ];
-  if (agentId && agentFilterName) {
-    historyConditions.push(eq(cisSubmissions.agentId, agentId));
-  }
-  if (status) {
-    historyConditions.push(eq(cisSubmissions.status, status as CisStatus));
-  }
-  if (q) {
-    historyConditions.push(
-      or(
-        ilike(cisSubmissions.tradeName, `%${q}%`),
-        ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )!
-    );
-  }
-
-  const [history, historyCountRow] = await Promise.all([
-    db
-      .select(SUBMISSION_COLS)
-      .from(cisSubmissions)
-      .innerJoin(users, eq(cisSubmissions.agentId, users.id))
-      .where(and(...historyConditions))
-      .orderBy(desc(cisSubmissions.createdAt))
-      .limit(pageSize)
-      .offset(historyOffset),
-    db
-      .select({ total: count() })
-      .from(cisSubmissions)
-      .where(and(...historyConditions)),
-  ]);
-  const historyTotal = Number(historyCountRow[0]?.total ?? 0);
 
   // Clear-agent-filter URL (preserves q and status)
   const clearAgentParams = new URLSearchParams();
@@ -245,9 +209,9 @@ export default async function ManagerDashboard({
             <p className="mt-0.5 text-sm text-zinc-500">All customer submissions from your agents.</p>
           </div>
         </div>
-        {pendingCount > 0 && (
-          <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
-            {pendingCount} need{pendingCount === 1 ? "s" : ""} your review
+        {activeCount > 0 && (
+          <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+            {activeCount} active
           </span>
         )}
       </div>
@@ -283,6 +247,12 @@ export default async function ManagerDashboard({
         ))}
       </div>
 
+      <CustomerTypeNavCards
+        basePath="/manager"
+        searchParams={{ q, status, agentId }}
+        submissions={actionQueue}
+      />
+
       {/* Agent filter banner */}
       {agentFilterName && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-700">
@@ -299,88 +269,17 @@ export default async function ManagerDashboard({
         </div>
       )}
 
-      {/* ── Section 1: Action Queue ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-          <h2 className="text-sm font-semibold text-zinc-700">Needs Your Review</h2>
-          {actionTotal > 0 && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-              {actionTotal}
-            </span>
-          )}
+      {actionTotal === 0 ? (
+        <div className="flex items-center gap-3 rounded-xl border border-dashed bg-white px-5 py-4 text-sm text-zinc-400">
+          <CheckCircle className="h-4 w-4 shrink-0 text-green-400" />
+          {q || status ? "No submissions match your search or filter." : "No submissions yet from your team."}
         </div>
-
-        {actionTotal === 0 ? (
-          <div className="flex items-center gap-3 rounded-xl border border-dashed bg-white px-5 py-4 text-sm text-zinc-400">
-            <CheckCircle className="h-4 w-4 shrink-0 text-green-400" />
-            {q ? "No pending endorsements match your search." : "Queue is clear — nothing to endorse right now."}
-          </div>
-        ) : (
-          <>
-            <CustomerTypeColumns
-              submissions={actionQueue.map((s) => ({
-                ...s,
-                status: s.status as CisStatus,
-              }))}
-              hrefPrefix="manager"
-            />
-            <DashboardPagination
-              basePath="/manager"
-              currentPage={queueCurrentPage}
-              totalItems={actionTotal}
-              pageSize={pageSize}
-              pageParamName="queuePage"
-              searchParams={{ q, status, agentId, historyPage }}
-            />
-          </>
-        )}
-      </div>
-
-      {/* ── Section 2: Team History ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-zinc-400" />
-          <h2 className="text-sm font-semibold text-zinc-700">Team History</h2>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
-            {historyTotal} submission{historyTotal !== 1 ? "s" : ""}
-          </span>
+      ) : (
+        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
+          Select a customer type card to open its dedicated submissions page.
         </div>
+      )}
 
-        {historyTotal === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-16 text-center">
-            <div className="rounded-full bg-zinc-100 p-4">
-              <FileText className="h-8 w-8 text-zinc-400" />
-            </div>
-            <h2 className="mt-4 text-base font-semibold text-zinc-900">
-              {q || status ? "No matching submissions" : "No history yet"}
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              {q || status
-                ? "Try adjusting your search or filters."
-                : "Endorsed and processed submissions will appear here."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <CustomerTypeColumns
-              submissions={history.map((s) => ({
-                ...s,
-                status: s.status as CisStatus,
-              }))}
-              hrefPrefix="manager"
-            />
-            <DashboardPagination
-              basePath="/manager"
-              currentPage={historyCurrentPage}
-              totalItems={historyTotal}
-              pageSize={pageSize}
-              pageParamName="historyPage"
-              searchParams={{ q, status, agentId, queuePage }}
-            />
-          </>
-        )}
-      </div>
     </div>
   );
 }

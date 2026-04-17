@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { cisSubmissions, users } from "@/lib/db/schema";
+import { cisSubmissions } from "@/lib/db/schema";
 import { getCisFormSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 import { computeSeal, sha256Fingerprint } from "@/lib/signature-integrity";
@@ -44,7 +44,6 @@ export async function POST(
     .select({
       id: cisSubmissions.id,
       status: cisSubmissions.status,
-      customerType: cisSubmissions.customerType,
       agentId: cisSubmissions.agentId,
     })
     .from(cisSubmissions)
@@ -57,10 +56,25 @@ export async function POST(
   }
 
   const body = await req.json();
-  const parsed = getCisFormSchema(cis.customerType).safeParse(body);
+  const parsed = getCisFormSchema().safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
+
+  // Valid ID is required when payment terms is credit
+  const paymentTerms = parsed.data.paymentTerms ?? "";
+  if (
+    ["credit_30", "credit_60", "credit_90"].includes(paymentTerms) &&
+    (!body.docValidId || (Array.isArray(body.docValidId) && body.docValidId.length === 0))
+  ) {
+    return NextResponse.json(
+      { error: { docValidId: ["Valid ID is required for credit terms."] } },
+      { status: 400 }
+    );
+  }
+
+  // Default blank TIN to "0000000"
+  const tinNumber = parsed.data.tinNumber?.trim() || "0000000";
 
   const signedAt = new Date();
   const seal = computeSeal(cis.id, signedAt, parsed.data.customerSignature);
@@ -72,6 +86,7 @@ export async function POST(
       .update(cisSubmissions)
       .set({
         ...parsed.data,
+        tinNumber,
         status: "submitted",
         customerSignedAt: signedAt,
         customerSignatureSeal: seal,
@@ -79,20 +94,12 @@ export async function POST(
       })
       .where(eq(cisSubmissions.id, cis.id));
 
-    // Get manager ID for notification
-    const [agent] = await db
-      .select({ managerId: users.managerId })
-      .from(users)
-      .where(eq(users.id, cis.agentId))
-      .limit(1);
-
     await transitionCis({
       cisId: cis.id,
-      toStatus: "pending_endorsement",
+      toStatus: "submitted",
       action: "submitted",
       actorId: cis.agentId,
       note: `sha256:${fp}`,
-      managerId: agent?.managerId ?? null,
     });
   } catch (err) {
     console.error("[form/submit] DB error:", err);

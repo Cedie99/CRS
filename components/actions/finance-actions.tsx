@@ -34,6 +34,10 @@ import { computePossiblePoints, type CisForScoring } from "@/lib/scoring";
 interface FinanceActionsProps {
   cisId: string;
   cis: CisForScoring;
+  /** Override the forward endpoint. Defaults to /api/cis/{cisId}/finance-forward */
+  forwardEndpoint?: string;
+  /** Override the deny endpoint. Defaults to /api/cis/{cisId}/finance-deny */
+  denyEndpoint?: string;
 }
 
 interface EvalFields {
@@ -54,7 +58,7 @@ interface EvalErrors {
   financeCreditTerms?: string;
 }
 
-export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
+export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: FinanceActionsProps) {
   const router = useRouter();
 
   const possiblePoints = computePossiblePoints(cis);
@@ -146,7 +150,7 @@ export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
           financeApprovedPoints: Number(fields.financeApprovedPoints),
           financeCreditTerms: fields.financeCreditTerms,
         };
-        const res = await fetch(`/api/cis/${cisId}/finance-forward`, {
+        const res = await fetch(forwardEndpoint ?? `/api/cis/${cisId}/finance-forward`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -159,7 +163,7 @@ export function FinanceActions({ cisId, cis }: FinanceActionsProps) {
           return;
         }
       } else {
-        const res = await fetch(`/api/cis/${cisId}/finance-deny`, {
+        const res = await fetch(denyEndpoint ?? `/api/cis/${cisId}/finance-deny`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ note: note.trim() }),

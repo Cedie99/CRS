@@ -2,53 +2,67 @@ import Link from "next/link";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
 import { formatDistanceToNow } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { User, Clock, Building2, ChevronRight, RefreshCw } from "lucide-react";
+import { Clock, Building2, ChevronRight, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "Standard",
+  standard: "End-User",
   fs_petroleum: "FS Petroleum",
   special: "Special",
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+  end_user: "End-User",
 };
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
-  standard: "bg-zinc-100 text-zinc-600",
+  standard: "bg-green-50 text-green-700",
   fs_petroleum: "bg-purple-50 text-purple-700",
   special: "bg-amber-50 text-amber-700",
+  dealer: "bg-blue-50 text-blue-700",
+  distributor: "bg-teal-50 text-teal-700",
+  private_label: "bg-violet-50 text-violet-700",
+  toll_blend: "bg-orange-50 text-orange-700",
+  end_user: "bg-green-50 text-green-700",
 };
 
 
 const NEXT_STEP: Partial<Record<CisStatus, string>> = {
   draft: "Waiting for customer to fill the form",
-  submitted: "Under review — will be assigned shortly",
+  submitted: "Customer submitted — agent fill-out required",
   pending_endorsement: "Waiting for manager to review",
-  pending_legal_review: "Under legal review",
-  pending_finance_review: "Under finance review",
-  pending_approval: "Awaiting final approval",
-  approved: "Almost done — being entered into the system",
+  pending_legal_review: "Under legal review (Maam Cha)",
+  pending_finance_review: "Under finance review (Maam Nida)",
+  pending_approval: "Awaiting final approval (Sir Ed)",
+  approved: "Approved — Sales Support fill-out required",
+  pending_erp_encoding: "Awaiting ERP encoding",
   erp_encoded: "Customer successfully onboarded",
   denied: "This form was not approved",
   returned: "Sent back — please create a new form",
 };
 
-function getWorkflowStep(status: CisStatus, customerType: string): number {
-  const isLegal = customerType === "fs_petroleum" || customerType === "special";
+function getWorkflowStep(status: CisStatus, customerType?: string | null): number {
+  const isLegal = customerType === "dealer";
   if (status === "denied" || status === "returned") return -1;
 
   const standardMap: Partial<Record<CisStatus, number>> = {
     draft: 0, submitted: 0,
     pending_endorsement: 1,
-    pending_finance_review: 2,
-    pending_approval: 3,
-    approved: 4, erp_encoded: 4,
+    pending_finance_review: 1,
+    pending_approval: 2,
+    approved: 3,
+    pending_erp_encoding: 4,
+    erp_encoded: 5,
   };
 
   const legalMap: Partial<Record<CisStatus, number>> = {
     draft: 0, submitted: 0,
     pending_legal_review: 1,
-    pending_finance_review: 2,
-    pending_approval: 3,
-    approved: 4, erp_encoded: 4,
+    pending_approval: 2,
+    approved: 3,
+    pending_erp_encoding: 4,
+    erp_encoded: 5,
   };
 
   return (isLegal ? legalMap : standardMap)[status] ?? 0;
@@ -58,7 +72,7 @@ interface CisCardProps {
   id: string;
   tradeName: string | null;
   contactPerson: string | null;
-  customerType: string;
+  customerType?: string | null;
   agentCode: string;
   agentName?: string;
   status: CisStatus;
@@ -72,6 +86,7 @@ export function CisCard({
   tradeName,
   contactPerson,
   customerType,
+  agentCode,
   agentName,
   status,
   createdAt,
@@ -79,7 +94,7 @@ export function CisCard({
   href,
 }: CisCardProps) {
   const currentStep = getWorkflowStep(status, customerType);
-  const totalSteps = 5;
+  const totalSteps = 7;
   const isTerminal = status === "denied" || status === "returned";
   const isComplete = status === "erp_encoded";
   const shortId = id.replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -94,40 +109,40 @@ export function CisCard({
   const isLatest = hoursSinceActivity <= 24;
   const isFresh = !isLatest && hoursSinceActivity <= 72;
 
+  const progressValue = isTerminal
+    ? 100
+    : Math.max(14, Math.round(((isComplete ? totalSteps : Math.max(1, currentStep + 1)) / totalSteps) * 100));
+
+  const assignedAgent = agentName ? `${agentName} (${agentCode})` : agentCode;
+
   return (
     <Link href={href} className="group block focus-visible:outline-none">
       <Card
         className={cn(
-          "cursor-pointer transition-colors duration-150",
-          "group-hover:bg-zinc-50",
+          "relative overflow-hidden border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+          "cursor-pointer transition-all duration-200",
+          "group-hover:-translate-y-0.5 group-hover:shadow-md",
           "group-focus-visible:ring-2 group-focus-visible:ring-[#2d6e1e]/30"
         )}
       >
-
-        <CardHeader className="pb-2 pt-4">
-          {/* Row 1: Short ID + agent info + Status Badge */}
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
-            <div className="min-w-0 flex-1">
-              <span className="font-mono text-[11px] font-semibold tracking-wide text-zinc-400">
-                #{shortId}
-              </span>
-              {agentName && (
-                <p className="mt-0.5 truncate text-xs text-zinc-400">{agentName}</p>
-              )}
+        <CardHeader className="space-y-2.5 pb-2 pt-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] font-semibold tracking-wide text-zinc-400">#{shortId}</p>
+              <p className="mt-0.5 truncate text-xs text-zinc-500">
+                <span className="font-semibold text-zinc-600">Agent:</span> {assignedAgent}
+              </p>
             </div>
-            <StatusBadge status={status} className="self-start sm:self-auto" />
+            <StatusBadge status={status} className="shrink-0" />
           </div>
 
-          {/* Row 2: Trade name + hover chevron */}
-          <div className="mt-2 flex items-start justify-between gap-2">
-            <p className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-[#2d6e1e]">
-              {tradeName ?? (
-                <span className="font-normal italic text-zinc-400">Untitled</span>
-              )}
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 flex-1 text-[18px] font-semibold leading-snug tracking-tight text-zinc-900 transition-colors group-hover:text-[#2d6e1e]">
+              {tradeName ?? <span className="font-normal italic text-zinc-400">Untitled</span>}
             </p>
             <ChevronRight
               className={cn(
-                "h-4 w-4 shrink-0 transition-all duration-200",
+                "mt-1 h-4 w-4 shrink-0 transition-all duration-200",
                 "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100",
                 isTerminal ? "text-zinc-400" : "text-[#2d6e1e]"
               )}
@@ -135,108 +150,60 @@ export function CisCard({
           </div>
         </CardHeader>
 
-        <CardContent className="pb-4 pt-0">
-          {/* Row 3: Contact person + Customer type pill */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="flex min-w-0 items-center gap-1 text-sm text-zinc-500">
-              <User className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-              <span className="truncate">{contactPerson ?? "—"}</span>
+        <CardContent className="space-y-3 pb-3.5 pt-0">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-sm text-zinc-600">
+              <span className="font-semibold text-zinc-700">Customer:</span> {contactPerson ?? "-"}
             </span>
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
+                customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"
               )}
             >
               <Building2 className="h-3 w-3" />
-              {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
+              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "Pending"}
             </span>
           </div>
 
-          {/* Divider */}
-          <div className="my-3 h-px bg-zinc-100" />
-
-              {/* Row 4: Workflow track + timestamp */}
-          <div className="mt-4 mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            {isTerminal ? (
-              <span
-                className={cn(
-                  "text-[11px] font-medium",
-                  status === "denied" ? "text-red-500" : "text-rose-500" 
-                )}
-              >
-                {NEXT_STEP[status]}
-              </span>
-            ) : (
-              <>
-                <div className="text-[11px] font-medium text-zinc-500 sm:hidden">
-                  Progress {isComplete ? "Done" : `${Math.max(1, currentStep + 1)}/${totalSteps}`}
-                </div>
-                <div className="hidden items-center gap-1 sm:flex">
-                  {Array.from({ length: totalSteps }).map((_, i) => {
-                    const done = isComplete || i < currentStep;
-                    const active = !isComplete && i === currentStep;
-                    return (
-                      <span key={i} className="flex items-center gap-1">
-                        <span
-                          className={cn(
-                            "inline-block h-2.5 w-2.5 rounded-full transition-all duration-400",
-                            done && "bg-[#2d6e1e]",
-                            active && "bg-[#2d6e1e] ring-2 ring-[#2d6e1e]/25",
-                            !done && !active && "bg-zinc-200"
-                          )}
-                        />
-                        {i < totalSteps - 1 && (
-                          <span
-                            className={cn(
-                              "inline-block h-px w-2.5",
-                              done ? "bg-[#2d6e1e]" : "bg-zinc-200"
-                            )}
-                          />
-                        )}
-                      </span>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Timestamp — shows "Updated" if record was modified after submission */}
-            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-              {isLatest && (
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
-                  Latest
-                </span>
-              )}
-              <span
-                className={cn(
-                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
-                  isLatest && "bg-green-50 text-green-700",
-                  !isLatest && isFresh && "bg-amber-50 text-amber-700",
-                  !isLatest && !isFresh && "text-zinc-400"
-                )}
-              >
-                {wasUpdated ? (
-                  <>
-                    <RefreshCw className="h-3 w-3" />
-                    Updated {formatDistanceToNow(updatedAt!)} ago
-                  </>
-                ) : (
-                  <>
-                    <Clock className="h-3 w-3" />
-                    Submitted {formatDistanceToNow(createdAt)} ago
-                  </>
-                )}
-              </span>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500">
+              <span>Step {isComplete ? totalSteps : Math.max(1, currentStep + 1)}/{totalSteps}</span>
+              <span>{progressValue}%</span>
             </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+              <div className="h-full rounded-full bg-[#2d6e1e] transition-all duration-500" style={{ width: `${progressValue}%` }} />
+            </div>
+            <p className={cn("text-[12px]", isTerminal ? "text-red-500" : "text-zinc-700")}>{NEXT_STEP[status]}</p>
           </div>
 
-          {/* Next step hint — only on non-terminal */}
-          {!isTerminal && (
-            <p className="mt-1.5 text-[12px] text-zinc-800">
-              {NEXT_STEP[status]}
-            </p>
-          )}
+          <div className="flex items-center justify-end">
+            {isLatest && (
+              <span className="mr-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
+                Latest
+              </span>
+            )}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]",
+                isLatest && "bg-green-50 text-green-700",
+                !isLatest && isFresh && "bg-amber-50 text-amber-700",
+                !isLatest && !isFresh && "text-zinc-400"
+              )}
+            >
+              {wasUpdated ? (
+                <>
+                  <RefreshCw className="h-3 w-3" />
+                  Updated {formatDistanceToNow(updatedAt!)} ago
+                </>
+              ) : (
+                <>
+                  <Clock className="h-3 w-3" />
+                  Submitted {formatDistanceToNow(createdAt)} ago
+                </>
+              )}
+            </span>
+          </div>
         </CardContent>
       </Card>
     </Link>

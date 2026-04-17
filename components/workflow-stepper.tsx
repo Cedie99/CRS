@@ -7,49 +7,51 @@ interface Step {
   label: string;
 }
 
+// Standard path: Finance → Approval → Sales Support → Project Dev
 const STANDARD_STEPS: Step[] = [
-  { key: "submitted", label: "Submitted" },
-  { key: "pending_endorsement", label: "Manager" },
-  { key: "pending_finance_review", label: "Finance" },
-  { key: "pending_approval", label: "Approval" },
-  { key: "approved", label: "Done" },
+  { key: "submitted",               label: "Agent" },
+  { key: "pending_finance_review",  label: "Finance" },
+  { key: "pending_approval",        label: "Approval" },
+  { key: "approved",                label: "Support" },
+  { key: "pending_erp_encoding",    label: "ERP" },
+  { key: "erp_encoded",             label: "Done" },
 ];
 
+// Dealer path: Legal → Approval → Sales Support → Project Dev
 const LEGAL_STEPS: Step[] = [
-  { key: "submitted",              label: "Submitted" },
-  { key: "pending_endorsement",    label: "Manager"   },
-  { key: "pending_legal_review",   label: "Legal"     },
-  { key: "pending_finance_review", label: "Finance"   },
-  { key: "pending_approval",       label: "Approval"  },
-  { key: "approved",               label: "Done"      },
+  { key: "submitted",              label: "Agent"    },
+  { key: "pending_legal_review",   label: "Legal"    },
+  { key: "pending_approval",       label: "Approval" },
+  { key: "approved",               label: "Support"  },
+  { key: "pending_erp_encoding",   label: "ERP"      },
+  { key: "erp_encoded",            label: "Done"     },
 ];
 
 const STANDARD_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
-  submitted: 0,
-  pending_endorsement: 1,
-  pending_finance_review: 2,
-  pending_approval: 3,
-  approved: 4,
-  erp_encoded: 4,
+  submitted:                0,
+  pending_finance_review:   1,
+  pending_approval:         2,
+  approved:                 3,
+  pending_erp_encoding:     4,
+  erp_encoded:              5,
 };
 
 const LEGAL_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
   submitted:              0,
-  pending_endorsement:    1,
-  pending_legal_review:   2,
-  pending_finance_review: 3,
-  pending_approval:       4,
-  approved:               5,
+  pending_legal_review:   1,
+  pending_approval:       2,
+  approved:               3,
+  pending_erp_encoding:   4,
   erp_encoded:            5,
 };
 
 interface WorkflowStepperProps {
   status: CisStatus;
-  customerType: string;
+  customerType?: string | null;
 }
 
 export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) {
-  const isLegal = customerType === "fs_petroleum" || customerType === "special";
+  const isLegal = (customerType ?? "") === "dealer";
   const steps = isLegal ? LEGAL_STEPS : STANDARD_STEPS;
   const indexMap = isLegal ? LEGAL_STATUS_INDEX : STANDARD_STATUS_INDEX;
 

@@ -3,8 +3,8 @@ import { eq, desc, and, ilike, or, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
-import { CustomerTypeColumns } from "@/components/customer-type-columns";
-import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
+import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
 import { CurrentDate } from "@/components/current-date";
@@ -33,7 +33,27 @@ export default async function AgentDashboard({
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
   const showArchived = archived === "1";
-  type Submission = typeof cisSubmissions.$inferSelect;
+
+  const cardSelect = {
+    id: cisSubmissions.id,
+    tradeName: cisSubmissions.tradeName,
+    contactPerson: cisSubmissions.contactPerson,
+    customerType: cisSubmissions.customerType,
+    agentCode: cisSubmissions.agentCode,
+    status: cisSubmissions.status,
+    createdAt: cisSubmissions.createdAt,
+    updatedAt: cisSubmissions.updatedAt,
+  };
+  type Submission = {
+    id: string;
+    tradeName: string | null;
+    contactPerson: string | null;
+    customerType: string | null;
+    agentCode: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+  };
 
   let supportsArchived = true;
   let submissions: Submission[] = [];
@@ -71,7 +91,7 @@ export default async function AgentDashboard({
     );
 
     submissions = await db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...conditions))
       .orderBy(desc(cisSubmissions.createdAt))
@@ -81,7 +101,7 @@ export default async function AgentDashboard({
     const [statsRow] = await db
       .select({
         total: count(),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
         completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
         denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
       })
@@ -128,7 +148,7 @@ export default async function AgentDashboard({
     );
 
     submissions = await db
-      .select()
+      .select(cardSelect)
       .from(cisSubmissions)
       .where(and(...fallbackConditions))
       .orderBy(desc(cisSubmissions.createdAt))
@@ -138,7 +158,7 @@ export default async function AgentDashboard({
     const [fallbackStatsRow] = await db
       .select({
         total: count(),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved') THEN 1 END`),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
         completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
         denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
       })
@@ -262,6 +282,12 @@ export default async function AgentDashboard({
         ))}
       </div>}
 
+      <CustomerTypeNavCards
+        basePath="/agent"
+        searchParams={{ q, status, archived }}
+        submissions={submissions}
+      />
+
       {submissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
           <div className="rounded-full bg-zinc-100 p-4">
@@ -283,22 +309,9 @@ export default async function AgentDashboard({
           )}
         </div>
       ) : (
-        <>
-          <CustomerTypeColumns
-            submissions={submissions.map((s) => ({
-              ...s,
-              status: s.status as CisStatus,
-            }))}
-            hrefPrefix="agent"
-          />
-          <DashboardPagination
-            basePath="/agent"
-            currentPage={currentPage}
-            totalItems={filteredCount}
-            pageSize={pageSize}
-            searchParams={{ q, status, archived }}
-          />
-        </>
+        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
+          Select a customer type card to open its dedicated submissions page.
+        </div>
       )}
     </div>
   );

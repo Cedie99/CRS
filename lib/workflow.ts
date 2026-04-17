@@ -19,6 +19,7 @@ export async function transitionCis({
   actorId,
   note,
   managerId,
+  isDealer,
 }: {
   cisId: string;
   toStatus: CisStatus;
@@ -26,6 +27,7 @@ export async function transitionCis({
   actorId: string;
   note?: string;
   managerId?: string | null;
+  isDealer?: boolean;
 }) {
   const emailJobs = await db.transaction(async (tx) => {
     await tx
@@ -40,7 +42,7 @@ export async function transitionCis({
       note: note ?? null,
     });
 
-    return notifyParties({ cisId, action, managerId, tx });
+    return notifyParties({ cisId, action, managerId, isDealer, tx });
   });
 
   await sendWorkflowEmails(emailJobs);
@@ -50,11 +52,13 @@ async function notifyParties({
   cisId,
   action,
   managerId,
+  isDealer,
   tx,
 }: {
   cisId: string;
   action: WorkflowAction;
   managerId?: string | null;
+  isDealer?: boolean;
   tx: Tx;
 }) {
   const [cis] = await tx
@@ -138,31 +142,6 @@ async function notifyParties({
   }
 
   if (action === "submitted") {
-    // Notify the agent's manager
-    if (managerId) {
-      const [manager] = await tx
-        .select({ id: users.id, email: users.email, fullName: users.fullName })
-        .from(users)
-        .where(eq(users.id, managerId))
-        .limit(1);
-
-      const reviewUrl = appUrl ? `${appUrl}/manager/${cisId}` : null;
-      addNotification(
-        manager?.id ?? managerId,
-        `A new CIS form for "${label}" from your agent is pending your endorsement.`,
-        manager?.email,
-        `[CRS] New CIS pending endorsement: ${label}`,
-        {
-          name: manager?.fullName ?? "there",
-          title: "New CIS Pending Endorsement",
-          body: `A customer form for <strong>${label}</strong> has been submitted by your agent and is now awaiting your endorsement.`,
-          reviewUrl,
-          ctaLabel: "Review & Endorse",
-          accentColor: "#0f2340",
-        },
-      );
-    }
-
     // Notify the customer — confirmation of their submission
     if (cis.emailAddress) {
       const customerName = cis.contactPerson ?? "Valued Customer";
@@ -193,17 +172,71 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Your customer has completed the CIS form for "${label}". It is now pending endorsement.`,
+        `Your customer has completed the CIS form for "${label}". Please fill out the agent section.`,
         agent.email,
         `[CRS] Customer completed CIS form: ${label}`,
         {
           name: agent.fullName,
           title: "Customer Form Completed",
-          body: `Your customer has completed and signed the CIS form for <strong>${label}</strong>. The form is now pending manager endorsement.`,
-          reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          body: `Your customer has completed and signed the CIS form for <strong>${label}</strong>. Please log in and fill out the agent section to route it for review.`,
+          reviewUrl: appUrl ? `${appUrl}/agent/${cisId}` : null,
+          ctaLabel: "Fill Out Now",
           accentColor: "#1a6e3c",
         },
+      );
+    }
+  } else if (action === "agent_submitted") {
+    // Notify manager (informational only — no action required)
+    if (managerId) {
+      const [manager] = await tx
+        .select({ id: users.id, email: users.email, fullName: users.fullName })
+        .from(users)
+        .where(eq(users.id, managerId))
+        .limit(1);
+
+      const viewUrl = appUrl ? `${appUrl}/manager/${cisId}` : null;
+      addNotification(
+        manager?.id ?? managerId,
+        `CIS form for "${label}" has been submitted by your agent and is now in review.`,
+        manager?.email,
+        `[CRS] CIS in review: ${label}`,
+        {
+          name: manager?.fullName ?? "there",
+          title: "CIS Now In Review",
+          body: `A CIS form for <strong>${label}</strong> has been submitted by your agent and is now in the review pipeline. No action is required from you.`,
+          reviewUrl: viewUrl,
+          ctaLabel: "View Form",
+          accentColor: "#0f2340",
+        },
+      );
+    }
+
+    // Notify the appropriate reviewer
+    if (isDealer) {
+      await notifyRole(
+        "legal_approver",
+        `A new CIS for "${label}" requires legal review.`,
+        `[CRS] CIS pending legal review: ${label}`,
+        "legal",
+        (_name, _url) => ({
+          title: "CIS Pending Legal Review",
+          body: `A CIS form for <strong>${label}</strong> has been routed to you for legal review (Dealer account).`,
+          ctaLabel: "Review Now",
+          accentColor: "#0f2340",
+        }),
+      );
+    } else {
+      await notifyRole(
+        "finance_reviewer",
+        `A new CIS for "${label}" requires finance review.`,
+        `[CRS] CIS pending finance review: ${label}`,
+        "finance",
+        (_name, _url) => ({
+          title: "CIS Pending Finance Review",
+          body: `A CIS form for <strong>${label}</strong> has been routed to you for finance review.`,
+          ctaLabel: "Review Now",
+          accentColor: "#0f2340",
+        }),
       );
     }
   } else if (action === "forwarded_to_legal") {
@@ -274,6 +307,19 @@ async function notifyParties({
         body: `A CIS form for <strong>${label}</strong> is ready for your final approval.`,
         ctaLabel: "Review & Approve",
         accentColor: "#0f2340",
+      }),
+    );
+  } else if (action === "sales_support_submitted") {
+    await notifyRole(
+      "project_development_specialist",
+      `CIS for "${label}" is ready for ERP encoding.`,
+      `[CRS] CIS pending ERP encoding: ${label}`,
+      "specialist",
+      (_name, _url) => ({
+        title: "CIS Pending ERP Encoding",
+        body: `CIS for <strong>${label}</strong> has been processed by Sales Support and is now ready for ERP encoding.`,
+        ctaLabel: "Encode Now",
+        accentColor: "#3730a3",
       }),
     );
   } else if (action === "approved") {
