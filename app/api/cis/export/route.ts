@@ -171,16 +171,20 @@ export async function GET(req: Request) {
 
   const rows = whereClause ? await query.where(whereClause) : await query;
 
-  const normalizedRows = rows.map((r) => ({
-    ID: r.id,
-    "Trade Name": r.tradeName ?? "",
-    "Contact Person": r.contactPerson ?? "",
-    "Customer Type": CUSTOMER_TYPE_LABELS[r.customerType] ?? r.customerType,
-    Status: STATUS_LABELS[r.status] ?? r.status,
-    "Agent Code": r.agentCode,
-    "Created At": r.createdAt.toISOString(),
-    "Updated At": r.updatedAt.toISOString(),
-  }));
+  const normalizedRows = rows.map((r) => {
+    const customerType = r.customerType ?? "standard";
+
+    return {
+      ID: r.id,
+      "Trade Name": r.tradeName ?? "",
+      "Contact Person": r.contactPerson ?? "",
+      "Customer Type": CUSTOMER_TYPE_LABELS[customerType] ?? customerType,
+      Status: STATUS_LABELS[r.status] ?? r.status,
+      "Agent Code": r.agentCode ?? "",
+      "Created At": r.createdAt.toISOString(),
+      "Updated At": r.updatedAt.toISOString(),
+    };
+  });
 
   const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   const baseName = `cis-export-${scope}-${ts}`;

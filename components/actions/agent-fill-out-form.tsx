@@ -57,8 +57,8 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  function setField<K extends keyof FormFields>(key: K, value: string) {
-    setFields((f) => ({ ...f, [key]: value }));
+  function setField<K extends keyof FormFields>(key: K, value: string | null) {
+    setFields((f) => ({ ...f, [key]: value ?? "" }));
     setErrors((e) => ({ ...e, [key]: undefined }));
   }
 

@@ -171,7 +171,10 @@ export default async function AdminDashboard({
               No submissions yet.
             </div>
           ) : (
-            submissions.map((s) => (
+            submissions.map((s) => {
+              const customerType = s.customerType ?? "standard";
+
+              return (
               <Link
                 key={s.id}
                 href={`/admin/${s.id}`}
@@ -189,15 +192,16 @@ export default async function AdminDashboard({
                   </span>
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      CUSTOMER_TYPE_COLORS[s.customerType] ?? "bg-zinc-100 text-zinc-600"
+                      CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                     }`}
                   >
-                    {CUSTOMER_TYPE_LABELS[s.customerType] ?? s.customerType}
+                    {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-zinc-400">Submitted {formatDistanceToNow(s.createdAt)} ago</p>
               </Link>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -231,7 +235,10 @@ export default async function AdminDashboard({
                   </td>
                 </tr>
               ) : (
-                submissions.map((s) => (
+                submissions.map((s) => {
+                  const customerType = s.customerType ?? "standard";
+
+                  return (
                   <tr key={s.id} className="group hover:bg-zinc-50 transition-colors">
                     <td className="px-5 py-3.5 font-semibold text-zinc-900">
                       {s.tradeName ?? <span className="font-normal italic text-zinc-400">Untitled</span>}
@@ -244,10 +251,10 @@ export default async function AdminDashboard({
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          CUSTOMER_TYPE_COLORS[s.customerType] ?? "bg-zinc-100 text-zinc-600"
+                          CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                         }`}
                       >
-                        {CUSTOMER_TYPE_LABELS[s.customerType] ?? s.customerType}
+                        {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -265,7 +272,8 @@ export default async function AdminDashboard({
                       </Link>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

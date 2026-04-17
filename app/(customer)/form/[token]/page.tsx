@@ -30,5 +30,5 @@ export default async function CustomerFormPage({
 
   if (!cis) notFound();
 
-  return <CustomerForm token={token} agentCode={cis.agentCode} customerType={cis.customerType} />;
+  return <CustomerForm token={token} agentCode={cis.agentCode ?? ""} customerType={cis.customerType ?? "end_user"} />;
 }

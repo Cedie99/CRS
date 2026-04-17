@@ -86,11 +86,18 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const FALLBACK_STATUS_CONFIG = {
+const FALLBACK_STATUS_CONFIG: {
+  label: string;
+  mobileLabel?: string;
+  className: string;
+  dot: string;
+  pulse?: boolean;
+} = {
   label: "Unknown",
   className: "bg-zinc-100 text-zinc-600 hover:bg-zinc-100",
   dot: "bg-zinc-400",
-} as const;
+  pulse: false,
+};
 
 function isCisStatus(value: string): value is CisStatus {
   return Object.prototype.hasOwnProperty.call(STATUS_CONFIG, value);

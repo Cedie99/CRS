@@ -13,6 +13,7 @@ declare module "next-auth" {
         | "legal_approver"
         | "senior_approver"
         | "sales_support"
+        | "project_development_specialist"
         | "admin";
       agentCode: string | null;
       agentType: "sales_agent" | "rsr" | null;
