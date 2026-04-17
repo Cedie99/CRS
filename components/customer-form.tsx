@@ -24,7 +24,7 @@ import { Loader2, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form", string>>;
+type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" | "docValidId", string>>;
 
 interface OwnerRow { name: string; nationality: string; percentage: string; contact: string }
 interface OfficerRow { name: string; position: string; contact: string }
