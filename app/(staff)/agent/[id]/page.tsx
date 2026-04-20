@@ -98,6 +98,27 @@ export default async function AgentCisDetailPage({
       isArchived: cisSubmissions.isArchived,
       createdAt: cisSubmissions.createdAt,
       updatedAt: cisSubmissions.updatedAt,
+      agentAccountSpecialistFirst: cisSubmissions.agentAccountSpecialistFirst,
+      agentAccountSpecialistLast: cisSubmissions.agentAccountSpecialistLast,
+      agentSalesSpecialist: cisSubmissions.agentSalesSpecialist,
+      agentSalesManager: cisSubmissions.agentSalesManager,
+      agentTpcFirst: cisSubmissions.agentTpcFirst,
+      agentTpcLast: cisSubmissions.agentTpcLast,
+      financeEu: cisSubmissions.financeEu,
+      financeDl: cisSubmissions.financeDl,
+      financeDr: cisSubmissions.financeDr,
+      financePlTs: cisSubmissions.financePlTs,
+      financePossiblePoints: cisSubmissions.financePossiblePoints,
+      financeApprovedPoints: cisSubmissions.financeApprovedPoints,
+      financeCreditLimit: cisSubmissions.financeCreditLimit,
+      financeCreditTerms: cisSubmissions.financeCreditTerms,
+      docSirRestySigned: cisSubmissions.docSirRestySigned,
+      salesSupportAccountType: cisSubmissions.salesSupportAccountType,
+      salesSupportPriceList1: cisSubmissions.salesSupportPriceList1,
+      salesSupportPriceList2: cisSubmissions.salesSupportPriceList2,
+      salesSupportSalesType: cisSubmissions.salesSupportSalesType,
+      salesSupportVatCode: cisSubmissions.salesSupportVatCode,
+      salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -186,7 +207,10 @@ export default async function AgentCisDetailPage({
 
       {/* Agent fill-out prompt — shown when customer has submitted but agent hasn't filled out */}
       {cis.status === "submitted" && (
-        <AgentFillOutForm cisId={cis.id} />
+        <AgentFillOutForm
+          cisId={cis.id}
+          initialOtherRequirements={(cis as any).docAgentOtherRequirements ?? []}
+        />
       )}
 
       {/* Two-column layout */}
@@ -264,6 +288,27 @@ export default async function AgentCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+            agentSalesSpecialist={cis.agentSalesSpecialist}
+            agentSalesManager={cis.agentSalesManager}
+            agentTpcFirst={cis.agentTpcFirst}
+            agentTpcLast={cis.agentTpcLast}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditLimit={cis.financeCreditLimit}
+            financeCreditTerms={cis.financeCreditTerms}
+            docSirRestySigned={cis.docSirRestySigned}
+            salesSupportAccountType={cis.salesSupportAccountType}
+            salesSupportPriceList1={cis.salesSupportPriceList1}
+            salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportSalesType={cis.salesSupportSalesType}
+            salesSupportVatCode={cis.salesSupportVatCode}
+            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
             agentUpload={canAgentUploadDocs ? { cisId: cis.id } : undefined}
           />
         </div>

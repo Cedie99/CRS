@@ -22,7 +22,100 @@ export default async function ManagerCisDetailPage({
   const { id } = await params;
 
   const [cis] = await db
-    .select()
+    .select({
+      id: cisSubmissions.id,
+      agentId: cisSubmissions.agentId,
+      agentCode: cisSubmissions.agentCode,
+      agentType: cisSubmissions.agentType,
+      customerType: cisSubmissions.customerType,
+      status: cisSubmissions.status,
+      tradeName: cisSubmissions.tradeName,
+      contactPerson: cisSubmissions.contactPerson,
+      contactNumber: cisSubmissions.contactNumber,
+      emailAddress: cisSubmissions.emailAddress,
+      businessAddress: cisSubmissions.businessAddress,
+      cityMunicipality: cisSubmissions.cityMunicipality,
+      businessType: cisSubmissions.businessType,
+      tinNumber: cisSubmissions.tinNumber,
+      additionalNotes: cisSubmissions.additionalNotes,
+      createdAt: cisSubmissions.createdAt,
+      updatedAt: cisSubmissions.updatedAt,
+      customerSignature: cisSubmissions.customerSignature,
+      customerSignedAt: cisSubmissions.customerSignedAt,
+      customerSignatureSeal: cisSubmissions.customerSignatureSeal,
+      approverSignature: cisSubmissions.approverSignature,
+      approverSignedAt: cisSubmissions.approverSignedAt,
+      approverSignatureSeal: cisSubmissions.approverSignatureSeal,
+      petroleumLicenseNo: cisSubmissions.petroleumLicenseNo,
+      depotStationType: cisSubmissions.depotStationType,
+      tankCapacity: cisSubmissions.tankCapacity,
+      doeAccreditationNo: cisSubmissions.doeAccreditationNo,
+      specialAccountType: cisSubmissions.specialAccountType,
+      specialAccountRemarks: cisSubmissions.specialAccountRemarks,
+      paymentTerms: cisSubmissions.paymentTerms,
+      docGovCertifications: cisSubmissions.docGovCertifications,
+      corporateName: cisSubmissions.corporateName,
+      dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
+      numberOfEmployees: cisSubmissions.numberOfEmployees,
+      website: cisSubmissions.website,
+      telephoneNumber: cisSubmissions.telephoneNumber,
+      landmarks: cisSubmissions.landmarks,
+      deliverySameAsOffice: cisSubmissions.deliverySameAsOffice,
+      deliveryAddress: cisSubmissions.deliveryAddress,
+      deliveryLandmarks: cisSubmissions.deliveryLandmarks,
+      deliveryMobile: cisSubmissions.deliveryMobile,
+      deliveryTelephone: cisSubmissions.deliveryTelephone,
+      lineOfBusiness: cisSubmissions.lineOfBusiness,
+      lineOfBusinessOther: cisSubmissions.lineOfBusinessOther,
+      businessActivity: cisSubmissions.businessActivity,
+      businessActivityOther: cisSubmissions.businessActivityOther,
+      owners: cisSubmissions.owners,
+      officers: cisSubmissions.officers,
+      businessLife: cisSubmissions.businessLife,
+      howLongAtAddress: cisSubmissions.howLongAtAddress,
+      numberOfBranches: cisSubmissions.numberOfBranches,
+      govCertifications: cisSubmissions.govCertifications,
+      tradeReferences: cisSubmissions.tradeReferences,
+      bankReferences: cisSubmissions.bankReferences,
+      achievements: cisSubmissions.achievements,
+      otherMerits: cisSubmissions.otherMerits,
+      docValidId: cisSubmissions.docValidId,
+      docMayorsPermit: cisSubmissions.docMayorsPermit,
+      docSecDti: cisSubmissions.docSecDti,
+      docBirCertificate: cisSubmissions.docBirCertificate,
+      docLocationMap: cisSubmissions.docLocationMap,
+      docFinancialStatement: cisSubmissions.docFinancialStatement,
+      docBankStatement: cisSubmissions.docBankStatement,
+      docProofOfBilling: cisSubmissions.docProofOfBilling,
+      docLeaseContract: cisSubmissions.docLeaseContract,
+      docProofOfOwnership: cisSubmissions.docProofOfOwnership,
+      docStorePhoto: cisSubmissions.docStorePhoto,
+      docSupplierInvoice: cisSubmissions.docSupplierInvoice,
+      docSocialMedia: cisSubmissions.docSocialMedia,
+      docCertifications: cisSubmissions.docCertifications,
+      docOther: cisSubmissions.docOther,
+      financeEu: cisSubmissions.financeEu,
+      financeDl: cisSubmissions.financeDl,
+      financeDr: cisSubmissions.financeDr,
+      financePlTs: cisSubmissions.financePlTs,
+      financePossiblePoints: cisSubmissions.financePossiblePoints,
+      financeApprovedPoints: cisSubmissions.financeApprovedPoints,
+      financeCreditTerms: cisSubmissions.financeCreditTerms,
+      agentAccountSpecialistFirst: cisSubmissions.agentAccountSpecialistFirst,
+      agentAccountSpecialistLast: cisSubmissions.agentAccountSpecialistLast,
+      agentSalesSpecialist: cisSubmissions.agentSalesSpecialist,
+      agentSalesManager: cisSubmissions.agentSalesManager,
+      agentTpcFirst: cisSubmissions.agentTpcFirst,
+      agentTpcLast: cisSubmissions.agentTpcLast,
+      financeCreditLimit: cisSubmissions.financeCreditLimit,
+      docSirRestySigned: cisSubmissions.docSirRestySigned,
+      salesSupportAccountType: cisSubmissions.salesSupportAccountType,
+      salesSupportPriceList1: cisSubmissions.salesSupportPriceList1,
+      salesSupportPriceList2: cisSubmissions.salesSupportPriceList2,
+      salesSupportSalesType: cisSubmissions.salesSupportSalesType,
+      salesSupportVatCode: cisSubmissions.salesSupportVatCode,
+      salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
+    })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -136,6 +229,27 @@ export default async function ManagerCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditLimit={cis.financeCreditLimit}
+            financeCreditTerms={cis.financeCreditTerms}
+            docSirRestySigned={cis.docSirRestySigned}
+            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+            agentSalesSpecialist={cis.agentSalesSpecialist}
+            agentSalesManager={cis.agentSalesManager}
+            agentTpcFirst={cis.agentTpcFirst}
+            agentTpcLast={cis.agentTpcLast}
+            salesSupportAccountType={cis.salesSupportAccountType}
+            salesSupportPriceList1={cis.salesSupportPriceList1}
+            salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportSalesType={cis.salesSupportSalesType}
+            salesSupportVatCode={cis.salesSupportVatCode}
+            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
           />
         </div>
 

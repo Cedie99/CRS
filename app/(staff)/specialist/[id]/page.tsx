@@ -45,6 +45,8 @@ export default async function SpecialistCisDetailPage({
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
 
+  const canAct = cis.status === "pending_erp_encoding";
+
   return (
     <div className="space-y-5">
       <Link
@@ -54,6 +56,8 @@ export default async function SpecialistCisDetailPage({
         <ArrowLeft className="h-4 w-4" />
         Back to encoding queue
       </Link>
+
+      {canAct && <SpecialistActions cisId={id} />}
 
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
@@ -128,10 +132,28 @@ export default async function SpecialistCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditLimit={cis.financeCreditLimit}
+            financeCreditTerms={cis.financeCreditTerms}
+            docSirRestySigned={cis.docSirRestySigned}
+            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+            agentSalesSpecialist={cis.agentSalesSpecialist}
+            agentSalesManager={cis.agentSalesManager}
+            agentTpcFirst={cis.agentTpcFirst}
+            agentTpcLast={cis.agentTpcLast}
+            salesSupportAccountType={cis.salesSupportAccountType}
+            salesSupportPriceList1={cis.salesSupportPriceList1}
+            salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportSalesType={cis.salesSupportSalesType}
+            salesSupportVatCode={cis.salesSupportVatCode}
+            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
           />
-          {cis.status === "pending_erp_encoding" && (
-            <SpecialistActions cisId={id} />
-          )}
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">

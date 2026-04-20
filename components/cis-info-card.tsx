@@ -33,6 +33,7 @@ import {
 import { PrintButton } from "@/components/print-button";
 import { PdfPrintRenderer } from "@/components/pdf-print-renderer";
 import { DocxRenderer } from "@/components/docx-renderer";
+import { humanizeDisplayValue } from "@/lib/utils";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "End-User",
@@ -105,12 +106,6 @@ const PAYMENT_TERMS_LABELS: Record<string, string> = {
   credit_90: "Credit – 90 days",
 };
 
-const FINANCE_EU_LABELS: Record<string, string> = {
-  end_user: "End User", reseller: "Reseller", dealer: "Dealer",
-};
-const FINANCE_DR_LABELS: Record<string, string> = {
-  cod: "COD (Cash on Delivery)", cbd: "CBD (Cash Before Delivery)", credit: "Credit",
-};
 const FINANCE_CREDIT_TERMS_LABELS: Record<string, string> = {
   "30_days": "30 Days", "60_days": "60 Days", "90_days": "90 Days",
 };
@@ -248,6 +243,7 @@ interface CisInfoCardProps {
   docSocialMedia?: unknown;
   docCertifications?: unknown;
   docGovCertifications?: unknown;
+  docSirRestySigned?: unknown;
   docOther?: unknown;
   // Signatures
   customerSignature?: string | null;
@@ -266,6 +262,13 @@ interface CisInfoCardProps {
   agentUpload?: {
     cisId: string;
   };
+  // Agent fill-out
+  agentAccountSpecialistFirst?: string | null;
+  agentAccountSpecialistLast?: string | null;
+  agentSalesSpecialist?: string | null;
+  agentSalesManager?: string | null;
+  agentTpcFirst?: string | null;
+  agentTpcLast?: string | null;
   // Finance credit evaluation
   financeEu?: string | null;
   financeDl?: string | null;
@@ -273,7 +276,15 @@ interface CisInfoCardProps {
   financePlTs?: string | null;
   financePossiblePoints?: number | null;
   financeApprovedPoints?: number | null;
+  financeCreditLimit?: string | null;
   financeCreditTerms?: string | null;
+  // Sales support
+  salesSupportAccountType?: string | null;
+  salesSupportPriceList1?: string | null;
+  salesSupportPriceList2?: string | null;
+  salesSupportSalesType?: string | null;
+  salesSupportVatCode?: string | null;
+  salesSupportOtherRemarks?: string | null;
 }
 
 function Field({
@@ -462,13 +473,26 @@ export function CisInfoCard(props: CisInfoCardProps) {
     approverSignedAt,
     approverSignatureSeal,
     agentUpload,
-    financeEu,
-    financeDl,
-    financeDr,
     financePlTs,
     financePossiblePoints,
     financeApprovedPoints,
+    financeCreditLimit,
     financeCreditTerms,
+    agentAccountSpecialistFirst,
+    agentAccountSpecialistLast,
+    agentSalesSpecialist,
+    agentSalesManager,
+    agentTpcFirst,
+    agentTpcLast,
+    financeEu,
+    financeDl,
+    financeDr,
+    salesSupportAccountType,
+    salesSupportPriceList1,
+    salesSupportPriceList2,
+    salesSupportSalesType,
+    salesSupportVatCode,
+    salesSupportOtherRemarks,
   } = props;
 
   const hasSignatures = customerSignature || approverSignature;
@@ -485,11 +509,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
   const lobLabel = lineOfBusiness === "other"
     ? lineOfBusinessOther
-    : (LINE_OF_BUSINESS_LABELS[lineOfBusiness ?? ""] ?? lineOfBusiness);
+    : (LINE_OF_BUSINESS_LABELS[lineOfBusiness ?? ""] ?? humanizeDisplayValue(lineOfBusiness));
 
   const activityLabel = businessActivity === "other"
     ? businessActivityOther
-    : (BUSINESS_ACTIVITY_LABELS[businessActivity ?? ""] ?? businessActivity);
+    : (BUSINESS_ACTIVITY_LABELS[businessActivity ?? ""] ?? humanizeDisplayValue(businessActivity));
 
   const ownerRows = (owners as OwnerRow[] | null) ?? [];
   const officerRows = (officers as OfficerRow[] | null) ?? [];
@@ -506,6 +530,10 @@ export function CisInfoCard(props: CisInfoCardProps) {
   const allDocsByType = Object.fromEntries(
     allDocEntries.map((entry) => [entry.key, entry.files])
   ) as Record<DocType, FileEntry[]>;
+
+  const hasAgentInfo = agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast;
+  const hasFinanceData = financeEu || financeDl || financeDr || financePlTs || financePossiblePoints != null || financeApprovedPoints != null || financeCreditLimit || financeCreditTerms;
+  const hasSalesSupportData = salesSupportAccountType || salesSupportPriceList1 || salesSupportPriceList2 || salesSupportSalesType || salesSupportVatCode || salesSupportOtherRemarks;
 
   const hasDelivery = !deliverySameAsOffice && (deliveryAddress || deliveryMobile || deliveryTelephone);
   const hasClassification = lineOfBusiness || businessActivity;
@@ -538,8 +566,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
               Customer Registration Sheet
             </p>
             <div className="flex gap-5 mt-1 text-[10px] text-zinc-600">
-              <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? status}</strong></span>
-              <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "—"}</strong></span>
+              <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? humanizeDisplayValue(status)}</strong></span>
+              <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "—"}</strong></span>
               <span>Agent: <strong className="font-mono text-zinc-900">{agentCode}</strong>{agentType && <span className="ml-1 text-zinc-500">({agentType === "sales_agent" ? "Sales" : "RSR"})</span>}</span>
             </div>
           </div>
@@ -575,7 +603,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
             <StatusBadge status={status} />
             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
               <Building2 className="h-3 w-3" />
-              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "Pending"}
+              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "Pending"}
             </span>
           </div>
         </div>
@@ -644,7 +672,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
                 {lobLabel && <Field label="Line of Business" value={lobLabel} />}
                 {activityLabel && <Field label="Business Activity" value={activityLabel} />}
-                <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? businessType) : null} icon={Building2} />
+                <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} />
                 <Field label="TIN Number" value={tinNumber} icon={Hash} mono />
               </div>
           </SectionCard>
@@ -654,7 +682,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {!hasClassification && (
           <SectionCard>
             <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-              <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? businessType) : null} icon={Building2} />
+              <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} />
               <Field label="TIN Number" value={tinNumber} icon={Hash} mono />
             </div>
           </SectionCard>
@@ -718,7 +746,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               )}
               {paymentTerms && (
                 <div className="mt-4">
-                  <Field label="Payment Terms" value={PAYMENT_TERMS_LABELS[paymentTerms] ?? paymentTerms} />
+                  <Field label="Payment Terms" value={PAYMENT_TERMS_LABELS[paymentTerms] ?? humanizeDisplayValue(paymentTerms)} />
                 </div>
               )}
           </SectionCard>
@@ -803,6 +831,23 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionCard className="print:hidden">
               <SectionTitle icon={Paperclip} label="Agent Document Upload" />
               <AgentDocSection cisId={agentUpload.cisId} initialDocs={allDocsByType} />
+          </SectionCard>
+        )}
+
+        {/* ── Agent Information ── */}
+        {hasAgentInfo && (
+          <SectionCard>
+            <SectionTitle icon={User} label="Agent Information" />
+            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              {(agentAccountSpecialistFirst || agentAccountSpecialistLast) && (
+                <Field label="Account Specialist" value={[agentAccountSpecialistFirst, agentAccountSpecialistLast].filter(Boolean).join(" ")} icon={User} />
+              )}
+              {agentSalesSpecialist && <Field label="Sales Specialist" value={agentSalesSpecialist} icon={User} />}
+              {agentSalesManager && <Field label="Sales Manager" value={agentSalesManager} icon={User} />}
+              {(agentTpcFirst || agentTpcLast) && (
+                <Field label="TPC" value={[agentTpcFirst, agentTpcLast].filter(Boolean).join(" ")} icon={User} />
+              )}
+            </div>
           </SectionCard>
         )}
 
@@ -930,20 +975,43 @@ export function CisInfoCard(props: CisInfoCardProps) {
         )}
 
         {/* ── Finance Evaluation ── */}
-        {financeApprovedPoints != null && (
+        {hasFinanceData && (
           <SectionCard>
               <SectionTitle icon={FileText} label="Finance Credit Evaluation" />
+              {(financeEu || financeDl || financeDr) && (
+                <div className="mb-5 grid gap-5 sm:grid-cols-3 print:gap-3">
+                  {financeEu && <Field label="EU" value={financeEu} />}
+                  {financeDl && <Field label="DL" value={financeDl} />}
+                  {financeDr && <Field label="DR" value={financeDr} />}
+                </div>
+              )}
               <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-                <Field label="End User (EU)" value={financeEu ? (FINANCE_EU_LABELS[financeEu] ?? financeEu) : null} />
-                <Field label="Delivery Limit (DL)" value={financeDl} />
-                <Field label="Delivery Receipt (DR)" value={financeDr ? (FINANCE_DR_LABELS[financeDr] ?? financeDr) : null} />
+                <Field label="Credit Limit" value={financeCreditLimit} />
+                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} />
                 <Field label="Price List / Terms & Schedule (PL/TS)" value={financePlTs} />
               </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-3 print:gap-3">
-                <Field label="Possible Points" value={financePossiblePoints != null ? String(financePossiblePoints) : null} />
-                <Field label="Approved Points" value={financeApprovedPoints != null ? String(financeApprovedPoints) : null} />
-                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? financeCreditTerms) : null} />
-              </div>
+              {(financePossiblePoints != null || financeApprovedPoints != null) && (
+                <div className="mt-5 grid gap-5 sm:grid-cols-3 print:gap-3">
+                  <Field label="Possible Points" value={financePossiblePoints != null ? String(financePossiblePoints) : null} />
+                  <Field label="Approved Points" value={financeApprovedPoints != null ? String(financeApprovedPoints) : null} />
+                  <Field label="Credit Decision" value={financeApprovedPoints != null && financePossiblePoints != null ? `${financeApprovedPoints}/${financePossiblePoints}` : null} />
+                </div>
+              )}
+          </SectionCard>
+        )}
+
+        {/* ── Sales Support Evaluation ── */}
+        {hasSalesSupportData && (
+          <SectionCard>
+            <SectionTitle icon={Users} label="Sales Support Evaluation" />
+            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} />}
+              {salesSupportPriceList1 && <Field label="Price List 1" value={salesSupportPriceList1} />}
+              {salesSupportPriceList2 && <Field label="Price List 2" value={salesSupportPriceList2} />}
+              {salesSupportSalesType && <Field label="Sales Type" value={salesSupportSalesType} />}
+              {salesSupportVatCode && <Field label="VAT Code" value={salesSupportVatCode} />}
+              {salesSupportOtherRemarks && <div className="sm:col-span-2"><Field label="Other Remarks" value={salesSupportOtherRemarks} /></div>}
+            </div>
           </SectionCard>
         )}
 
@@ -977,6 +1045,50 @@ export function CisInfoCard(props: CisInfoCardProps) {
               
           </SectionCard>
         )}
+
+        {/* ── Physical Sign-off (Sir Resty) ── */}
+        <SectionCard className="print:break-inside-avoid">
+            <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400 print:text-zinc-700 print:border-b print:border-zinc-300 print:pb-1.5">
+              <PenLine className="h-3.5 w-3.5 print:hidden" />
+              Senior Approver Physical Signature (Sir Resty)
+            </p>
+
+            {/* Screen helper */}
+            <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-4 print:hidden">
+              <p className="text-sm text-zinc-700">
+                For printed copies: have Sir Resty sign in the designated signature panel.
+              </p>
+              <div className="mt-6 border-b-2 border-zinc-400" />
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
+                <span>Signature over printed name: Sir Resty</span>
+                <span>Date: ____________________</span>
+              </div>
+            </div>
+
+            {/* Print layout */}
+            <div className="hidden print:block print:rounded-none print:border print:border-zinc-500 print:bg-white print:px-3 print:py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-700">
+                Sign-off Required Before Final Approval
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-700">
+                The Senior Approver must physically sign this printed CIS.
+              </p>
+
+              <div className="mt-5 min-h-[26mm] border-b-2 border-zinc-700" />
+
+              <div className="mt-1 grid grid-cols-2 gap-3 text-[10px] text-zinc-700">
+                <div>
+                  <p className="font-semibold">Signature over printed name</p>
+                  <p className="mt-0.5">Sir Resty</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">Date signed</p>
+                  <p className="mt-0.5">____________________</p>
+                </div>
+              </div>
+            </div>
+        </SectionCard>
+
         {/* Screen footer */}
         <div className="print:hidden">
 

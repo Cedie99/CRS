@@ -14,13 +14,17 @@ import { ArrowLeft, History } from "lucide-react";
 
 export default async function LegalCisDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
+  const { view } = await searchParams;
+  const isReadOnlyContextView = view === "all";
 
   const [cis] = await db
     .select({
@@ -101,6 +105,20 @@ export default async function LegalCisDetailPage({
       financePossiblePoints: cisSubmissions.financePossiblePoints,
       financeApprovedPoints: cisSubmissions.financeApprovedPoints,
       financeCreditTerms: cisSubmissions.financeCreditTerms,
+      docSirRestySigned: cisSubmissions.docSirRestySigned,
+      agentAccountSpecialistFirst: cisSubmissions.agentAccountSpecialistFirst,
+      agentAccountSpecialistLast: cisSubmissions.agentAccountSpecialistLast,
+      agentSalesSpecialist: cisSubmissions.agentSalesSpecialist,
+      agentSalesManager: cisSubmissions.agentSalesManager,
+      agentTpcFirst: cisSubmissions.agentTpcFirst,
+      agentTpcLast: cisSubmissions.agentTpcLast,
+      financeCreditLimit: cisSubmissions.financeCreditLimit,
+      salesSupportAccountType: cisSubmissions.salesSupportAccountType,
+      salesSupportPriceList1: cisSubmissions.salesSupportPriceList1,
+      salesSupportPriceList2: cisSubmissions.salesSupportPriceList2,
+      salesSupportSalesType: cisSubmissions.salesSupportSalesType,
+      salesSupportVatCode: cisSubmissions.salesSupportVatCode,
+      salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -126,12 +144,28 @@ export default async function LegalCisDetailPage({
   return (
     <div className="space-y-5">
       <Link
-        href="/legal"
+        href={isReadOnlyContextView ? "/legal?view=all" : "/legal"}
         className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to queue
       </Link>
+
+      {isReadOnlyContextView && (
+        <div className="print:hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Context view enabled: this record is read-only from All Submissions mode.
+        </div>
+      )}
+
+      {cis.status === "pending_legal_review" && !isReadOnlyContextView && (
+        <FinanceActions
+          cisId={id}
+          initialSirRestyFiles={(cis.docSirRestySigned as any) ?? []}
+          forwardEndpoint={`/api/cis/${id}/legal-forward`}
+          denyEndpoint={`/api/cis/${id}/legal-deny`}
+          dashboardPath="/legal"
+        />
+      )}
 
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
@@ -206,15 +240,28 @@ export default async function LegalCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditLimit={cis.financeCreditLimit}
+            financeCreditTerms={cis.financeCreditTerms}
+            docSirRestySigned={cis.docSirRestySigned}
+            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+            agentSalesSpecialist={cis.agentSalesSpecialist}
+            agentSalesManager={cis.agentSalesManager}
+            agentTpcFirst={cis.agentTpcFirst}
+            agentTpcLast={cis.agentTpcLast}
+            salesSupportAccountType={cis.salesSupportAccountType}
+            salesSupportPriceList1={cis.salesSupportPriceList1}
+            salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportSalesType={cis.salesSupportSalesType}
+            salesSupportVatCode={cis.salesSupportVatCode}
+            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
           />
-          {cis.status === "pending_legal_review" && (
-            <FinanceActions
-              cisId={id}
-              cis={cis as any}
-              forwardEndpoint={`/api/cis/${id}/legal-forward`}
-              denyEndpoint={`/api/cis/${id}/legal-deny`}
-            />
-          )}
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
