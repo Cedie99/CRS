@@ -217,7 +217,7 @@ export const cisSubmissions = pgTable("cis_submissions", {
   approverSignedAt: timestamp("approver_signed_at"),
   approverSignatureSeal: text("approver_signature_seal"),
 
-  // Finance credit evaluation (populated by finance_reviewer when forwarding)
+  // Finance credit evaluation (populated by finance_reviewer/legal_approver when forwarding)
   financeEu: varchar("finance_eu", { length: 100 }),
   financeDl: varchar("finance_dl", { length: 100 }),
   financeDr: varchar("finance_dr", { length: 100 }),
@@ -225,6 +225,17 @@ export const cisSubmissions = pgTable("cis_submissions", {
   financePossiblePoints: integer("finance_possible_points"),
   financeApprovedPoints: integer("finance_approved_points"),
   financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
+  financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
+  docSirRestySigned: jsonb("doc_sir_resty_signed"), // FileEntry[] — CFO-signed approved CIS
+
+  // Sales Support fill-out fields
+  salesSupportAccountType: varchar("sales_support_account_type", { length: 50 }),
+  salesSupportPriceList1: varchar("sales_support_price_list_1", { length: 100 }),
+  salesSupportPriceList2: varchar("sales_support_price_list_2", { length: 100 }),
+  salesSupportSalesType: varchar("sales_support_sales_type", { length: 100 }),
+  salesSupportVatCode: varchar("sales_support_vat_code", { length: 100 }),
+  salesSupportOtherRemarks: text("sales_support_other_remarks"),
+  docSalesSupportOther: jsonb("doc_sales_support_other"), // FileEntry[]
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

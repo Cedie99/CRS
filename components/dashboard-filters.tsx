@@ -23,17 +23,18 @@ import {
 } from "@/components/ui/select";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "submitted", label: "Submitted" },
-  { value: "pending_endorsement", label: "Manager Review" },
-  { value: "pending_legal_review", label: "Legal Review" },
-  { value: "pending_finance_review", label: "Finance Review" },
-  { value: "pending_approval", label: "Final Approval" },
-  { value: "approved", label: "Approved" },
-  { value: "erp_encoded", label: "Onboarded" },
-  { value: "denied", label: "Denied" },
-  { value: "returned", label: "Sent Back" },
+  { value: "",                       label: "All Statuses" },
+  { value: "draft",                  label: "Awaiting Customer Submission" },
+  { value: "submitted",              label: "Agent Completion" },
+  { value: "pending_endorsement",    label: "Manager Review" },
+  { value: "pending_legal_review",   label: "Legal Completion" },
+  { value: "pending_finance_review", label: "Finance Completion" },
+  { value: "pending_approval",       label: "Final Approval" },
+  { value: "approved",               label: "Sales Support Completion" },
+  { value: "pending_erp_encoding",   label: "ERP Encoding" },
+  { value: "erp_encoded",            label: "Onboarded" },
+  { value: "denied",                 label: "Denied" },
+  { value: "returned",               label: "Returned" },
 ];
 
 interface DashboardFiltersProps {

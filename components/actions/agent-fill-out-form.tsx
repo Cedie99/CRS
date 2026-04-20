@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DocUploadSlot } from "@/components/doc-upload-slot";
 import {
   Select,
   SelectContent,
@@ -13,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardList, Paperclip, UserRound } from "lucide-react";
 import { sileo as toast } from "sileo";
+import type { FileEntry } from "@/lib/doc-types";
 
 const CUSTOMER_TYPES = [
   { value: "dealer", label: "Dealer" },
@@ -24,8 +26,18 @@ const CUSTOMER_TYPES = [
   { value: "end_user", label: "End-User" },
 ] as const;
 
+const SALES_MANAGERS = [
+  "Jan Kevin Siy",
+  "Michael Dominic Siy",
+  "Miguel Santos",
+  "Eric Onnagan",
+  "Louie Jay Donato",
+  "Joyce Mejarito",
+] as const;
+
 interface AgentFillOutFormProps {
   cisId: string;
+  initialOtherRequirements?: FileEntry[];
 }
 
 interface FormFields {
@@ -40,9 +52,13 @@ interface FormFields {
 
 interface FormErrors {
   customerType?: string;
+  agentAccountSpecialistFirst?: string;
+  agentAccountSpecialistLast?: string;
+  agentSalesSpecialist?: string;
+  agentSalesManager?: string;
 }
 
-export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
+export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: AgentFillOutFormProps) {
   const router = useRouter();
   const [fields, setFields] = useState<FormFields>({
     customerType: "",
@@ -53,9 +69,19 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
     agentTpcFirst: "",
     agentTpcLast: "",
   });
+  const [otherRequirements, setOtherRequirements] = useState<FileEntry[]>(initialOtherRequirements);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  const requiredFilledCount = [
+    fields.agentAccountSpecialistFirst.trim(),
+    fields.agentAccountSpecialistLast.trim(),
+    fields.agentSalesSpecialist.trim(),
+    fields.agentSalesManager.trim(),
+    fields.customerType.trim(),
+  ].filter(Boolean).length;
+  const isDealer = fields.customerType === "dealer";
 
   function setField<K extends keyof FormFields>(key: K, value: string | null) {
     setFields((f) => ({ ...f, [key]: value ?? "" }));
@@ -65,6 +91,10 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!fields.customerType) errs.customerType = "Customer type is required";
+    if (!fields.agentAccountSpecialistFirst.trim()) errs.agentAccountSpecialistFirst = "First name is required";
+    if (!fields.agentAccountSpecialistLast.trim()) errs.agentAccountSpecialistLast = "Last name is required";
+    if (!fields.agentSalesSpecialist.trim()) errs.agentSalesSpecialist = "Sales Specialist is required";
+    if (!fields.agentSalesManager.trim()) errs.agentSalesManager = "Sales Manager is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -80,10 +110,10 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerType: fields.customerType,
-          agentAccountSpecialistFirst: fields.agentAccountSpecialistFirst || undefined,
-          agentAccountSpecialistLast: fields.agentAccountSpecialistLast || undefined,
-          agentSalesSpecialist: fields.agentSalesSpecialist || undefined,
-          agentSalesManager: fields.agentSalesManager || undefined,
+          agentAccountSpecialistFirst: fields.agentAccountSpecialistFirst,
+          agentAccountSpecialistLast: fields.agentAccountSpecialistLast,
+          agentSalesSpecialist: fields.agentSalesSpecialist,
+          agentSalesManager: fields.agentSalesManager,
           agentTpcFirst: fields.agentTpcFirst || undefined,
           agentTpcLast: fields.agentTpcLast || undefined,
         }),
@@ -111,53 +141,34 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
   }
 
   return (
-    <Card className="border-blue-200 bg-blue-50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-blue-900">
-          Agent Fill-Out Required
-        </CardTitle>
-        <p className="text-sm text-blue-700">
-          Your customer has submitted the form. Complete the details below to route it for review.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Customer Type */}
-        <div className="space-y-1.5">
-          <Label htmlFor="customer-type">Customer Type *</Label>
-          <Select
-            value={fields.customerType}
-            onValueChange={(v) => setField("customerType", v)}
-          >
-            <SelectTrigger id="customer-type" className="bg-white">
-              <SelectValue placeholder="Select customer type…" />
-            </SelectTrigger>
-            <SelectContent>
-              {CUSTOMER_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.customerType && (
-            <p className="text-xs text-red-600">{errors.customerType}</p>
-          )}
-          {fields.customerType === "dealer" && (
-            <p className="text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded px-2 py-1.5">
-              Dealer accounts are routed to Legal Review (Maam Cha).
+    <Card className="overflow-hidden border border-sky-200/80 bg-linear-to-b from-sky-50/70 via-white to-white shadow-sm">
+      <CardHeader className="border-b border-sky-100/80 pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-sky-900">
+              <ClipboardList className="h-4 w-4" />
+              Sales Agent Information
+            </CardTitle>
+            <p className="mt-1 text-sm text-sky-700">
+              Your customer has submitted the form. Complete this section to route it for review.
             </p>
-          )}
-          {fields.customerType && fields.customerType !== "dealer" && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-              This account type is routed to Finance Review (Maam Nida).
-            </p>
-          )}
+          </div>
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-800">
+            {requiredFilledCount === 5 ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+            ) : (
+              <UserRound className="h-3.5 w-3.5 text-sky-600" />
+            )}
+            Required fields: {requiredFilledCount}/5
+          </div>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Account Specialist */}
-          <div className="space-y-1.5">
-            <Label htmlFor="acc-spec-first">Account Specialist — First Name</Label>
+      </CardHeader>
+      <CardContent className="space-y-5 pt-5">
+        <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Assignment Details</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="acc-spec-first">Account Specialist - First Name *</Label>
             <Input
               id="acc-spec-first"
               className="bg-white"
@@ -165,10 +176,15 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
               onChange={(e) => setField("agentAccountSpecialistFirst", e.target.value)}
               placeholder="First name"
               maxLength={255}
+              disabled={isLoading}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="acc-spec-last">Account Specialist — Last Name</Label>
+            {errors.agentAccountSpecialistFirst && (
+              <p className="text-xs text-red-600">{errors.agentAccountSpecialistFirst}</p>
+            )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="acc-spec-last">Account Specialist - Last Name *</Label>
             <Input
               id="acc-spec-last"
               className="bg-white"
@@ -176,12 +192,15 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
               onChange={(e) => setField("agentAccountSpecialistLast", e.target.value)}
               placeholder="Last name"
               maxLength={255}
+              disabled={isLoading}
             />
-          </div>
+            {errors.agentAccountSpecialistLast && (
+              <p className="text-xs text-red-600">{errors.agentAccountSpecialistLast}</p>
+            )}
+            </div>
 
-          {/* Sales Specialist */}
-          <div className="space-y-1.5">
-            <Label htmlFor="sales-specialist">Sales Specialist</Label>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="sales-specialist">Sales Specialist *</Label>
             <Input
               id="sales-specialist"
               className="bg-white"
@@ -189,25 +208,76 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
               onChange={(e) => setField("agentSalesSpecialist", e.target.value)}
               placeholder="Name"
               maxLength={255}
+              disabled={isLoading}
             />
-          </div>
+            {errors.agentSalesSpecialist && (
+              <p className="text-xs text-red-600">{errors.agentSalesSpecialist}</p>
+            )}
+            </div>
 
-          {/* Sales Manager */}
-          <div className="space-y-1.5">
-            <Label htmlFor="sales-manager">Sales Manager</Label>
-            <Input
-              id="sales-manager"
-              className="bg-white"
+            <div className="space-y-1.5">
+              <Label htmlFor="sales-manager">Sales Manager *</Label>
+            <Select
               value={fields.agentSalesManager}
-              onChange={(e) => setField("agentSalesManager", e.target.value)}
-              placeholder="Name"
-              maxLength={255}
-            />
+              onValueChange={(v) => setField("agentSalesManager", v)}
+            >
+              <SelectTrigger id="sales-manager" className="bg-white w-full">
+                <SelectValue placeholder="Please Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {SALES_MANAGERS.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.agentSalesManager && (
+              <p className="text-xs text-red-600">{errors.agentSalesManager}</p>
+            )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="customer-type">Customer Type *</Label>
+            <Select
+              value={fields.customerType}
+              onValueChange={(v) => setField("customerType", v)}
+            >
+              <SelectTrigger id="customer-type" className="bg-white w-full">
+                <SelectValue placeholder="Please Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {CUSTOMER_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.customerType && (
+              <p className="text-xs text-red-600">{errors.customerType}</p>
+            )}
+            </div>
           </div>
 
-          {/* TPC */}
-          <div className="space-y-1.5">
-            <Label htmlFor="tpc-first">TPC — First Name</Label>
+          <div className="mt-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/70 px-3 py-2.5 text-xs text-zinc-700">
+            {fields.customerType ? (
+              isDealer ? (
+                <span className="font-medium text-purple-700">Dealer route: this submission will be sent to Legal Review (Maam Cha).</span>
+              ) : (
+                <span className="font-medium text-amber-700">Standard route: this submission will be sent to Finance Review (Maam Nida).</span>
+              )
+            ) : (
+              <span>Select a customer type to preview where this form will be routed.</span>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">TPC Contact (Optional)</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="tpc-first">TPC - First Name</Label>
             <Input
               id="tpc-first"
               className="bg-white"
@@ -215,10 +285,11 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
               onChange={(e) => setField("agentTpcFirst", e.target.value)}
               placeholder="First name"
               maxLength={255}
+              disabled={isLoading}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="tpc-last">TPC — Last Name</Label>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tpc-last">TPC - Last Name</Label>
             <Input
               id="tpc-last"
               className="bg-white"
@@ -226,22 +297,44 @@ export function AgentFillOutForm({ cisId }: AgentFillOutFormProps) {
               onChange={(e) => setField("agentTpcLast", e.target.value)}
               placeholder="Last name"
               maxLength={255}
+              disabled={isLoading}
             />
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
+            <Paperclip className="h-4 w-4 text-zinc-500" />
+            Other Requirements <span className="text-zinc-400 font-normal">(Optional)</span>
+          </h3>
+          <DocUploadSlot
+            docType="docAgentOtherRequirements"
+            label="Other Requirements"
+            endpoint={`/api/cis/${cisId}/docs`}
+            files={otherRequirements}
+            onChange={setOtherRequirements}
+            disabled={isLoading}
+          />
+        </section>
 
         {submitError && (
           <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{submitError}</p>
         )}
 
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="w-full gap-2 sm:w-auto"
-        >
-          <ArrowRight className="h-4 w-4" />
-          {isLoading ? "Submitting…" : "Submit & Route for Review"}
-        </Button>
+        <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-zinc-500">
+            Review required fields before submitting.
+          </p>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="w-full gap-2 sm:w-auto"
+          >
+            <ArrowRight className="h-4 w-4" />
+            {isLoading ? "Submitting..." : "Submit & Route for Review"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

@@ -10,10 +10,10 @@ const agentSubmitSchema = z.object({
   customerType: z.enum(["dealer", "distributor", "private_label", "toll_blend", "end_user"], {
     error: "Customer type is required",
   }),
-  agentAccountSpecialistFirst: z.string().max(255).optional().or(z.literal("")),
-  agentAccountSpecialistLast: z.string().max(255).optional().or(z.literal("")),
-  agentSalesSpecialist: z.string().max(255).optional().or(z.literal("")),
-  agentSalesManager: z.string().max(255).optional().or(z.literal("")),
+  agentAccountSpecialistFirst: z.string().min(1, "Account Specialist first name is required").max(255),
+  agentAccountSpecialistLast: z.string().min(1, "Account Specialist last name is required").max(255),
+  agentSalesSpecialist: z.string().min(1, "Sales Specialist is required").max(255),
+  agentSalesManager: z.string().min(1, "Sales Manager is required").max(255),
   agentTpcFirst: z.string().max(255).optional().or(z.literal("")),
   agentTpcLast: z.string().max(255).optional().or(z.literal("")),
   docAgentOtherRequirements: z.array(z.object({

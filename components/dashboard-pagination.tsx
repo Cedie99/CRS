@@ -52,9 +52,10 @@ export function DashboardPagination({
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if (totalPages <= 1) return null;
 
-  const prevPage = Math.max(1, currentPage - 1);
-  const nextPage = Math.min(totalPages, currentPage + 1);
-  const page = Math.min(currentPage, totalPages);
+  // Clamp any out-of-range page query so pagination links always stay valid.
+  const page = Math.min(Math.max(1, currentPage), totalPages);
+  const prevPage = Math.max(1, page - 1);
+  const nextPage = Math.min(totalPages, page + 1);
 
   const prevHref = buildPageHref({
     basePath,

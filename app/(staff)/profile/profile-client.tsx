@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Camera, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { sileo as toast } from "sileo";
+import { humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
   sales_agent: "Sales Agent",
@@ -298,7 +299,7 @@ export function ProfileClient({
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Role</p>
               <span className="inline-flex items-center rounded-full bg-[#2d6e1e]/10 px-2.5 py-0.5 text-xs font-medium text-[#2d6e1e]">
-                {ROLE_LABELS[role] ?? role}
+                {ROLE_LABELS[role] ?? humanizeDisplayValue(role)}
               </span>
             </div>
 

@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { humanizeDisplayValue } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,13 @@ const STEP_LABELS = [
   "Documents",
   "Background & Sign",
 ];
+
+function getOptionLabel(
+  options: ReadonlyArray<{ value: string; label: string }>,
+  value: string
+) {
+  return options.find((option) => option.value === value)?.label ?? humanizeDisplayValue(value);
+}
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -452,7 +460,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             Agent: <span className="font-mono">{agentCode}</span>
             {customerType !== "standard" && (
               <span className="ml-2 rounded-full bg-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
-                {customerType.replace("_", " ")}
+                {humanizeDisplayValue(customerType)}
               </span>
             )}
           </span>
@@ -644,7 +652,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 <div className="space-y-1.5">
                   <Label>Line of business</Label>
                   <Select value={lineOfBusiness} onValueChange={(v) => setLineOfBusiness(v ?? "")} disabled={isLoading}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select…">
+                        {lineOfBusiness ? getOptionLabel(LINE_OF_BUSINESS_OPTIONS, lineOfBusiness) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       {LINE_OF_BUSINESS_OPTIONS.map((o) => (
                         <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -662,7 +674,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 <div className="space-y-1.5">
                   <Label>Business activity</Label>
                   <Select value={businessActivity} onValueChange={(v) => setBusinessActivity(v ?? "")} disabled={isLoading}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select…">
+                        {businessActivity ? getOptionLabel(BUSINESS_ACTIVITY_OPTIONS, businessActivity) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       {BUSINESS_ACTIVITY_OPTIONS.map((o) => (
                         <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -680,7 +696,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 <div className="space-y-1.5">
                   <Label>Business type *</Label>
                   <Select value={businessType} onValueChange={(v) => setBusinessType(v ?? "")} disabled={isLoading}>
-                    <SelectTrigger><SelectValue placeholder="Select type…" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type…">
+                        {businessType ? getOptionLabel(BUSINESS_TYPES, businessType) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       {BUSINESS_TYPES.map((t) => (
                         <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>

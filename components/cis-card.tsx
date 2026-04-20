@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Clock, Building2, ChevronRight, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "End-User",
@@ -98,6 +97,8 @@ export function CisCard({
   const isTerminal = status === "denied" || status === "returned";
   const isComplete = status === "erp_encoded";
   const shortId = id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const hasFinalizedCustomerType =
+    status !== "draft" && status !== "submitted" && Boolean(customerType);
 
   const wasUpdated =
     updatedAt &&
@@ -158,11 +159,15 @@ export function CisCard({
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"
+                hasFinalizedCustomerType && customerType
+                  ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600")
+                  : "bg-zinc-100 text-zinc-400"
               )}
             >
               <Building2 className="h-3 w-3" />
-              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? customerType) : "Pending"}
+              {hasFinalizedCustomerType && customerType
+                ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType))
+                : "Pending"}
             </span>
           </div>
 

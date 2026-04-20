@@ -15,6 +15,11 @@ export const DOC_TYPES = [
   "docCertifications",
   "docGovCertifications",
   "docOther",
+  // Agent fill-out
+  "docAgentOtherRequirements",
+  // Staff fill-out
+  "docSirRestySigned",
+  "docSalesSupportOther",
 ] as const;
 
 export type DocType = (typeof DOC_TYPES)[number];
@@ -90,6 +95,9 @@ export const DOC_COLUMN_MAP: Record<DocType, DocType> = {
   docCertifications: "docCertifications",
   docGovCertifications: "docGovCertifications",
   docOther: "docOther",
+  docAgentOtherRequirements: "docAgentOtherRequirements",
+  docSirRestySigned: "docSirRestySigned",
+  docSalesSupportOther: "docSalesSupportOther",
 };
 
 export const DOC_SLOTS: Array<{ key: DocType; label: string }> = [
@@ -109,6 +117,9 @@ export const DOC_SLOTS: Array<{ key: DocType; label: string }> = [
   { key: "docCertifications", label: "Certifications (ISO / Halal Certificate)" },
   { key: "docGovCertifications", label: "Government and Other Certifications" },
   { key: "docOther", label: "Other Supporting Documents" },
+  { key: "docAgentOtherRequirements", label: "Other Requirements (Agent)" },
+  { key: "docSirRestySigned", label: "Approved CIS (Signed by Sir Resty)" },
+  { key: "docSalesSupportOther", label: "Other Documents for New Pricelist" },
 ];
 
 export const DOC_LABELS: Record<DocType, string> = Object.fromEntries(

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { DecisionNoteTemplates } from "@/components/decision-note-templates";
 import {
   Select,
@@ -22,102 +23,65 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowRight, XCircle } from "lucide-react";
+import { ArrowRight, AlertCircle, CheckCircle2, PenLine, Printer, ScanLine, XCircle } from "lucide-react";
 import { sileo as toast } from "sileo";
-import {
-  FINANCE_EU_OPTIONS,
-  FINANCE_DR_OPTIONS,
-  FINANCE_CREDIT_TERMS_OPTIONS,
-} from "@/lib/validations/cis";
-import { computePossiblePoints, type CisForScoring } from "@/lib/scoring";
+import { FINANCE_CREDIT_TERMS_OPTIONS } from "@/lib/validations/cis";
+import type { FileEntry } from "@/lib/doc-types";
 
 interface FinanceActionsProps {
   cisId: string;
-  cis: CisForScoring;
+  initialSirRestyFiles?: FileEntry[];
   /** Override the forward endpoint. Defaults to /api/cis/{cisId}/finance-forward */
   forwardEndpoint?: string;
   /** Override the deny endpoint. Defaults to /api/cis/{cisId}/finance-deny */
   denyEndpoint?: string;
+  /** Dashboard path to redirect to on success. Defaults to /finance */
+  dashboardPath?: string;
 }
 
-interface EvalFields {
-  financeEu: string;
-  financeDl: string;
-  financeDr: string;
-  financePlTs: string;
-  financeApprovedPoints: string;
-  financeCreditTerms: string;
+interface FieldErrors {
+  creditLimit?: string;
+  creditTerms?: string;
+  sirRestyFiles?: string;
 }
 
-interface EvalErrors {
-  financeEu?: string;
-  financeDl?: string;
-  financeDr?: string;
-  financePlTs?: string;
-  financeApprovedPoints?: string;
-  financeCreditTerms?: string;
-}
-
-export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: FinanceActionsProps) {
+export function FinanceActions({
+  cisId,
+  initialSirRestyFiles = [],
+  forwardEndpoint,
+  denyEndpoint,
+  dashboardPath = "/finance",
+}: FinanceActionsProps) {
   const router = useRouter();
 
-  const possiblePoints = computePossiblePoints(cis);
-
-  const scoreColor =
-    possiblePoints >= 80
-      ? { card: "border-green-200 bg-green-50", number: "text-green-700", label: "text-green-600", badge: "bg-green-100 text-green-700" }
-      : possiblePoints >= 50
-      ? { card: "border-amber-200 bg-amber-50", number: "text-amber-700", label: "text-amber-600", badge: "bg-amber-100 text-amber-700" }
-      : { card: "border-red-200 bg-red-50",     number: "text-red-700",   label: "text-red-600",   badge: "bg-red-100 text-red-700" };
-
-  const scoreLabel =
-    possiblePoints >= 80 ? "High" : possiblePoints >= 50 ? "Moderate" : "Low";
-
-  const [fields, setFields] = useState<EvalFields>({
-    financeEu: "",
-    financeDl: "",
-    financeDr: "",
-    financePlTs: "",
-    financeApprovedPoints: "",
-    financeCreditTerms: "",
-  });
-  const [evalErrors, setEvalErrors] = useState<EvalErrors>({});
+  const [creditLimit, setCreditLimit] = useState("");
+  const [creditTerms, setCreditTerms] = useState("");
+  const [sirRestyFiles, setSirRestyFiles] = useState<FileEntry[]>(initialSirRestyFiles);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState<"forward" | "deny" | null>(null);
   const [note, setNote] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const requiredFilledCount = [
+    creditLimit.trim(),
+    creditTerms,
+    sirRestyFiles.length > 0 ? "files" : "",
+  ].filter(Boolean).length;
+  const canForward = requiredFilledCount === 3;
 
-  function setField<K extends keyof EvalFields>(key: K, value: string) {
-    setFields((f) => ({ ...f, [key]: value }));
-    setEvalErrors((e) => ({ ...e, [key]: undefined }));
-  }
-
-  function validateEvalFields(): boolean {
-    const errors: EvalErrors = {};
-    if (!fields.financeEu) errors.financeEu = "End User classification is required";
-    if (!fields.financeDl.trim()) errors.financeDl = "Delivery Limit is required";
-    if (!fields.financeDr) errors.financeDr = "Delivery Receipt terms are required";
-    if (!fields.financePlTs.trim()) errors.financePlTs = "Price List / Terms & Schedule is required";
-
-    const approved = Number(fields.financeApprovedPoints);
-    if (
-      fields.financeApprovedPoints === "" ||
-      isNaN(approved) ||
-      !Number.isInteger(approved) ||
-      approved < 0
-    ) {
-      errors.financeApprovedPoints = "Approved Points must be a whole number (0 or more)";
-    }
-    if (!fields.financeCreditTerms) errors.financeCreditTerms = "Credit Terms selection is required";
-
-    setEvalErrors(errors);
+  function validateFields(): boolean {
+    const errors: FieldErrors = {};
+    if (!creditLimit.trim()) errors.creditLimit = "Credit limit is required";
+    if (!creditTerms) errors.creditTerms = "Credit Terms selection is required";
+    if (sirRestyFiles.length === 0) errors.sirRestyFiles = "Please attach the approved CIS signed by Sir Resty";
+    setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
   function openDialog(a: "forward" | "deny") {
-    if (a === "forward" && !validateEvalFields()) return;
+    if (a === "forward" && !validateFields()) return;
     setAction(a);
     setNote("");
     setDialogError("");
@@ -141,25 +105,18 @@ export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: Fi
     setIsLoading(true);
     try {
       if (action === "forward") {
-        const body = {
-          note: note.trim() || undefined,
-          financeEu: fields.financeEu,
-          financeDl: fields.financeDl,
-          financeDr: fields.financeDr,
-          financePlTs: fields.financePlTs,
-          financeApprovedPoints: Number(fields.financeApprovedPoints),
-          financeCreditTerms: fields.financeCreditTerms,
-        };
         const res = await fetch(forwardEndpoint ?? `/api/cis/${cisId}/finance-forward`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            note: note.trim() || undefined,
+            financeCreditLimit: creditLimit.trim(),
+            financeCreditTerms: creditTerms,
+          }),
         });
         const json = await res.json();
         if (!res.ok) {
-          setDialogError(
-            typeof json.error === "string" ? json.error : "Something went wrong."
-          );
+          setDialogError(typeof json.error === "string" ? json.error : "Something went wrong.");
           return;
         }
       } else {
@@ -170,9 +127,7 @@ export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: Fi
         });
         const json = await res.json();
         if (!res.ok) {
-          setDialogError(
-            typeof json.error === "string" ? json.error : "Something went wrong."
-          );
+          setDialogError(typeof json.error === "string" ? json.error : "Something went wrong.");
           return;
         }
       }
@@ -182,10 +137,10 @@ export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: Fi
         title: action === "forward" ? "Forwarded to Senior Approver." : "Submission denied.",
         description:
           action === "forward"
-            ? "Final approver has been notified to review this account."
+            ? "The Senior Approver has been notified for final review."
             : "The submission has been closed as denied.",
       });
-      router.push("/finance");
+      router.push(dashboardPath);
       router.refresh();
     } catch {
       setDialogError("Something went wrong. Please try again.");
@@ -196,169 +151,175 @@ export function FinanceActions({ cisId, cis, forwardEndpoint, denyEndpoint }: Fi
 
   return (
     <>
-      {/* ── Evaluation Form ── */}
-      <Card className="print:hidden">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-            Finance Credit Evaluation
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-
-          {/* Possible Points — auto-computed, read-only */}
-          <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${scoreColor.card}`}>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Possible Points
-                </p>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${scoreColor.badge}`}>
-                  {scoreLabel}
-                </span>
-              </div>
-              <p className="mt-0.5 text-sm text-zinc-500">
-                Auto-calculated from form completeness and uploaded documents
+      <Card className="print:hidden overflow-hidden border border-indigo-200/70 bg-linear-to-b from-indigo-50/60 via-white to-white shadow-sm">
+        <CardHeader className="border-b border-indigo-100/80 pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-indigo-900">
+                Finance and Legal Information
+              </CardTitle>
+              <p className="mt-1 text-xs text-zinc-600">
+                Complete credit details and attach the approved signed CIS before forwarding.
               </p>
             </div>
-            <p className={`text-2xl font-bold tabular-nums ${scoreColor.number}`}>
-              {possiblePoints}
-              <span className="ml-1 text-sm font-normal text-zinc-400">/ 112</span>
-            </p>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+              {canForward ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <AlertCircle className="h-3.5 w-3.5 text-indigo-600" />}
+              Required fields: {requiredFilledCount}/3
+            </span>
           </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            To be filled out by Finance. Attach the CIS approved and signed by Sir Resty before forwarding.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5 pt-5">
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* EU */}
+          <section className="rounded-xl border border-blue-200/80 bg-linear-to-br from-blue-50 via-sky-50 to-indigo-50 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                  Required Physical Sign-off
+                </p>
+                <p className="mt-1 text-sm font-medium text-blue-900">
+                  Print, sign, then upload before forwarding
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-blue-200 bg-white/75 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                <AlertCircle className="h-3.5 w-3.5" />
+                Mandatory
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Step 1</p>
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium text-zinc-800">
+                  <Printer className="h-4 w-4 text-blue-600" />
+                  Print CIS form
+                </p>
+              </div>
+              <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Step 2</p>
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium text-zinc-800">
+                  <PenLine className="h-4 w-4 text-blue-600" />
+                  Get Sir Resty signature
+                </p>
+              </div>
+              <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Step 3</p>
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium text-zinc-800">
+                  <ScanLine className="h-4 w-4 text-blue-600" />
+                  Upload signed copy
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-blue-900">Forwarding is blocked until upload is completed.</span>
+              {sirRestyFiles.length > 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Signed copy uploaded ({sirRestyFiles.length})
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Awaiting signed copy upload
+                </span>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+            <h3 className="mb-3 text-sm font-semibold text-zinc-900">Credit Decision Details</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="credit-limit">Credit Limit *</Label>
+                <Input
+                  id="credit-limit"
+                  value={creditLimit}
+                  onChange={(e) => {
+                    setCreditLimit(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, creditLimit: undefined }));
+                  }}
+                  placeholder="e.g., 500,000"
+                  disabled={isLoading}
+                />
+                {fieldErrors.creditLimit && (
+                  <p className="text-xs text-red-600">{fieldErrors.creditLimit}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="credit-terms">Credit Terms *</Label>
+                <Select
+                  value={creditTerms}
+                  onValueChange={(v) => {
+                    setCreditTerms(v ?? "");
+                    setFieldErrors((prev) => ({ ...prev, creditTerms: undefined }));
+                  }}
+                >
+                  <SelectTrigger id="credit-terms" className="w-full">
+                    <SelectValue placeholder="Please Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FINANCE_CREDIT_TERMS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldErrors.creditTerms && (
+                  <p className="text-xs text-red-600">{fieldErrors.creditTerms}</p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
             <div className="space-y-1.5">
-              <Label htmlFor="finance-eu">End User (EU) *</Label>
-              <Select
-                value={fields.financeEu}
-                onValueChange={(v) => setField("financeEu", v ?? "")}
+              <Label>Attach Approved CIS from Sir Resty *</Label>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <DocUploadSlot
+                  docType="docSirRestySigned"
+                  label="Approved CIS (Signed by Sir Resty)"
+                  endpoint={`/api/cis/${cisId}/staff-docs`}
+                  files={sirRestyFiles}
+                  onChange={(files) => {
+                    setSirRestyFiles(files);
+                    setFieldErrors((prev) => ({ ...prev, sirRestyFiles: undefined }));
+                  }}
+                  disabled={isLoading}
+                />
+              </div>
+              {fieldErrors.sirRestyFiles && (
+                <p className="text-xs text-red-600">{fieldErrors.sirRestyFiles}</p>
+              )}
+            </div>
+          </section>
+
+          <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <p className="text-xs text-zinc-500">Complete all required fields before forwarding.</p>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <Button onClick={() => openDialog("forward")} className="w-full gap-2 sm:w-auto" disabled={isLoading}>
+                <ArrowRight className="h-4 w-4" />
+                Forward to Sr. Approver
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => openDialog("deny")}
+                disabled={isLoading}
+                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
               >
-                <SelectTrigger id="finance-eu" className="w-full">
-                  <SelectValue placeholder="Select…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FINANCE_EU_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {evalErrors.financeEu && (
-                <p className="text-xs text-red-600">{evalErrors.financeEu}</p>
-              )}
+                <XCircle className="h-4 w-4" />
+                Deny
+              </Button>
             </div>
-
-            {/* DL */}
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-dl">Delivery Limit (DL) *</Label>
-              <Input
-                id="finance-dl"
-                value={fields.financeDl}
-                onChange={(e) => setField("financeDl", e.target.value)}
-                placeholder="e.g. 5,000 liters"
-              />
-              {evalErrors.financeDl && (
-                <p className="text-xs text-red-600">{evalErrors.financeDl}</p>
-              )}
-            </div>
-
-            {/* DR */}
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-dr">Delivery Receipt (DR) *</Label>
-              <Select
-                value={fields.financeDr}
-                onValueChange={(v) => setField("financeDr", v ?? "")}
-              >
-                <SelectTrigger id="finance-dr" className="w-full">
-                  <SelectValue placeholder="Select…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FINANCE_DR_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {evalErrors.financeDr && (
-                <p className="text-xs text-red-600">{evalErrors.financeDr}</p>
-              )}
-            </div>
-
-            {/* PL/TS */}
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-plts">Price List / Terms &amp; Schedule (PL/TS) *</Label>
-              <Input
-                id="finance-plts"
-                value={fields.financePlTs}
-                onChange={(e) => setField("financePlTs", e.target.value)}
-                placeholder="e.g. Standard PL v2"
-              />
-              {evalErrors.financePlTs && (
-                <p className="text-xs text-red-600">{evalErrors.financePlTs}</p>
-              )}
-            </div>
-
-            {/* Approved Points */}
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-approved">Approved Points *</Label>
-              <Input
-                id="finance-approved"
-                type="number"
-                min={0}
-                value={fields.financeApprovedPoints}
-                onChange={(e) => setField("financeApprovedPoints", e.target.value)}
-                placeholder={`0–${possiblePoints}`}
-              />
-              {evalErrors.financeApprovedPoints && (
-                <p className="text-xs text-red-600">{evalErrors.financeApprovedPoints}</p>
-              )}
-            </div>
-
-            {/* Credit Terms */}
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-credit-terms">Credit Terms *</Label>
-              <Select
-                value={fields.financeCreditTerms}
-                onValueChange={(v) => setField("financeCreditTerms", v ?? "")}
-              >
-                <SelectTrigger id="finance-credit-terms" className="w-full">
-                  <SelectValue placeholder="Select…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FINANCE_CREDIT_TERMS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {evalErrors.financeCreditTerms && (
-                <p className="text-xs text-red-600">{evalErrors.financeCreditTerms}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-3">
-            <Button onClick={() => openDialog("forward")} className="w-full gap-2 sm:w-auto">
-              <ArrowRight className="h-4 w-4" />
-              Forward to Approver
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => openDialog("deny")}
-              className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
-            >
-              <XCircle className="h-4 w-4" />
-              Deny
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* ── Confirmation Dialog ── */}
+      {/* Confirmation Dialog */}
       <Dialog open={open} onOpenChange={closeDialog}>
         <DialogContent showCloseButton={!isLoading}>
           <DialogHeader>

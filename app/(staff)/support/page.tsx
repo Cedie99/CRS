@@ -8,6 +8,7 @@ import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import { FileText, Database, XCircle, Clock, LayoutList } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Sales Support — CRS" };
 
@@ -135,22 +136,24 @@ export default async function SupportDashboard({
 
       <DashboardFilters />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="rounded-xl border bg-white p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-                <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-900 sm:text-3xl">{value}</p>
-              </div>
-              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
-                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
+      <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
+          {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
+            <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+                  <p className="mt-1.5 text-xl font-bold tabular-nums text-zinc-900">{value}</p>
+                </div>
+                <div className={`rounded-lg p-1.5 ${iconBg}`}>
+                  <Icon className={`h-4 w-4 ${iconColor}`} />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </details>
 
       <CustomerTypeNavCards
         basePath="/support"
@@ -160,9 +163,7 @@ export default async function SupportDashboard({
 
       {total === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
             {q || status ? "No matching submissions" : "No submissions yet"}
           </h2>

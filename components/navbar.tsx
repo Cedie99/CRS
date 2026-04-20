@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
   sales_agent: "Sales Agent",
@@ -132,7 +132,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
     sessionStorage.removeItem("crs:showWelcomeToast");
     toast.success({
       title: "Welcome back",
-      description: `Signed in as ${ROLE_LABELS[userRole] ?? userRole}.`,
+      description: `Signed in as ${ROLE_LABELS[userRole] ?? humanizeDisplayValue(userRole)}.`,
       icon: <Sparkles className="h-4 w-4" />,
       duration: 5200,
       autopilot: { expand: 120, collapse: 3600 },
@@ -173,7 +173,7 @@ export function Navbar({ userRole, onMenuToggle }: NavbarProps) {
             Customer Request System
           </span>
           <span className="hidden rounded-md border border-emerald-200/20 bg-white/10 px-2 py-0.5 text-xs font-medium text-emerald-50 sm:block">
-            {ROLE_LABELS[userRole] ?? userRole}
+            {ROLE_LABELS[userRole] ?? humanizeDisplayValue(userRole)}
           </span>
         </Link>
         </div>

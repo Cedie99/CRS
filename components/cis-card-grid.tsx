@@ -16,9 +16,10 @@ type GridSubmission = {
 interface CisCardGridProps {
   submissions: GridSubmission[];
   hrefPrefix: string;
+  readOnlyView?: boolean;
 }
 
-export function CisCardGrid({ submissions, hrefPrefix }: CisCardGridProps) {
+export function CisCardGrid({ submissions, hrefPrefix, readOnlyView = false }: CisCardGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {submissions.map((s) => (
@@ -33,7 +34,7 @@ export function CisCardGrid({ submissions, hrefPrefix }: CisCardGridProps) {
           status={s.status}
           createdAt={s.createdAt}
           updatedAt={s.updatedAt ?? undefined}
-          href={`/${hrefPrefix}/${s.id}`}
+          href={`/${hrefPrefix}/${s.id}${readOnlyView ? "?view=all" : ""}`}
         />
       ))}
     </div>

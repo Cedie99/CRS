@@ -6,9 +6,10 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { CisCardGrid } from "@/components/cis-card-grid";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { CUSTOMER_TYPE_DESCRIPTIONS, CUSTOMER_TYPE_LABELS, isDashboardCustomerType } from "@/lib/customer-types";
 import { buttonVariants } from "@/lib/button-variants";
-import { ArrowLeft, FileText, Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -66,6 +67,8 @@ export default async function AgentCustomerTypePage({
     const conditions = [
       eq(cisSubmissions.agentId, session.user.id),
       eq(cisSubmissions.customerType, customerType),
+      ne(cisSubmissions.status, "draft"),
+      ne(cisSubmissions.status, "submitted"),
       showArchived ? eq(cisSubmissions.isArchived, true) : ne(cisSubmissions.isArchived, true),
     ];
 
@@ -113,6 +116,8 @@ export default async function AgentCustomerTypePage({
     const fallbackConditions = [
       eq(cisSubmissions.agentId, session.user.id),
       eq(cisSubmissions.customerType, customerType),
+      ne(cisSubmissions.status, "draft"),
+      ne(cisSubmissions.status, "submitted"),
     ];
 
     if (q) {
@@ -160,9 +165,7 @@ export default async function AgentCustomerTypePage({
 
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No submissions found</h2>
           <p className="mt-1 text-sm text-zinc-500">Try adjusting your search or filters.</p>
           {!q && !status && (

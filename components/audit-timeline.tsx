@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 import {
   Send,
   CheckCheck,
@@ -172,7 +172,7 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
             {/* Right: content */}
             <div className={`min-w-0 pb-5 ${isLast ? "pb-0" : ""}`}>
               <p className="text-sm font-semibold text-zinc-900">
-                {config?.label ?? event.action}
+                {config?.label ?? humanizeDisplayValue(event.action)}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <ActorAvatar name={event.actorName} avatarUrl={event.actorAvatarUrl} />
@@ -182,7 +182,7 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
                     <>
                       {" · "}
                       <span className="text-zinc-400">
-                        {ROLE_LABELS[event.actorRole] ?? event.actorRole}
+                        {ROLE_LABELS[event.actorRole] ?? humanizeDisplayValue(event.actorRole)}
                       </span>
                     </>
                   )}

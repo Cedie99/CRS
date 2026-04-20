@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, BellRing, CheckCheck, CircleSlash, ShieldCheck, UserPlus } from "lucide-react";
+import { Bell, BellRing, CheckCheck, CircleSlash, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
+import { sileo as toast } from "sileo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_HREFS: Record<string, string> = {
   sales_agent: "/agent",
@@ -23,6 +24,19 @@ const ROLE_HREFS: Record<string, string> = {
   sales_support: "/support",
   project_development_specialist: "/specialist",
   admin: "/admin",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  sales_agent: "Sales Agent",
+  rsr: "RSR",
+  sales_manager: "Sales Manager",
+  rsr_manager: "RSR Manager",
+  finance_reviewer: "Finance Reviewer",
+  legal_approver: "Legal Approver",
+  senior_approver: "Senior Approver",
+  sales_support: "Sales Support",
+  project_development_specialist: "Project Development Specialist",
+  admin: "Admin",
 };
 
 type Notification = {
@@ -60,11 +74,14 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(true);
+  const [isPendingLoading, setIsPendingLoading] = useState(false);
 
   const isAdmin = role === "admin";
   const homeHref = ROLE_HREFS[role] ?? "/";
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const totalBadgeCount = unreadCount + pendingRegistrations.length;
+  const isInitialLoading = isNotificationsLoading || (isAdmin && isPendingLoading);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -72,6 +89,8 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
       if (res.ok) setNotifications(await res.json());
     } catch {
       // silent
+    } finally {
+      setIsNotificationsLoading(false);
     }
   }, []);
 
@@ -81,6 +100,8 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
       if (res.ok) setPendingRegistrations(await res.json());
     } catch {
       // silent
+    } finally {
+      setIsPendingLoading(false);
     }
   }, []);
 
@@ -92,10 +113,25 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
 
   useEffect(() => {
     if (!isAdmin) return;
+    setIsPendingLoading(true);
     fetchPendingRegistrations();
     const interval = setInterval(fetchPendingRegistrations, 30_000);
     return () => clearInterval(interval);
   }, [isAdmin, fetchPendingRegistrations]);
+
+  useEffect(() => {
+    const shouldShowWelcome = sessionStorage.getItem("crs:showWelcomeToast") === "1";
+    if (!shouldShowWelcome) return;
+
+    sessionStorage.removeItem("crs:showWelcomeToast");
+    toast.success({
+      title: "Welcome back",
+      description: `Signed in as ${ROLE_LABELS[role] ?? humanizeDisplayValue(role)}.`,
+      icon: <Sparkles className="h-4 w-4" />,
+      duration: 5200,
+      autopilot: { expand: 120, collapse: 3600 },
+    });
+  }, [role]);
 
   async function handleOpenNotifications(open: boolean) {
     setNotifOpen(open);
@@ -118,7 +154,7 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
 
       <DropdownMenuContent
         align="end"
-        className="w-80 max-w-[calc(100vw-1rem)] rounded-2xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-[0_20px_45px_-30px_rgba(10,10,10,0.65)] backdrop-blur-md"
+        className="w-80 max-h-[min(72vh,34rem)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-[0_20px_45px_-30px_rgba(10,10,10,0.65)] backdrop-blur-md"
       >
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-sm font-semibold text-zinc-900">Notifications</span>
@@ -130,67 +166,84 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
         </div>
         <DropdownMenuSeparator />
 
-        {isAdmin && pendingRegistrations.length > 0 && (
-          <>
-            <div className="px-3 py-1.5">
-              <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-amber-600">
-                <UserPlus className="h-3 w-3" />
-                Pending Activation
-              </span>
+        <div className="max-h-[min(60vh,26rem)] overflow-y-auto overscroll-contain">
+          {isInitialLoading ? (
+            <div className="space-y-2.5 px-3 py-3" aria-label="Loading notifications">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-pulse rounded-full bg-zinc-200" />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="h-2.5 w-11/12 animate-pulse rounded bg-zinc-200" />
+                      <div className="h-2.5 w-7/12 animate-pulse rounded bg-zinc-200" />
+                      <div className="h-2 w-16 animate-pulse rounded bg-zinc-200" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            {pendingRegistrations.map((u) => (
-              <DropdownMenuItem
-                key={u.id}
-                className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
-                onClick={() => {
-                  setNotifOpen(false);
-                  router.push("/admin/users");
-                }}
-              >
-                <div className="flex w-full items-start gap-2">
-                  <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                  <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
-                    {u.fullName} registered and needs activation
-                  </p>
-                </div>
-                <span className="pl-3.5 text-[10px] text-zinc-400">
-                  {formatDistanceToNow(new Date(u.createdAt))}
+          ) : isAdmin && pendingRegistrations.length > 0 ? (
+            <>
+              <div className="px-3 py-1.5">
+                <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-amber-600">
+                  <UserPlus className="h-3 w-3" />
+                  Pending Activation
                 </span>
-              </DropdownMenuItem>
-            ))}
-            {notifications.length > 0 && <DropdownMenuSeparator />}
-          </>
-        )}
+              </div>
+              {pendingRegistrations.map((u) => (
+                <DropdownMenuItem
+                  key={u.id}
+                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
+                  onClick={() => {
+                    setNotifOpen(false);
+                    router.push("/admin/users");
+                  }}
+                >
+                  <div className="flex w-full items-start gap-2">
+                    <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                    <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
+                      {u.fullName} registered and needs activation
+                    </p>
+                  </div>
+                  <span className="pl-3.5 text-[10px] text-zinc-400">
+                    {formatDistanceToNow(new Date(u.createdAt))}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              {notifications.length > 0 && <DropdownMenuSeparator />}
+            </>
+          ) : null}
 
-        {notifications.length === 0 && pendingRegistrations.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
-            <Bell className="h-6 w-6 text-zinc-300" />
-            <p className="text-sm text-zinc-400">No notifications yet</p>
-          </div>
-        ) : notifications.length > 0 ? (
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.map((n) => (
-              <DropdownMenuItem
-                key={n.id}
-                className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
-                onClick={() => {
-                  setNotifOpen(false);
-                  router.push(`${homeHref}/${n.cisId}`);
-                }}
-              >
-                <div className="flex w-full items-start gap-2">
-                  {getNotificationIcon(n.message)}
-                  <p className={`flex-1 text-xs leading-relaxed ${!n.isRead ? "font-medium text-zinc-900" : "text-zinc-500"}`}>
-                    {n.message}
-                  </p>
-                </div>
-                <span className="pl-3.5 text-[10px] text-zinc-400">
-                  {formatDistanceToNow(new Date(n.sentAt))}
-                </span>
-              </DropdownMenuItem>
-            ))}
-          </div>
-        ) : null}
+          {!isInitialLoading && notifications.length === 0 && pendingRegistrations.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
+              <Bell className="h-6 w-6 text-zinc-300" />
+              <p className="text-sm text-zinc-400">No notifications yet</p>
+            </div>
+          ) : !isInitialLoading && notifications.length > 0 ? (
+            <>
+              {notifications.map((n) => (
+                <DropdownMenuItem
+                  key={n.id}
+                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
+                  onClick={() => {
+                    setNotifOpen(false);
+                    router.push(`${homeHref}/${n.cisId}`);
+                  }}
+                >
+                  <div className="flex w-full items-start gap-2">
+                    {getNotificationIcon(n.message)}
+                    <p className={`flex-1 text-xs leading-relaxed ${!n.isRead ? "font-medium text-zinc-900" : "text-zinc-500"}`}>
+                      {n.message}
+                    </p>
+                  </div>
+                  <span className="pl-3.5 text-[10px] text-zinc-400">
+                    {formatDistanceToNow(new Date(n.sentAt))}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </>
+          ) : null}
+        </div>
 
         {notifications.some((n) => !n.isRead) === false && notifications.length > 0 && pendingRegistrations.length === 0 && (
           <>

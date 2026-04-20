@@ -294,7 +294,7 @@ function NewCisContent() {
                             className="flex-1 rounded-lg border bg-zinc-50 px-3 py-2 text-sm font-mono text-zinc-700 outline-none"
                             onClick={(e) => (e.target as HTMLInputElement).select()}
                           />
-                          <Button variant="outline" onClick={handleCopy} className="shrink-0 min-w-[88px] overflow-hidden">
+                          <Button variant="outline" onClick={handleCopy} className="shrink-0 min-w-22 overflow-hidden">
                             <AnimatePresence mode="wait" initial={false}>
                               <motion.span
                                 key={copied ? "check" : "copy"}
@@ -322,7 +322,7 @@ function NewCisContent() {
                           <p className="text-xs text-zinc-500">
                             The message below will be copied to your clipboard — ready to paste into chat or email.
                           </p>
-                          <div className="rounded-md border border-zinc-100 bg-white px-3 py-2.5 text-xs leading-relaxed text-zinc-700 whitespace-pre-wrap break-words">
+                          <div className="rounded-md border border-zinc-100 bg-white px-3 py-2.5 text-xs leading-relaxed text-zinc-700 whitespace-pre-wrap wrap-break-word">
                             {messageText}
                           </div>
                           <Button

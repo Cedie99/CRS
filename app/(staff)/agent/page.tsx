@@ -7,8 +7,9 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
-import { Plus, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Plus, FileText, Link as LinkIcon, UserRound, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "My Submissions — CRS" };
 
@@ -57,7 +58,7 @@ export default async function AgentDashboard({
   let supportsArchived = true;
   let submissions: Submission[] = [];
   let filteredCount = 0;
-  let statsCounts = { total: 0, active: 0, completed: 0, denied: 0 };
+  let statsCounts = { total: 0, draft: 0, awaitingAgentCompletion: 0, active: 0, completed: 0, denied: 0 };
   let archivedCount = 0;
 
   try {
@@ -99,8 +100,10 @@ export default async function AgentDashboard({
 
     const [statsRow] = await db
       .select({
-        total: count(),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+        total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
+        draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
+        awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
         completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
         denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
       })
@@ -108,6 +111,8 @@ export default async function AgentDashboard({
       .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true)));
     statsCounts = {
       total: Number(statsRow?.total ?? 0),
+      draft: Number(statsRow?.draft ?? 0),
+      awaitingAgentCompletion: Number(statsRow?.awaitingAgentCompletion ?? 0),
       active: Number(statsRow?.active ?? 0),
       completed: Number(statsRow?.completed ?? 0),
       denied: Number(statsRow?.denied ?? 0),
@@ -156,8 +161,10 @@ export default async function AgentDashboard({
 
     const [fallbackStatsRow] = await db
       .select({
-        total: count(),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+        total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
+        draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
+        awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
+        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
         completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
         denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
       })
@@ -165,6 +172,8 @@ export default async function AgentDashboard({
       .where(eq(cisSubmissions.agentId, session!.user.id));
     statsCounts = {
       total: Number(fallbackStatsRow?.total ?? 0),
+      draft: Number(fallbackStatsRow?.draft ?? 0),
+      awaitingAgentCompletion: Number(fallbackStatsRow?.awaitingAgentCompletion ?? 0),
       active: Number(fallbackStatsRow?.active ?? 0),
       completed: Number(fallbackStatsRow?.completed ?? 0),
       denied: Number(fallbackStatsRow?.denied ?? 0),
@@ -173,54 +182,47 @@ export default async function AgentDashboard({
 
   const effectiveShowArchived = supportsArchived && showArchived;
 
-  const { total, active, completed, denied } = statsCounts;
+  const { total, draft, awaitingAgentCompletion, active, completed, denied } = statsCounts;
 
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+  const openPipeline = draft + awaitingAgentCompletion + active;
 
-  const stats = [
+  const queueCards = [
     {
-      label: "Total",
-      value: total,
-      sub: total === 1 ? "1 submission" : `${total} submissions`,
-      icon: FileText,
-      iconBg: "bg-zinc-100",
-      iconColor: "text-zinc-500",
-      valueColor: "text-zinc-900",
-      barColor: "bg-zinc-400",
-      percent: 100,
+      label: "Awaiting Customer",
+      value: draft,
+      sub: draft === 1 ? "1 link sent" : `${draft} links sent`,
+      href: "/agent/drafts",
+      icon: LinkIcon,
+      tone: "border-amber-200 bg-amber-50/40 text-amber-700",
+      iconTone: "bg-amber-100 text-amber-600",
     },
     {
-      label: "In Progress",
-      value: active,
-      sub: total > 0 ? `${pct(active)}% of total` : "none yet",
-      icon: Clock,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-      valueColor: "text-blue-700",
-      barColor: "bg-blue-400",
-      percent: pct(active),
+      label: "Awaiting Agent Completion",
+      value: awaitingAgentCompletion,
+      sub: awaitingAgentCompletion === 1 ? "1 customer submitted" : `${awaitingAgentCompletion} customer submissions`,
+      href: "/agent/agent-completion",
+      icon: UserRound,
+      tone: "border-blue-200 bg-blue-50/40 text-blue-700",
+      iconTone: "bg-blue-100 text-blue-600",
+    },
+  ];
+
+  const overviewTiles = [
+    {
+      label: "Open Pipeline",
+      value: openPipeline,
+      sub: total > 0 ? `${pct(openPipeline)}% of total` : "none yet",
     },
     {
       label: "Onboarded",
       value: completed,
       sub: total > 0 ? `${pct(completed)}% of total` : "none yet",
-      icon: CheckCircle,
-      iconBg: "bg-green-50",
-      iconColor: "text-green-600",
-      valueColor: "text-green-700",
-      barColor: "bg-green-500",
-      percent: pct(completed),
     },
     {
       label: "Not Accepted",
       value: denied,
       sub: total > 0 ? `${pct(denied)}% of total` : "none yet",
-      icon: XCircle,
-      iconBg: "bg-red-50",
-      iconColor: "text-red-500",
-      valueColor: "text-red-700",
-      barColor: "bg-red-400",
-      percent: pct(denied),
     },
   ];
 
@@ -247,36 +249,50 @@ export default async function AgentDashboard({
       />
 
       {/* Stats — hidden in archived view */}
-      {!effectiveShowArchived && <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
-          <div
-            key={label}
-            className="relative overflow-hidden rounded-xl border bg-white p-4 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm sm:p-5"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  {label}
-                </p>
-                <p className={`mt-2 text-2xl font-bold tabular-nums sm:text-3xl ${valueColor}`}>
-                  {value}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">{sub}</p>
-              </div>
-              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
-                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
-              </div>
-            </div>
-            {/* Colored fill bar at bottom showing proportion */}
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-100">
-              <div
-                className={`h-full transition-all duration-700 ${barColor}`}
-                style={{ width: `${percent}%` }}
-              />
-            </div>
+      {!effectiveShowArchived && <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="space-y-3 border-t border-zinc-100 p-3">
+          <div className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Submissions</span>
+            <span className="rounded-full bg-white px-2 py-0.5 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-200">{total}</span>
           </div>
-        ))}
-      </div>}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {queueCards.map(({ label, value, sub, href, icon: Icon, tone, iconTone }) => (
+              <Link
+                key={label}
+                href={href}
+                className={`group rounded-lg border p-3 transition-all duration-200 hover:shadow-sm ${tone}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
+                    <p className="mt-1 text-3xl font-bold leading-none">{value}</p>
+                    <p className="mt-1.5 text-xs text-zinc-500">{sub}</p>
+                  </div>
+                  <span className={`rounded-lg p-2 ${iconTone}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-xs font-semibold">
+                  Open queue
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            {overviewTiles.map(({ label, value, sub }) => (
+              <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
+                <p className="mt-1.5 text-xl font-bold text-zinc-900">{value}</p>
+                <p className="mt-1 text-[11px] text-zinc-500">{sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>}
 
       <CustomerTypeNavCards
         basePath="/agent"
@@ -286,9 +302,7 @@ export default async function AgentDashboard({
 
       {submissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
             {q || status ? "No matching submissions" : "No submissions yet"}
           </h2>

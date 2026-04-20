@@ -6,25 +6,47 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { FileText, Scale, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Legal Review Queue — CRS" };
+
+const ALL_VISIBLE_STATUSES: CisStatus[] = [
+  "draft",
+  "submitted",
+  "pending_endorsement",
+  "pending_legal_review",
+  "pending_finance_review",
+  "pending_approval",
+  "approved",
+  "pending_erp_encoding",
+  "erp_encoded",
+  "denied",
+  "returned",
+];
 
 export default async function LegalDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, status, page } = await searchParams;
+  const { q, status, page, view } = await searchParams;
+  const viewMode = view === "all" ? "all" : "queue";
+  const isAllView = viewMode === "all";
   const currentPage = getPageNumber(page);
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
-  const conditions: any[] = [eq(cisSubmissions.status, "pending_legal_review")];
+  const conditions: any[] = [
+    isAllView
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES as any)
+      : eq(cisSubmissions.status, "pending_legal_review"),
+  ];
 
   if (q) {
     conditions.push(
@@ -78,6 +100,14 @@ export default async function LegalDashboard({
   const denied = history.filter((e) => e.action === "denied").length;
   const total = forwarded + denied;
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+  const buildModeHref = (mode: "queue" | "all") => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status) params.set("status", status);
+    if (mode === "all") params.set("view", "all");
+    const suffix = params.toString();
+    return `/legal${suffix ? `?${suffix}` : ""}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -96,70 +126,81 @@ export default async function LegalDashboard({
         {filteredCount > 0 && (
           <span className="mt-7 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-purple-200 bg-linear-to-r from-purple-50 to-purple-100/80 px-3.5 py-1.5 text-sm font-semibold text-purple-800 shadow-sm sm:mt-8">
             <Clock3 className="h-3.5 w-3.5 text-purple-700" />
-            <span>{filteredCount} Pending Review</span>
+            <span>{filteredCount} {isAllView ? "Visible Forms" : "Pending Review"}</span>
           </span>
         )}
       </div>
 
+      <div className="inline-flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
+        <Link
+          href={buildModeHref("queue")}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${!isAllView ? "bg-purple-100 text-purple-800" : "text-zinc-600 hover:text-zinc-900"}`}
+        >
+          My Queue
+        </Link>
+        <Link
+          href={buildModeHref("all")}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isAllView ? "bg-blue-100 text-blue-800" : "text-zinc-600 hover:text-zinc-900"}`}
+        >
+          All Submissions (Read-only)
+        </Link>
+      </div>
+
+      {isAllView && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Context mode: you can view all submissions across customer types and statuses. Actions are disabled when opened from this mode.
+        </div>
+      )}
+
       <DashboardFilters />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">In Queue</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{filteredCount}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">awaiting review</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-purple-400" style={{ width: "100%" }} />
+      <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{isAllView ? "Visible Forms" : "In Queue"}</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{filteredCount}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{isAllView ? "matching filters" : "awaiting review"}</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Forwarded</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{forwarded}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{total > 0 ? `${pct(forwarded)}% of processed` : "none yet"}</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Denied</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{denied}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{total > 0 ? `${pct(denied)}% of processed` : "none yet"}</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Total Processed</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{total}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">all time</p>
           </div>
         </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Forwarded</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{forwarded}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">{total > 0 ? `${pct(forwarded)}% of processed` : "none yet"}</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-green-500" style={{ width: `${pct(forwarded)}%` }} />
-          </div>
-        </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Denied</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{denied}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">{total > 0 ? `${pct(denied)}% of processed` : "none yet"}</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-red-400" style={{ width: `${pct(denied)}%` }} />
-          </div>
-        </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Total Processed</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{total}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">all time</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-zinc-400" style={{ width: total > 0 ? "100%" : "0%" }} />
-          </div>
-        </div>
-      </div>
+      </details>
 
       <CustomerTypeNavCards
         basePath="/legal"
-        searchParams={{ q, status }}
+        searchParams={{ q, status, view: isAllView ? "all" : undefined }}
         submissions={submissions}
       />
 
       {filteredCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
-            {q || status ? "No matching submissions" : "Queue is clear"}
+            {q || status ? "No matching submissions" : isAllView ? "No submissions available" : "Queue is clear"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q || status ? "Try adjusting your search or filters." : "No submissions awaiting legal review."}
+            {q || status ? "Try adjusting your search or filters." : isAllView ? "No submissions match this context view." : "No submissions awaiting legal review."}
           </p>
         </div>
       ) : (
         <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          Select a customer type card to open its dedicated submissions page.
+          {isAllView
+            ? "Select a customer type card to browse submissions in read-only context mode."
+            : "Select a customer type card to open its dedicated submissions page."}
         </div>
       )}
     </div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PageTransition } from "@/components/page-transition";
-import { CurrentDate } from "@/components/current-date";
 import { DashboardNotificationBell } from "@/components/dashboard-notification-bell";
 
 interface StaffShellProps {
@@ -49,10 +48,7 @@ export function StaffShell({
         <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50">
           <div className="relative px-4 pb-6 pt-16 sm:px-6 sm:pt-8 lg:px-8 lg:pt-8 print:p-0">
             <div className="absolute right-4 top-3 z-10 hidden print:hidden sm:flex lg:right-8">
-              <div className="inline-flex items-center gap-2">
-                <DashboardNotificationBell role={userRole} />
-                <CurrentDate />
-              </div>
+              <DashboardNotificationBell role={userRole} />
             </div>
             <PageTransition>{children}</PageTransition>
           </div>

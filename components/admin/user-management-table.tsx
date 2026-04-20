@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, UserCheck, UserX, Pencil } from "lucide-react";
 import { sileo as toast } from "sileo";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
   sales_agent: "Sales Agent",
@@ -73,6 +73,10 @@ export function UserManagementTable({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
 
   function openEdit(user: UserRow) {
     setEditingUser(user);
@@ -168,7 +172,7 @@ export function UserManagementTable({
 
   const managerOptions = managers.map((m) => ({
     id: m.id,
-    label: `${m.fullName} (${ROLE_LABELS[m.role] ?? m.role})`,
+    label: `${m.fullName} (${ROLE_LABELS[m.role] ?? humanizeDisplayValue(m.role)})`,
   }));
 
   if (form.managerId && !managerOptions.some((m) => m.id === form.managerId)) {
@@ -234,7 +238,7 @@ export function UserManagementTable({
                 <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-zinc-100 pt-3 text-xs">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Role</p>
-                    <p className="mt-0.5 text-sm text-zinc-700">{ROLE_LABELS[user.role] ?? user.role}</p>
+                    <p className="mt-0.5 text-sm text-zinc-700">{ROLE_LABELS[user.role] ?? humanizeDisplayValue(user.role)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Agent Code</p>
@@ -301,7 +305,7 @@ export function UserManagementTable({
                 <td className="px-4 py-3 text-zinc-500">{user.email}</td>
                 <td className="px-4 py-3">
                   <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                    {ROLE_LABELS[user.role] ?? user.role}
+                    {ROLE_LABELS[user.role] ?? humanizeDisplayValue(user.role)}
                   </span>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-zinc-500">

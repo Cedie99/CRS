@@ -38,6 +38,7 @@ async function getCis(id: string) {
       docCertifications: cisSubmissions.docCertifications,
       docGovCertifications: cisSubmissions.docGovCertifications,
       docOther: cisSubmissions.docOther,
+      docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -126,7 +127,7 @@ export async function POST(
   };
 
   const colKey = DOC_COLUMN_MAP[typedDocType];
-  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  const existing = ((cis as Record<string, unknown>)[colKey] as FileEntry[] | null) ?? [];
   await db
     .update(cisSubmissions)
     .set({ [colKey]: sortFilesByUploadedAtDesc([...existing, entry]) })
@@ -157,7 +158,7 @@ export async function PATCH(
   if (!trimmed) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
 
   const colKey = DOC_COLUMN_MAP[docType as DocType];
-  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  const existing = ((cis as Record<string, unknown>)[colKey] as FileEntry[] | null) ?? [];
   const updated = existing.map((f) => (f.url === url ? { ...f, name: trimmed } : f));
 
   await db
@@ -192,7 +193,7 @@ export async function DELETE(
   try { await del(url); } catch { /* already gone */ }
 
   const colKey = DOC_COLUMN_MAP[docType as DocType];
-  const existing = (cis[colKey] as FileEntry[] | null) ?? [];
+  const existing = ((cis as Record<string, unknown>)[colKey] as FileEntry[] | null) ?? [];
   const updated = existing.filter((f) => f.url !== url);
 
   await db

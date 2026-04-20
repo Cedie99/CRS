@@ -18,7 +18,7 @@ import {
   Database,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, humanizeDisplayValue } from "@/lib/utils";
 
 interface NavItem {
   label: string;
@@ -173,7 +173,7 @@ function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentPr
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{userName}</p>
-              <p className="truncate text-xs text-emerald-100/80">{ROLE_LABELS[role] ?? role}</p>
+              <p className="truncate text-xs text-emerald-100/80">{ROLE_LABELS[role] ?? humanizeDisplayValue(role)}</p>
             </div>
           </Link>
         )}

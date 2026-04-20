@@ -8,6 +8,7 @@ import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import { FileText, BadgeCheck, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Approval Queue — CRS" };
 
@@ -103,41 +104,31 @@ export default async function ApproverDashboard({
 
       <DashboardFilters />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">In Queue</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{filteredCount}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">awaiting decision</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-orange-400" style={{ width: "100%" }} />
+      <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">In Queue</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{filteredCount}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">awaiting decision</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Approved</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{approved}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{total > 0 ? `${pct(approved)}% of processed` : "none yet"}</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Denied</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{denied}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{total > 0 ? `${pct(denied)}% of processed` : "none yet"}</p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Total Processed</p>
+            <p className="mt-1.5 text-xl font-bold text-zinc-900">{total}</p>
+            <p className="mt-1 text-[11px] text-zinc-500">all time</p>
           </div>
         </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Approved</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{approved}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">{total > 0 ? `${pct(approved)}% of processed` : "none yet"}</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-green-500" style={{ width: `${pct(approved)}%` }} />
-          </div>
-        </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Denied</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{denied}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">{total > 0 ? `${pct(denied)}% of processed` : "none yet"}</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-red-400" style={{ width: `${pct(denied)}%` }} />
-          </div>
-        </div>
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Total Processed</p>
-          <p className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">{total}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-400">all time</p>
-          <div className="mt-3 h-1 w-full rounded-full bg-zinc-100">
-            <div className="h-1 rounded-full bg-zinc-400" style={{ width: total > 0 ? "100%" : "0%" }} />
-          </div>
-        </div>
-      </div>
+      </details>
 
       <CustomerTypeNavCards
         basePath="/approver"
@@ -147,9 +138,7 @@ export default async function ApproverDashboard({
 
       {filteredCount === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
             {q || status ? "No matching submissions" : "Queue is clear"}
           </h2>

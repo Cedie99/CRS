@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import { salesSupportSubmitSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
-
-const salesSupportSubmitSchema = z.object({
-  salesSupportNotes: z.string().max(5000).optional().or(z.literal("")),
-});
 
 export async function PATCH(
   req: Request,
@@ -39,10 +35,24 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  const {
+    salesSupportAccountType,
+    salesSupportPriceList1,
+    salesSupportPriceList2,
+    salesSupportSalesType,
+    salesSupportVatCode,
+    salesSupportOtherRemarks,
+  } = parsed.data;
+
   await db
     .update(cisSubmissions)
     .set({
-      salesSupportNotes: parsed.data.salesSupportNotes || null,
+      salesSupportAccountType,
+      salesSupportPriceList1,
+      salesSupportPriceList2,
+      salesSupportSalesType,
+      salesSupportVatCode,
+      salesSupportOtherRemarks: salesSupportOtherRemarks || null,
       updatedAt: new Date(),
     })
     .where(eq(cisSubmissions.id, id));

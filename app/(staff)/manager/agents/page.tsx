@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Users, ArrowRight, Mail, Calendar, Clock } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "My Agents — CRS" };
 
@@ -158,9 +159,7 @@ export default async function ManagerAgentsPage() {
       {/* Empty state */}
       {agents.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <Users className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No agents assigned</h2>
           <p className="mt-1 text-sm text-zinc-500">
             No active agents are assigned to you yet. Contact your admin.

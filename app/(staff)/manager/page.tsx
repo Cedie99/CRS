@@ -7,8 +7,9 @@ import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText } from "lucide-react";
+import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText, Activity } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Team Submissions — CRS" };
 
@@ -78,9 +79,7 @@ export default async function ManagerDashboard({
           </div>
         </div>
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <FileText className="h-8 w-8 text-zinc-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No agents assigned</h2>
           <p className="mt-1 text-sm text-zinc-500">
             No agents are assigned to you yet. Contact your admin.
@@ -210,8 +209,9 @@ export default async function ManagerDashboard({
           </div>
         </div>
         {activeCount > 0 && (
-          <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
-            {activeCount} active
+          <span className="mt-7 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-linear-to-r from-blue-50 to-blue-100/80 px-3.5 py-1.5 text-sm font-semibold text-blue-800 shadow-sm sm:mt-8">
+            <Activity className="h-3.5 w-3.5 text-blue-700" />
+            <span>{activeCount} Active</span>
           </span>
         )}
       </div>
@@ -219,11 +219,13 @@ export default async function ManagerDashboard({
       <DashboardFilters showStatusFilter />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
           <div
             key={label}
-            className="relative overflow-hidden rounded-xl border bg-white p-4 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm sm:p-5"
+            className="relative overflow-hidden rounded-lg border bg-zinc-50 p-3 transition-all duration-200 hover:border-zinc-300"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -245,7 +247,8 @@ export default async function ManagerDashboard({
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      </details>
 
       <CustomerTypeNavCards
         basePath="/manager"

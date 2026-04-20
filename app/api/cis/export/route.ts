@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
+import { humanizeDisplayValue } from "@/lib/utils";
 
 const EXPORT_LIMIT = 5000;
 
@@ -178,8 +179,8 @@ export async function GET(req: Request) {
       ID: r.id,
       "Trade Name": r.tradeName ?? "",
       "Contact Person": r.contactPerson ?? "",
-      "Customer Type": CUSTOMER_TYPE_LABELS[customerType] ?? customerType,
-      Status: STATUS_LABELS[r.status] ?? r.status,
+      "Customer Type": CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType),
+      Status: STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
       "Agent Code": r.agentCode ?? "",
       "Created At": r.createdAt.toISOString(),
       "Updated At": r.updatedAt.toISOString(),

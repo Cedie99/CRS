@@ -8,7 +8,7 @@ import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { formatDistanceToNow } from "@/lib/utils";
+import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 import { FileText, Activity, CheckCircle2, XCircle, UserPlus } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -111,8 +111,8 @@ export default async function AdminDashboard({
             Overview of all customer submissions across the entire system.
           </p>
         </div>
-        <div className="flex w-full items-center gap-2 sm:w-auto">
-          <DashboardRefreshButton className="bg-zinc-50" />
+        <div className="mt-7 flex w-full items-center gap-2 sm:mt-8 sm:w-auto">
+          <DashboardRefreshButton className="border-blue-200 bg-linear-to-r from-blue-50 to-blue-100/80 font-medium text-blue-700 shadow-sm hover:border-blue-300 hover:text-blue-800" />
         </div>
       </div>
 
@@ -142,22 +142,24 @@ export default async function AdminDashboard({
         </Link>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="rounded-xl border bg-white p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-                <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-900 sm:text-3xl">{value}</p>
-              </div>
-              <div className={`rounded-xl p-2 ${iconBg} sm:p-2.5`}>
-                <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
+      <details className="rounded-xl border border-zinc-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
+          {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
+            <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+                  <p className="mt-1.5 text-xl font-bold tabular-nums text-zinc-900">{value}</p>
+                </div>
+                <div className={`rounded-lg p-1.5 ${iconBg}`}>
+                  <Icon className={`h-4 w-4 ${iconColor}`} />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </details>
 
       <DashboardFilters showStatusFilter />
 
@@ -202,7 +204,7 @@ export default async function AdminDashboard({
                       CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                     }`}
                   >
-                    {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
+                    {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-zinc-400">Submitted {formatDistanceToNow(s.createdAt)} ago</p>
@@ -261,7 +263,7 @@ export default async function AdminDashboard({
                           CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                         }`}
                       >
-                        {CUSTOMER_TYPE_LABELS[customerType] ?? customerType}
+                        {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">

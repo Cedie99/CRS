@@ -19,12 +19,13 @@ const STATUS_CONFIG: Record<
   { label: string; mobileLabel?: string; className: string; dot: string; pulse?: boolean }
 > = {
   draft: {
-    label: "Draft",
+    label: "Awaiting Customer",
     className: "bg-zinc-100 text-zinc-600 hover:bg-zinc-100",
     dot: "bg-zinc-400",
   },
   submitted: {
-    label: "Submitted",
+    label: "Agent Completion",
+    mobileLabel: "Agent",
     className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
     dot: "bg-blue-400",
     pulse: true,
@@ -37,14 +38,14 @@ const STATUS_CONFIG: Record<
     pulse: true,
   },
   pending_legal_review: {
-    label: "Legal Review",
+    label: "Legal Completion",
     mobileLabel: "Legal",
     className: "bg-purple-100 text-purple-700 hover:bg-purple-100",
     dot: "bg-purple-400",
     pulse: true,
   },
   pending_finance_review: {
-    label: "Finance Review",
+    label: "Finance Completion",
     mobileLabel: "Finance",
     className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
     dot: "bg-amber-500",
@@ -58,9 +59,11 @@ const STATUS_CONFIG: Record<
     pulse: true,
   },
   approved: {
-    label: "Approved",
+    label: "Sales Support Completion",
+    mobileLabel: "Support",
     className: "bg-green-100 text-green-700 hover:bg-green-100",
     dot: "bg-green-500",
+    pulse: true,
   },
   pending_erp_encoding: {
     label: "ERP Encoding",

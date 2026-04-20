@@ -52,23 +52,23 @@ export const initiateSchema = z.object({
 });
 
 export const LINE_OF_BUSINESS_OPTIONS = [
-  { value: "retail", label: "Retail" },
-  { value: "wholesale", label: "Wholesale" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "services", label: "Services" },
-  { value: "construction", label: "Construction" },
-  { value: "transport", label: "Transport / Logistics" },
-  { value: "agriculture", label: "Agriculture" },
-  { value: "other", label: "Other" },
+  { value: "automotive_equipment",   label: "Automotive/Equipment" },
+  { value: "logistics_transportation", label: "Logistics/Transportation" },
+  { value: "construction_mining",    label: "Construction & Mining" },
+  { value: "agriculture",            label: "Agriculture" },
+  { value: "electronics_technology", label: "Electronics/Technology" },
+  { value: "energy_chemicals",       label: "Energy/Chemicals" },
+  { value: "merchandising",          label: "Merchandising" },
+  { value: "other",                  label: "Others" },
 ] as const;
 
 export const BUSINESS_ACTIVITY_OPTIONS = [
-  { value: "trading", label: "Trading" },
-  { value: "distribution", label: "Distribution" },
-  { value: "production", label: "Production" },
-  { value: "service_provider", label: "Service Provider" },
-  { value: "subcontractor", label: "Subcontractor" },
-  { value: "other", label: "Other" },
+  { value: "manufacturer",  label: "Manufacturer" },
+  { value: "distributor",   label: "Distributor" },
+  { value: "retailer",      label: "Retailer" },
+  { value: "wholesaler",    label: "Wholesaler" },
+  { value: "service",       label: "Service" },
+  { value: "other",         label: "Others" },
 ] as const;
 
 const ownerRowSchema = z.object({
@@ -236,44 +236,79 @@ export const returnSchema = z.object({
     .max(1000),
 });
 
-export const FINANCE_EU_OPTIONS = [
-  { value: "end_user", label: "End User" },
-  { value: "reseller", label: "Reseller" },
-  { value: "dealer", label: "Dealer" },
-] as const;
-
-export const FINANCE_DR_OPTIONS = [
-  { value: "cod", label: "COD (Cash on Delivery)" },
-  { value: "cbd", label: "CBD (Cash Before Delivery)" },
-  { value: "credit", label: "Credit" },
-] as const;
-
 export const FINANCE_CREDIT_TERMS_OPTIONS = [
-  { value: "30_days", label: "30 Days" },
-  { value: "60_days", label: "60 Days" },
-  { value: "90_days", label: "90 Days" },
+  { value: "COD", label: "COD" },
+  { value: "Prepaid", label: "Prepaid" },
+  { value: "7 DAYS", label: "7 DAYS" },
+  { value: "15 DAYS", label: "15 DAYS" },
+  { value: "30 DAYS", label: "30 DAYS" },
+  { value: "45 DAYS", label: "45 DAYS" },
+  { value: "60 DAYS", label: "60 DAYS" },
+  { value: "90 DAYS", label: "90 DAYS" },
+  { value: "120 DAYS", label: "120 DAYS" },
 ] as const;
 
 export const financeForwardSchema = z.object({
   note: z.string().max(1000).optional(),
-  financeEu: z.enum(["end_user", "reseller", "dealer"], {
-    error: "End User classification is required",
-  }),
-  financeDl: z.string().min(1, "Delivery Limit is required").max(100),
-  financeDr: z.enum(["cod", "cbd", "credit"], {
-    error: "Delivery Receipt terms are required",
-  }),
-  financePlTs: z.string().min(1, "Price List / Terms & Schedule is required").max(255),
-  financeApprovedPoints: z
-    .number({ error: "Approved Points must be a number" })
-    .int("Approved Points must be a whole number")
-    .min(0).max(200),
-  financeCreditTerms: z.enum(["30_days", "60_days", "90_days"], {
-    error: "Credit Terms selection is required",
-  }),
+  financeCreditLimit: z.string().min(1, "Credit limit is required").max(100),
+  financeCreditTerms: z.string().min(1, "Credit Terms selection is required").max(50),
 });
 
 export type FinanceForwardInput = z.infer<typeof financeForwardSchema>;
+
+export const SALES_SUPPORT_PRICE_LIST_1_OPTIONS = [
+  { value: "PLATINUM DISTRIBUTOR", label: "PLATINUM DISTRIBUTOR" },
+  { value: "PLATINUM DEALER", label: "PLATINUM DEALER" },
+  { value: "PLATINUM SRP", label: "PLATINUM SRP" },
+  { value: "COMET DISTRIBUTOR", label: "COMET DISTRIBUTOR" },
+  { value: "COMET DEALER", label: "COMET DEALER" },
+  { value: "COMET SRP", label: "COMET SRP" },
+  { value: "DRO PLATINUM DISTRIBUTOR", label: "DRO PLATINUM DISTRIBUTOR" },
+  { value: "DRO PLATINUM DEALER", label: "DRO PLATINUM DEALER" },
+  { value: "DRO PLATINUM SRP", label: "DRO PLATINUM SRP" },
+  { value: "DRO COMET DISTRIBUTOR", label: "DRO COMET DISTRIBUTOR" },
+  { value: "DRO COMET DEALER", label: "DRO COMET DEALER" },
+  { value: "DRO COMET SRP", label: "DRO COMET SRP" },
+] as const;
+
+export const SALES_SUPPORT_PRICE_LIST_2_OPTIONS = [
+  { value: "DRO PLATINUM DISTRIBUTOR", label: "DRO PLATINUM DISTRIBUTOR" },
+  { value: "DRO PLATINUM DEALER", label: "DRO PLATINUM DEALER" },
+  { value: "DRO PLATINUM SRP", label: "DRO PLATINUM SRP" },
+  { value: "DRO COMET DISTRIBUTOR", label: "DRO COMET DISTRIBUTOR" },
+  { value: "DRO COMET DEALER", label: "DRO COMET DEALER" },
+  { value: "DRO COMET SRP", label: "DRO COMET SRP" },
+] as const;
+
+export const SALES_SUPPORT_SALES_TYPE_OPTIONS = [
+  { value: "OPC Sales", label: "OPC Sales" },
+  { value: "Flexi Sales", label: "Flexi Sales" },
+  { value: "Plat Sales", label: "Plat Sales" },
+  { value: "DRO", label: "DRO" },
+] as const;
+
+export const SALES_SUPPORT_VAT_CODE_OPTIONS = [
+  { value: "VAT-CAP (12.00%)", label: "VAT-CAP (12.00%)" },
+  { value: "VAT-GFS (12.00%)", label: "VAT-GFS (12.00%)" },
+  { value: "VAT-RMPM (12.00%)", label: "VAT-RMPM (12.00%)" },
+  { value: "VAT-SUP (12.00%)", label: "VAT-SUP (12.00%)" },
+  { value: "VAT-SVC (12.00%)", label: "VAT-SVC (12.00%)" },
+  { value: "VAT-EXP (0.00%)", label: "VAT-EXP (0.00%)" },
+  { value: "VAT-ZERO (0.00%)", label: "VAT-ZERO (0.00%)" },
+] as const;
+
+export const salesSupportSubmitSchema = z.object({
+  salesSupportAccountType: z.enum(["individual", "corporate"], {
+    error: "Account type is required",
+  }),
+  salesSupportPriceList1: z.string().min(1, "Assigned Price List 1 is required").max(100),
+  salesSupportPriceList2: z.string().min(1, "Assigned Price List 2 is required").max(100),
+  salesSupportSalesType: z.string().min(1, "Sales Type is required").max(100),
+  salesSupportVatCode: z.string().min(1, "VAT Code is required").max(100),
+  salesSupportOtherRemarks: z.string().max(2000).optional().or(z.literal("")),
+});
+
+export type SalesSupportSubmitInput = z.infer<typeof salesSupportSubmitSchema>;
 
 export const denySchema = z.object({
   note: z

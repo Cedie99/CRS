@@ -7,6 +7,7 @@ import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
 import { Database, CheckCircle } from "lucide-react";
+import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Project Development — CRS" };
 
@@ -93,9 +94,7 @@ export default async function SpecialistDashboard({
 
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <div className="rounded-full bg-zinc-100 p-4">
-            <CheckCircle className="h-8 w-8 text-green-400" />
-          </div>
+          <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">
             {q ? "No matches found" : "Queue is clear"}
           </h2>

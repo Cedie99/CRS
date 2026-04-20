@@ -12,6 +12,14 @@ interface RoleInfo {
 }
 
 const ROLES: Record<string, RoleInfo> = {
+  pending_selection: {
+    label: "To be determined",
+    description: "Depends on customer type selected by agent",
+    dotColor: "bg-zinc-300",
+    bgColor: "bg-zinc-50",
+    textColor: "text-zinc-500",
+    borderColor: "border-zinc-200",
+  },
   customer: {
     label: "Customer",
     description: "Filling out the business information form",
@@ -95,12 +103,7 @@ function getHandoff(status: CisStatus, customerType: string): HandoffConfig | nu
     case "submitted":
       return {
         current: { role: "sales_agent", action: "Filling out the agent section" },
-        next: {
-          role: isDealer ? "legal_approver" : "finance_reviewer",
-          action: isDealer
-            ? "Will conduct credit evaluation (Dealer account)"
-            : "Will conduct credit evaluation",
-        },
+        next: { role: "pending_selection", action: "Agent must select a customer type first" },
       };
     case "pending_endorsement":
       return {

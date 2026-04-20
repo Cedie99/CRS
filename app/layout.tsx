@@ -27,12 +27,13 @@ export default function RootLayout({
           position="top-center"
           theme="system"
           options={{
+            fill: "#ffffff",
             roundness: 16,
             duration: 6000,
             autopilot: { expand: 180, collapse: 4200 },
             styles: {
-              title: "text-sm font-semibold",
-              description: "text-xs text-zinc-500",
+              title: "text-sm font-semibold text-[#2d6e1e]",
+              description: "text-xs text-black",
             },
           }}
         />
