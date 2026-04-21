@@ -14,6 +14,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const [existingUser] = await db
+    .select({ avatarUrl: users.avatarUrl })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
   const formData = await req.formData();
   const file = formData.get("file");
 
@@ -34,7 +40,19 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const { url: avatarUrl } = await put(`avatars/${session.user.id}.${ext}`, file, { access: "public" });
+  const pathname = `avatars/${session.user.id}.${ext}`;
+  const { url: avatarUrl } = await put(pathname, file, {
+    access: "public",
+    allowOverwrite: true,
+  });
+
+  if (existingUser?.avatarUrl && existingUser.avatarUrl !== avatarUrl) {
+    try {
+      await del(existingUser.avatarUrl);
+    } catch {
+      // Older avatar might already be removed; keep profile update successful.
+    }
+  }
 
   await db
     .update(users)
