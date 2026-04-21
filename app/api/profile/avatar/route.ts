@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const pathname = `avatars/${session.user.id}.${ext}`;
+  const pathname = `avatars/${session.user.id}/avatar.${ext}`;
   const { url: avatarUrl } = await put(pathname, file, {
     access: "public",
-    allowOverwrite: true,
+    addRandomSuffix: true,
   });
 
   if (existingUser?.avatarUrl && existingUser.avatarUrl !== avatarUrl) {

@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { sileo as toast } from "sileo";
 import {
   Camera,
@@ -39,6 +40,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function ProfileClient({ user }: ProfileClientProps) {
+  const router = useRouter();
   const { update: updateSession } = useSession();
 
   // ── Avatar ─────────────────────────────────────────────────────────
@@ -67,6 +69,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
       }
       setAvatarUrl(data.avatarUrl);
       await updateSession({ avatarUrl: data.avatarUrl });
+      router.refresh();
       toast.success({ title: "Avatar updated" });
     });
     e.target.value = "";
@@ -81,6 +84,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
       }
       setAvatarUrl(null);
       await updateSession({ avatarUrl: null });
+      router.refresh();
       toast.success({ title: "Avatar removed" });
     });
   }
@@ -124,6 +128,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
       }
       setProfileData({ fullName: data.fullName, email: data.email });
       await updateSession({ name: data.fullName, email: data.email });
+      router.refresh();
       toast.success({ title: "Profile updated" });
     });
   }
