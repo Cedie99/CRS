@@ -5,6 +5,7 @@ import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import { FileText, BadgeCheck, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
@@ -104,8 +105,7 @@ export default async function ApproverDashboard({
 
       <DashboardFilters />
 
-      <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">In Queue</p>
@@ -128,7 +128,7 @@ export default async function ApproverDashboard({
             <p className="mt-1 text-[11px] text-zinc-500">all time</p>
           </div>
         </div>
-      </details>
+      </AnimatedDisclosure>
 
       <CustomerTypeNavCards
         basePath="/approver"
@@ -147,8 +147,8 @@ export default async function ApproverDashboard({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          Select a customer type card to open its dedicated submissions page.
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <strong className="text-zinc-800">Highlighted cards</strong> have submissions awaiting your approval. Select one to open it.
         </div>
       )}
     </div>

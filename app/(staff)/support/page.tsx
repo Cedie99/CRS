@@ -5,6 +5,7 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import { FileText, Database, XCircle, Clock, LayoutList } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
@@ -136,8 +137,7 @@ export default async function SupportDashboard({
 
       <DashboardFilters />
 
-      <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
             <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
@@ -153,7 +153,7 @@ export default async function SupportDashboard({
             </div>
           ))}
         </div>
-      </details>
+      </AnimatedDisclosure>
 
       <CustomerTypeNavCards
         basePath="/support"
@@ -174,8 +174,8 @@ export default async function SupportDashboard({
       )}
 
       {total > 0 && (
-        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          Select a customer type card to open its dedicated submissions page.
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <strong className="text-zinc-800">Highlighted cards</strong> have submissions to process. Select one to open it.
         </div>
       )}
     </div>

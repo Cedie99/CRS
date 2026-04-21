@@ -1,4 +1,4 @@
-import { Check, X, RotateCcw } from "lucide-react";
+import { Check, Circle, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -7,34 +7,34 @@ interface Step {
   label: string;
 }
 
-// Standard path: Finance → Approval → Sales Support → Project Dev
+// Standard path: Finance → Approval → Sales Support → ERP
 const STANDARD_STEPS: Step[] = [
-  { key: "submitted",               label: "Agent" },
-  { key: "pending_finance_review",  label: "Finance" },
-  { key: "pending_approval",        label: "Approval" },
-  { key: "approved",                label: "Support" },
-  { key: "pending_erp_encoding",    label: "ERP" },
-  { key: "erp_encoded",             label: "Done" },
+  { key: "submitted",              label: "Agent"    },
+  { key: "pending_finance_review", label: "Finance"  },
+  { key: "pending_approval",       label: "Approval" },
+  { key: "approved",               label: "Support"  },
+  { key: "pending_erp_encoding",   label: "ERP"      },
+  { key: "erp_encoded",            label: "Done"     },
 ];
 
-// Dealer path: Legal → Approval → Sales Support → Project Dev
+// Dealer path: Legal → Approval → Sales Support → ERP
 const LEGAL_STEPS: Step[] = [
-  { key: "submitted",              label: "Agent"    },
-  { key: "pending_legal_review",   label: "Legal"    },
-  { key: "pending_approval",       label: "Approval" },
-  { key: "approved",               label: "Support"  },
-  { key: "pending_erp_encoding",   label: "ERP"      },
-  { key: "erp_encoded",            label: "Done"     },
+  { key: "submitted",            label: "Agent"    },
+  { key: "pending_legal_review", label: "Legal"    },
+  { key: "pending_approval",     label: "Approval" },
+  { key: "approved",             label: "Support"  },
+  { key: "pending_erp_encoding", label: "ERP"      },
+  { key: "erp_encoded",          label: "Done"     },
 ];
 
-// Unknown-type path (agent hasn't selected customer type yet)
+// Unknown-type path
 const PENDING_STEPS: Step[] = [
-  { key: "submitted",              label: "Agent"    },
-  { key: "pending_review",         label: "Review"   },
-  { key: "pending_approval",       label: "Approval" },
-  { key: "approved",               label: "Support"  },
-  { key: "pending_erp_encoding",   label: "ERP"      },
-  { key: "erp_encoded",            label: "Done"     },
+  { key: "submitted",            label: "Agent"    },
+  { key: "pending_review",       label: "Review"   },
+  { key: "pending_approval",     label: "Approval" },
+  { key: "approved",             label: "Support"  },
+  { key: "pending_erp_encoding", label: "ERP"      },
+  { key: "erp_encoded",          label: "Done"     },
 ];
 
 const STANDARD_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
@@ -67,186 +67,188 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
   const indexMap = isLegal ? LEGAL_STATUS_INDEX : STANDARD_STATUS_INDEX;
 
   const isTerminal = status === "denied" || status === "returned";
+  const isDone = status === "erp_encoded";
   const currentIndex = indexMap[status] ?? -1;
+  const currentStepLabel = currentIndex >= 0 ? steps[currentIndex]?.label : "Pending";
 
   if (isTerminal) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-linear-to-br from-white to-zinc-50 px-5 py-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          {status === "denied" ? (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-100">
-              <X className="h-4 w-4 text-red-600" />
-            </span>
-          ) : (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-rose-200 bg-rose-100">
-              <RotateCcw className="h-4 w-4 text-rose-600" />
-            </span>
+      <div
+        className={cn(
+          "flex items-center gap-3.5 rounded-xl border px-5 py-4",
+          status === "denied"
+            ? "border-red-200/80 bg-red-50/60"
+            : "border-rose-200/80 bg-rose-50/60"
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            status === "denied" ? "bg-red-100 text-red-600" : "bg-rose-100 text-rose-600"
           )}
-          <div>
-            <p
-              className={cn(
-                "text-sm font-semibold",
-                status === "denied" ? "text-red-700" : "text-rose-700"
-              )}
-            >
-              {status === "denied" ? "Submission Denied" : "Returned to Agent"}
-            </p>
-            <p className="text-xs text-zinc-400 mt-0.5">This form is no longer being processed.</p>
-          </div>
+        >
+          {status === "denied" ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <RotateCcw className="h-4 w-4" />
+          )}
+        </span>
+        <div>
+          <p
+            className={cn(
+              "text-sm font-semibold",
+              status === "denied" ? "text-red-700" : "text-rose-700"
+            )}
+          >
+            {status === "denied" ? "Submission Denied" : "Returned to Agent"}
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            This form is no longer being processed.
+          </p>
         </div>
       </div>
     );
   }
 
-  const progressPercent = Math.round(((Math.max(currentIndex, 0) + 1) / steps.length) * 100);
+  const progressPercent = Math.round(
+    ((Math.max(currentIndex, 0) + 1) / steps.length) * 100
+  );
+
+  const totalSegments = 34;
+  const filledSegments = Math.max(
+    1,
+    Math.round((Math.max(currentIndex, 0) + 1) / steps.length * totalSegments)
+  );
+  const horizontalFillPct =
+    currentIndex <= 0 ? 0 : (currentIndex / Math.max(steps.length - 1, 1)) * 100;
 
   return (
-    <div className="animate-in slide-in-from-bottom-1 fade-in-0 rounded-xl border border-zinc-200 bg-linear-to-br from-white via-white to-zinc-50 px-5 py-5 shadow-sm duration-500">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <p className="text-[12px] font-semibold uppercase tracking-widest text-zinc-500">
-          Workflow Progress
-        </p>
-        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+    <div className="animate-in fade-in-0 slide-in-from-bottom-1 rounded-2xl border border-zinc-200 bg-linear-to-b from-zinc-50 to-white p-4 shadow-sm duration-500 md:p-5">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+            Workflow Progress
+          </p>
+          <h3 className="mt-1 text-lg font-bold tracking-tight text-zinc-900 md:text-xl">
+            {isDone ? "Workflow completed" : "Form is moving forward"}
+          </h3>
+          <p className="mt-0.5 text-xs text-zinc-600 md:text-sm">
+            {isDone
+              ? "All business steps are complete."
+              : `Currently in ${currentStepLabel} stage.`}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-semibold",
+            isDone
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-zinc-200/80 text-zinc-700"
+          )}
+        >
           {progressPercent}%
         </span>
       </div>
 
-      <div className="md:hidden">
-        <div className="space-y-3">
-          {steps.map((step, i) => {
-            const isCompleted = i < currentIndex;
-            const isCurrent = i === currentIndex;
-            const isFuture = i > currentIndex;
-            const isLast = i === steps.length - 1;
-            const isDone = isCurrent && isLast;
+      <div className="mb-3.5 flex gap-1 rounded-md bg-white/70 px-1 py-1">
+        {Array.from({ length: totalSegments }).map((_, i) => {
+          const isFilled = i < filledSegments;
+          const hue = 18 + Math.round((36 * i) / Math.max(totalSegments - 1, 1));
 
-            return (
+          return (
+            <span
+              key={i}
+              className={cn(
+                "h-4 flex-1 rounded-xs transition-all duration-500",
+                isFilled ? "opacity-100" : "bg-zinc-200/80 opacity-70"
+              )}
+              style={
+                isFilled
+                  ? { backgroundColor: `hsl(${hue} 90% 55%)` }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </div>
+
+      <div className="rounded-xl bg-white/70 px-2.5 py-2.5">
+        <div className="overflow-x-auto">
+          <div className="min-w-140">
+            <div className="relative mt-4 pb-9">
+              <div className="absolute left-3 right-3 top-3.5 h-0.5 rounded-full bg-zinc-200" />
               <div
-                key={step.key}
-                className="animate-in slide-in-from-left-1 fade-in-0 relative flex items-center gap-3 duration-500"
-                style={{ animationDelay: `${i * 70}ms` }}
-              >
-                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center">
-                  {isCurrent && (
-                    <>
-                      <span className="absolute inset-0 rounded-full bg-[#2d6e1e]/25 blur-[1px] animate-pulse" />
-                      <span className="absolute inset-0 rounded-full border border-[#2d6e1e]/40 animate-ping" />
-                    </>
-                  )}
-                  <div
-                    className={cn(
-                      "relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition-all duration-500",
-                      (isCompleted || isCurrent || isDone) && "border-[#2d6e1e] bg-[#2d6e1e] text-white shadow-[0_6px_14px_-8px_rgba(45,110,30,0.8)]",
-                      isFuture && "border-zinc-200 bg-zinc-100 text-zinc-400"
-                    )}
-                  >
-                    {isCompleted || isDone ? <Check className="h-4 w-4" /> : <span>{i + 1}</span>}
-                  </div>
-                </div>
+                className="absolute left-3 top-3.5 h-0.5 rounded-full bg-emerald-500/70 transition-all duration-500"
+                style={{ width: `calc(${horizontalFillPct}% * (100% - 24px) / 100)` }}
+              />
 
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    (isDone || isCompleted || isCurrent) && "text-[#2d6e1e]",
-                    isFuture && "text-zinc-400"
-                  )}
-                >
-                  {step.label}
-                </span>
-                {isCurrent && (
-                  <span className="relative inline-flex items-center">
-                    <span className="absolute inset-0 rounded-full bg-emerald-100/70 blur-sm animate-pulse" />
-                    <span className="relative inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                      </span>
-                      Current
-                    </span>
-                  </span>
-                )}
+              <div className="relative grid grid-cols-6 gap-1">
+                {steps.map((step, i) => {
+                  const isCompleted = i < currentIndex;
+                  const isCurrent = i === currentIndex;
+                  const isFuture = i > currentIndex;
 
-                {!isLast && (
-                  <span
-                    className={cn(
-                      "absolute left-3.75 top-8 h-4 w-0.5 rounded-full transition-colors duration-500",
-                      i < currentIndex ? "bg-[#2d6e1e]" : "bg-zinc-200"
-                    )}
-                  />
-                )}
+                  return (
+                    <div
+                      key={step.key}
+                      className="animate-in fade-in-0 flex flex-col items-center duration-500"
+                      style={{ animationDelay: `${i * 55}ms` }}
+                    >
+                      <div className="relative flex h-7 w-7 items-center justify-center">
+                        {isCurrent && (
+                          <>
+                            <span className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping" />
+                            <span className="absolute inset-1 rounded-full border border-emerald-600/40 animate-pulse" />
+                          </>
+                        )}
+                        <div
+                          className={cn(
+                            "relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500",
+                            isCompleted && "bg-emerald-600 text-white",
+                            isCurrent && "bg-emerald-600 text-white ring-2 ring-emerald-200",
+                            isFuture && "bg-zinc-200 text-zinc-400"
+                          )}
+                        >
+                          {isCompleted ? (
+                            <Check className="h-3 w-3" />
+                          ) : isCurrent ? (
+                            <Circle className="h-2.5 w-2.5 fill-current" />
+                          ) : (
+                            <Circle className="h-2.5 w-2.5" />
+                          )}
+                        </div>
+                      </div>
+
+                      <p
+                        className={cn(
+                          "mt-2 text-center text-xs font-semibold leading-tight",
+                          isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500"
+                        )}
+                      >
+                        {step.label}
+                      </p>
+                      <p
+                        className={cn(
+                          "mt-0.5 text-[10px] font-medium",
+                          isCompleted && "text-emerald-700",
+                          isCurrent && "text-emerald-700",
+                          isFuture && "text-zinc-400"
+                        )}
+                      >
+                        {isCompleted ? "Done" : isCurrent ? "Current" : "Next"}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="hidden md:block">
-        <div className="grid grid-cols-6 items-start gap-2 pt-2">
-          {steps.map((step, i) => {
-            const isCompleted = i < currentIndex;
-            const isCurrent = i === currentIndex;
-            const isFuture = i > currentIndex;
-            const isLast = i === steps.length - 1;
-            const isDone = isCurrent && isLast;
-
-            return (
-              <div
-                key={step.key}
-                className="animate-in slide-in-from-bottom-1 fade-in-0 relative flex flex-col items-center duration-500"
-                style={{ animationDelay: `${i * 90}ms` }}
-              >
-                {!isLast && (
-                  <span
-                    className={cn(
-                      "absolute left-1/2 top-5 h-0.5 w-full transition-colors duration-500",
-                      i < currentIndex ? "bg-linear-to-r from-[#2d6e1e] to-[#54a844]" : "bg-zinc-200"
-                    )}
-                  />
-                )}
-
-                <div className="relative z-10 flex h-10 w-10 items-center justify-center">
-                  {isCurrent && (
-                    <>
-                      <span className="absolute inset-0 rounded-full bg-[#2d6e1e]/25 blur-[1px] animate-pulse" />
-                      <span className="absolute inset-0 rounded-full border border-[#2d6e1e]/40 animate-ping" />
-                    </>
-                  )}
-                  <div
-                    className={cn(
-                      "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border text-xs font-semibold transition-all duration-500",
-                      (isCompleted || isCurrent || isDone) && "border-[#2d6e1e] bg-[#2d6e1e] text-white shadow-[0_8px_18px_-10px_rgba(45,110,30,0.8)]",
-                      isFuture && "border-zinc-200 bg-zinc-100 text-zinc-400"
-                    )}
-                  >
-                    {isCompleted || isDone ? <Check className="h-4 w-4" /> : <span>{i + 1}</span>}
-                  </div>
-                </div>
-
-                <span
-                  className={cn(
-                    "mt-2 text-center text-[12px] font-semibold",
-                    (isDone || isCompleted || isCurrent) && "text-[#2d6e1e]",
-                    isFuture && "text-zinc-400"
-                  )}
-                >
-                  {step.label}
-                </span>
-                {isCurrent && (
-                  <span className="relative mt-1 inline-flex items-center">
-                    <span className="absolute inset-0 rounded-full bg-emerald-100/70 blur-sm animate-pulse" />
-                    <span className="relative inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                      </span>
-                      Current
-                    </span>
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      <div className="mt-2 text-[11px] text-zinc-500">
+        Workflow path is determined by customer type and current approval status.
       </div>
     </div>
   );

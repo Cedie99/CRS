@@ -5,6 +5,7 @@ import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FileText, DollarSign, Clock3 } from "lucide-react";
@@ -154,8 +155,7 @@ export default async function FinanceDashboard({
 
       <DashboardFilters />
 
-      <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{isAllView ? "Visible Forms" : "In Queue"}</p>
@@ -178,7 +178,7 @@ export default async function FinanceDashboard({
             <p className="mt-1 text-[11px] text-zinc-500">all time</p>
           </div>
         </div>
-      </details>
+      </AnimatedDisclosure>
 
       <CustomerTypeNavCards
         basePath="/finance"
@@ -193,14 +193,18 @@ export default async function FinanceDashboard({
             {q || status ? "No matching submissions" : isAllView ? "No submissions available" : "Queue is clear"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q || status ? "Try adjusting your search or filters." : isAllView ? "No submissions match this context view." : "No submissions awaiting finance review."}
+            {q || status ? "Try adjusting your search or filters." : isAllView ? "No submissions match this context view." : "No submissions are awaiting finance review right now."}
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          {isAllView
-            ? "Select a customer type card to browse submissions in read-only context mode."
-            : "Select a customer type card to open its dedicated submissions page."}
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          {isAllView ? (
+            <span>You are in read-only mode — select a card to browse, but actions are disabled.</span>
+          ) : (
+            <span>
+              <strong className="text-zinc-800">Highlighted cards</strong> have submissions waiting for your review. Select one to open it.
+            </span>
+          )}
         </div>
       )}
     </div>

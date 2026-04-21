@@ -5,6 +5,7 @@ import { cisSubmissions, users } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText, Activity } from "lucide-react";
@@ -219,8 +220,7 @@ export default async function ManagerDashboard({
       <DashboardFilters showStatusFilter />
 
       {/* Stats */}
-      <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, iconBg, iconColor, valueColor, barColor, percent }) => (
           <div
@@ -248,7 +248,7 @@ export default async function ManagerDashboard({
           </div>
         ))}
         </div>
-      </details>
+      </AnimatedDisclosure>
 
       <CustomerTypeNavCards
         basePath="/manager"
@@ -278,8 +278,8 @@ export default async function ManagerDashboard({
           {q || status ? "No submissions match your search or filter." : "No submissions yet from your team."}
         </div>
       ) : (
-        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          Select a customer type card to open its dedicated submissions page.
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <strong className="text-zinc-800">Highlighted cards</strong> have submissions from your team. Select one to open its list.
         </div>
       )}
 

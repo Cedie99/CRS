@@ -6,6 +6,7 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { buttonVariants } from "@/lib/button-variants";
 import { Plus, FileText, Link as LinkIcon, UserRound, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
@@ -249,8 +250,7 @@ export default async function AgentDashboard({
       />
 
       {/* Stats — hidden in archived view */}
-      {!effectiveShowArchived && <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      {!effectiveShowArchived && <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="space-y-3 border-t border-zinc-100 p-3">
           <div className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
             <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Submissions</span>
@@ -292,7 +292,7 @@ export default async function AgentDashboard({
             ))}
           </div>
         </div>
-      </details>}
+      </AnimatedDisclosure>}
 
       <CustomerTypeNavCards
         basePath="/agent"
@@ -319,8 +319,8 @@ export default async function AgentDashboard({
           )}
         </div>
       ) : (
-        <div className="rounded-xl border bg-white px-4 py-3 text-sm text-zinc-600">
-          Select a customer type card to open its dedicated submissions page.
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <strong className="text-zinc-800">Highlighted cards</strong> have submissions. Select one to open its list.
         </div>
       )}
     </div>

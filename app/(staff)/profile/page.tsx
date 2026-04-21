@@ -26,13 +26,5 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login");
 
-  return (
-    <ProfileClient
-      fullName={user.fullName}
-      email={user.email}
-      role={user.role}
-      agentCode={user.agentCode ?? null}
-      avatarUrl={user.avatarUrl ?? null}
-    />
-  );
+  return <ProfileClient user={user} />;
 }

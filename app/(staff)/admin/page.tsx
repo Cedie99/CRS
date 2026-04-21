@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 import { FileText, Activity, CheckCircle2, XCircle, UserPlus } from "lucide-react";
@@ -142,8 +143,7 @@ export default async function AdminDashboard({
         </Link>
       )}
 
-      <details className="rounded-xl border border-zinc-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-700">Performance Snapshot</summary>
+      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
             <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
@@ -159,7 +159,7 @@ export default async function AdminDashboard({
             </div>
           ))}
         </div>
-      </details>
+      </AnimatedDisclosure>
 
       <DashboardFilters showStatusFilter />
 

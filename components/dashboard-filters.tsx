@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useCallback, useState, useRef } from "react";
 import { Search, SlidersHorizontal, X, Download, ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import {
@@ -122,7 +123,13 @@ export function DashboardFilters({
                   : "border-zinc-200 bg-white text-zinc-400 hover:border-zinc-300 hover:text-zinc-700"
               )}
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <motion.span
+                initial={false}
+                animate={{ rotate: filterOpen ? 90 : 0, scale: filterOpen ? 1.06 : 1 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </motion.span>
             </button>
           )}
 
@@ -194,37 +201,48 @@ export function DashboardFilters({
       </div>
 
       {/* Advanced filter panel */}
-      {filterOpen && showStatusFilter && (
-        <div className="w-full rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm sm:w-auto">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <span className="shrink-0 text-xs font-medium text-zinc-400">Status</span>
-            <Select
-              value={statusValue}
-              onValueChange={(v) => updateParams({ status: v === "__all__" ? "" : (v ?? "") })}
-            >
-              <SelectTrigger className="h-9 w-full sm:w-64 md:w-72">
-                <SelectValue>{selectedStatusLabel}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((opt) => (
-                  <SelectItem key={opt.value || "__all__"} value={opt.value || "__all__"}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {status && (
-              <button
-                onClick={() => updateParams({ status: "" })}
-                className="flex h-8 items-center justify-center gap-1 rounded-lg border border-zinc-200 px-2 text-xs text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
-              >
-                <X className="h-3 w-3" />
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {filterOpen && showStatusFilter && (
+          <motion.div
+            key="advanced-filter-panel"
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="w-full rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm sm:w-auto">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <span className="shrink-0 text-xs font-medium text-zinc-400">Status</span>
+                <Select
+                  value={statusValue}
+                  onValueChange={(v) => updateParams({ status: v === "__all__" ? "" : (v ?? "") })}
+                >
+                  <SelectTrigger className="h-9 w-full sm:w-64 md:w-72">
+                    <SelectValue>{selectedStatusLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((opt) => (
+                      <SelectItem key={opt.value || "__all__"} value={opt.value || "__all__"}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {status && (
+                  <button
+                    onClick={() => updateParams({ status: "" })}
+                    className="flex h-8 items-center justify-center gap-1 rounded-lg border border-zinc-200 px-2 text-xs text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+                  >
+                    <X className="h-3 w-3" />
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

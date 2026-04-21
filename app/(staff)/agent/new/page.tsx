@@ -21,21 +21,45 @@ const HOW_IT_WORKS = [
     icon: LinkIcon,
     title: "Generate a unique link",
     desc: "A one-time form link and QR code are created specifically for this customer.",
+    color: {
+      bg: "bg-blue-100",
+      text: "text-blue-600",
+      ring: "ring-blue-200/70",
+      label: "text-blue-500",
+    },
   },
   {
     icon: FileText,
     title: "Customer fills the form",
     desc: "They open the link and submit their business information directly.",
+    color: {
+      bg: "bg-teal-100",
+      text: "text-teal-600",
+      ring: "ring-teal-200/70",
+      label: "text-teal-500",
+    },
   },
   {
     icon: UserRound,
     title: "Agent fills out details",
     desc: "After customer submits, you complete the account type and specialist details.",
+    color: {
+      bg: "bg-violet-100",
+      text: "text-violet-600",
+      ring: "ring-violet-200/70",
+      label: "text-violet-500",
+    },
   },
   {
     icon: GitBranch,
     title: "Auto-routed for approval",
     desc: "Based on the customer type you select, the form routes to Legal (Dealer) or Finance (others).",
+    color: {
+      bg: "bg-orange-100",
+      text: "text-orange-600",
+      ring: "ring-orange-200/70",
+      label: "text-orange-500",
+    },
   },
 ];
 
@@ -383,32 +407,56 @@ function NewCisContent() {
                 transition={{ duration: 0.22, ease: "easeOut" }}
               >
                 <Card>
-                  <CardContent className="pt-5 space-y-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <CardContent className="pt-5 pb-5 space-y-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
                       How it works
                     </p>
-                    <ol className="space-y-4">
+
+                    <ol className="space-y-0">
                       {HOW_IT_WORKS.map((step, i) => {
                         const Icon = step.icon;
+                        const isLast = i === HOW_IT_WORKS.length - 1;
                         return (
-                          <li key={i} className="flex gap-3">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">
-                              {i + 1}
-                            </span>
-                            <div className="pt-0.5">
-                              <p className="text-sm font-semibold text-zinc-800">{step.title}</p>
+                          <li key={i} className="relative flex gap-3.5">
+                            {/* Connecting vertical line */}
+                            {!isLast && (
+                              <div className="absolute left-[15px] top-8 bottom-0 w-px bg-zinc-100" />
+                            )}
+
+                            {/* Icon bubble */}
+                            <div
+                              className={[
+                                "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
+                                step.color.bg,
+                                step.color.text,
+                                step.color.ring,
+                              ].join(" ")}
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                            </div>
+
+                            {/* Text */}
+                            <div className={`min-w-0 ${isLast ? "pb-0" : "pb-5"} pt-0.5`}>
+                              <p className={`text-[10px] font-bold uppercase tracking-widest ${step.color.label}`}>
+                                Step {i + 1}
+                              </p>
+                              <p className="mt-0.5 text-sm font-semibold text-zinc-800">{step.title}</p>
                               <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{step.desc}</p>
                             </div>
                           </li>
                         );
                       })}
                     </ol>
-                    <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3.5 py-3">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
-                        <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-                        Tip
+
+                    {/* Tip box */}
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-md bg-amber-100 p-1">
+                          <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-amber-800">Tip</span>
                       </div>
-                      <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                      <p className="mt-2 text-xs leading-relaxed text-amber-700">
                         Each link is unique and single-use per customer. You can generate as many as you need — one per customer.
                       </p>
                     </div>
