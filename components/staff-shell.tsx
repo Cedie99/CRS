@@ -45,8 +45,19 @@ export function StaffShell({
             onMobileClose={() => setSidebarOpen(false)}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50">
-          <div className="relative px-4 pb-6 pt-16 sm:px-6 sm:pt-8 lg:px-8 lg:pt-8 print:p-0">
+        <main className="relative min-w-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50">
+          <div aria-hidden className="pointer-events-none fixed bottom-0 left-0 right-0 z-0 h-120 overflow-hidden print:hidden lg:left-56">
+            <div
+              className="absolute inset-0 bg-bottom bg-no-repeat"
+              style={{
+                backgroundImage: "url('/dashboard-bg-wave.svg?v=2')",
+                backgroundSize: "cover",
+                opacity: 0.4,
+              }}
+            />
+          </div>
+
+          <div className="relative z-10 px-4 pb-6 pt-16 sm:px-6 sm:pt-8 lg:px-8 lg:pt-8 print:p-0">
             <div className="absolute right-4 top-3 z-10 hidden print:hidden sm:flex lg:right-8">
               <DashboardNotificationBell role={userRole} />
             </div>

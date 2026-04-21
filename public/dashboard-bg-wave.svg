@@ -1,0 +1,24 @@
+<svg width="1728" height="768" viewBox="0 0 1728 768" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.85">
+    <path d="M0 656C226 626 485 615 728 673C863 704 1000 736 1179 715C1378 692 1556 678 1728 694V768H0V656Z" fill="url(#g1)"/>
+    <path d="M0 676C199 654 431 650 655 687C874 721 1074 728 1266 705C1467 681 1609 675 1728 684V768H0V676Z" fill="url(#g2)"/>
+    <path d="M0 710C241 700 495 712 741 731C979 749 1237 747 1496 729C1589 722 1666 720 1728 721V768H0V710Z" fill="url(#g3)"/>
+  </g>
+
+  <defs>
+    <linearGradient id="g1" x1="864" y1="615" x2="864" y2="768" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" stop-opacity="0.75"/>
+      <stop offset="0.58" stop-color="#2BCB2B" stop-opacity="0.86"/>
+      <stop offset="1" stop-color="#18A318"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="864" y1="650" x2="864" y2="768" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1020" stop-opacity="0.55"/>
+      <stop offset="0.62" stop-color="#35D035" stop-opacity="0.74"/>
+      <stop offset="1" stop-color="#17B317"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="864" y1="700" x2="864" y2="768" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#25BC25" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#24D524" stop-opacity="0.78"/>
+    </linearGradient>
+  </defs>
+</svg>
