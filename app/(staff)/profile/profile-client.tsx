@@ -34,6 +34,22 @@ interface ProfileClientProps {
   };
 }
 
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+async function readApiPayload(res: Response) {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  const text = await res.text();
+  return { error: text || `Request failed (${res.status})` };
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="mt-1 text-xs text-destructive">{message}</p>;
@@ -58,17 +74,36 @@ export function ProfileClient({ user }: ProfileClientProps) {
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > AVATAR_MAX_SIZE) {
+      toast.error({ title: "File must be under 2MB" });
+      e.target.value = "";
+      return;
+    }
+
     startAvatarTransition(async () => {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
-      const data = await res.json();
+      const data = await readApiPayload(res);
       if (!res.ok) {
-        toast.error({ title: data.error ?? "Failed to upload avatar" });
+        toast.error({
+          title:
+            (data as { error?: string } | null)?.error ??
+            (res.status === 413
+              ? "Image is too large. Please upload a file under 2MB."
+              : "Failed to upload avatar"),
+        });
         return;
       }
-      setAvatarUrl(data.avatarUrl);
-      await updateSession({ avatarUrl: data.avatarUrl });
+      const avatar = (data as { avatarUrl?: string } | null)?.avatarUrl;
+      if (!avatar) {
+        toast.error({ title: "Upload succeeded but no avatar URL was returned" });
+        return;
+      }
+
+      setAvatarUrl(avatar);
+      await updateSession({ avatarUrl: avatar });
       router.refresh();
       toast.success({ title: "Avatar updated" });
     });
