@@ -299,12 +299,12 @@ function Field({
   mono?: boolean;
 }) {
   return (
-    <div className="space-y-2">
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:bg-white print:p-0 print:pb-2">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-zinc-500">
         {Icon && <Icon className="h-3 w-3 print:hidden" />}
         {label}
       </p>
-      <p className={`min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:text-xs ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-0.5 print:text-[11px] print:leading-snug ${mono ? "font-mono" : ""}`}>
         {value || <span className="text-zinc-300 print:text-zinc-400">—</span>}
       </p>
     </div>
@@ -319,11 +319,11 @@ function SectionTitle({
   label: string;
 }) {
   return (
-    <div className="mb-5 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-3 print:border-zinc-300 print:pb-1.5">
-      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
+    <div className="mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-3 print:border-zinc-300 print:pb-1.5">
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 print:text-zinc-600">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-zinc-700">
         {label}
       </p>
     </div>
@@ -333,7 +333,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-5 print:break-inside-avoid print:rounded-none print:border-x-0 print:border-y print:border-zinc-300 print:bg-white print:px-0 print:py-3 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-0 print:break-inside-avoid print:rounded-none print:border-0 print:border-t print:border-zinc-300 print:bg-white print:px-0 print:pt-3 print:pb-2 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -609,9 +609,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
         </div>
       </div>
 
-      <CardContent className="space-y-6 p-4 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
+      <CardContent className="space-y-6 p-4 sm:p-6 print:space-y-4 print:px-0 print:pt-4">
 
-        <div className="hidden print:block mb-2">
+        <div className="hidden print:block print:mb-1">
           <p className="text-sm font-bold text-zinc-900">
             {tradeName ?? <span className="italic text-zinc-400">Untitled</span>}
           </p>
@@ -620,8 +620,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Business Information ── */}
         <SectionCard>
           <SectionTitle icon={Briefcase} label="Business Information" />
-          <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-            {corporateName && <div className="sm:col-span-2"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} /></div>}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+            {corporateName && <div className="sm:col-span-2 lg:col-span-3"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} /></div>}
             <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} />
             {dateOfBusinessReg && <Field label="Date of Registration" value={dateOfBusinessReg} />}
             {numberOfEmployees && <Field label="No. of Employees" value={numberOfEmployees} icon={Users} />}
@@ -631,20 +631,20 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Contact Details ── */}
         <SectionCard>
           <SectionTitle icon={User} label="Contact Details" />
-          <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
             <Field label="Contact Person" value={contactPerson} icon={User} />
             <Field label="Email Address" value={emailAddress} icon={Mail} />
             <Field label="Mobile Number" value={contactNumber} icon={Phone} />
             {telephoneNumber && <Field label="Telephone" value={telephoneNumber} icon={Phone} />}
-            {website && <Field label="Website" value={website} icon={LinkIcon} />}
+            {website && <div className="sm:col-span-2 lg:col-span-1"><Field label="Website" value={website} icon={LinkIcon} /></div>}
           </div>
         </SectionCard>
 
         {/* ── Office Address ── */}
         <SectionCard>
           <SectionTitle icon={MapPin} label="Office Address" />
-          <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-            <div className="sm:col-span-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+            <div className="sm:col-span-2 lg:col-span-3">
               <Field label="Street Address" value={businessAddress} icon={MapPin} />
             </div>
             <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} />
@@ -656,9 +656,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasDelivery && (
           <SectionCard>
               <SectionTitle icon={MapPin} label="Delivery Address" />
-              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-                {deliveryAddress && <div className="sm:col-span-2"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} /></div>}
-                {deliveryLandmarks && <div className="sm:col-span-2"><Field label="Delivery Landmarks" value={deliveryLandmarks} /></div>}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+                {deliveryAddress && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} /></div>}
+                {deliveryLandmarks && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Landmarks" value={deliveryLandmarks} /></div>}
                 {deliveryMobile && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} />}
                 {deliveryTelephone && <Field label="Delivery Telephone" value={deliveryTelephone} icon={Phone} />}
               </div>
@@ -669,7 +669,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasClassification && (
           <SectionCard>
               <SectionTitle icon={Briefcase} label="Business Classification" />
-              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              <div className="grid gap-3 sm:grid-cols-2 print:gap-2">
                 {lobLabel && <Field label="Line of Business" value={lobLabel} />}
                 {activityLabel && <Field label="Business Activity" value={activityLabel} />}
                 <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} />
@@ -681,7 +681,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* If no classification section shown, still show type + TIN */}
         {!hasClassification && (
           <SectionCard>
-            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+            <div className="grid gap-3 sm:grid-cols-2 print:gap-2">
               <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} />
               <Field label="TIN Number" value={tinNumber} icon={Hash} mono />
             </div>

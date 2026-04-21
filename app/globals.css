@@ -141,6 +141,33 @@
     font-size: 12px !important;
   }
 
+  /* Fix SPA fixed-shell layout so all content flows onto the page */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .fixed {
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  [class~="overflow-hidden"],
+  [class~="overflow-y-auto"],
+  [class~="overscroll-none"],
+  [class~="overscroll-contain"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  [class~="min-h-0"] {
+    min-height: auto !important;
+  }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

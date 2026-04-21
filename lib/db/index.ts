@@ -16,7 +16,7 @@ declare global {
 function createClient() {
   return postgres(connectionString, {
     prepare: false, // Required for Supabase pgbouncer transaction mode
-    max: 5,
+    max: 20,
   });
 }
 

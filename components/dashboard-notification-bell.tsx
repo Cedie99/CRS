@@ -107,7 +107,9 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30_000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchNotifications();
+    }, 60_000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
@@ -115,7 +117,9 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
     if (!isAdmin) return;
     setIsPendingLoading(true);
     fetchPendingRegistrations();
-    const interval = setInterval(fetchPendingRegistrations, 30_000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchPendingRegistrations();
+    }, 60_000);
     return () => clearInterval(interval);
   }, [isAdmin, fetchPendingRegistrations]);
 
