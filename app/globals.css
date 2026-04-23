@@ -138,7 +138,7 @@
   }
 
   html {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
 
   /* Fix SPA fixed-shell layout so all content flows onto the page */
@@ -171,6 +171,7 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    forced-color-adjust: none !important;
     box-shadow: none !important;
     animation: none !important;
     transition: none !important;
@@ -203,17 +204,29 @@
   }
 
   /* Keep tabular data readable on paper */
-  table {
+  [data-print-root] table {
     width: 100% !important;
-    table-layout: fixed;
+    table-layout: auto !important;
     border-collapse: collapse;
   }
 
-  th,
-  td {
-    word-break: break-word;
-    overflow-wrap: anywhere;
+  [data-print-root] table tr {
+    border: 0 !important;
+  }
+
+  [data-print-root] table th,
+  [data-print-root] table td {
+    border: 1px solid #d4d4d8 !important;
+    padding: 0.45rem 0.55rem !important;
+    word-break: normal;
+    overflow-wrap: break-word;
     vertical-align: top;
+    text-align: left;
+  }
+
+  [data-print-root] table th {
+    background: #f4f4f5 !important;
+    font-weight: 700 !important;
   }
 
   /* Avoid clipped print output from scroll wrappers */

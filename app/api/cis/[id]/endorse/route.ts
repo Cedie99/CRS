@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { endorseSchema } from "@/lib/validations/cis";
-import { validateSubmissionDocumentExpirations } from "@/lib/document-expiration";
 import { transitionCis } from "@/lib/workflow";
 
 export async function PATCH(
@@ -26,7 +25,6 @@ export async function PATCH(
       status: cisSubmissions.status,
       agentId: cisSubmissions.agentId,
       customerType: cisSubmissions.customerType,
-      docMayorsPermit: cisSubmissions.docMayorsPermit,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -46,11 +44,6 @@ export async function PATCH(
 
   if (!agent || agent.managerId !== userId) {
     return NextResponse.json({ error: "This submission does not belong to your agents" }, { status: 403 });
-  }
-
-  const expirationCheck = validateSubmissionDocumentExpirations(cis);
-  if (!expirationCheck.ok) {
-    return NextResponse.json({ error: expirationCheck.errors.join(" ") }, { status: 422 });
   }
 
   const body = await req.json();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
 import { CheckCircle, XCircle } from "lucide-react";
 import { sileo as toast } from "sileo";
 
@@ -29,20 +28,16 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const signatureRef = useRef<SignaturePadRef>(null);
-  const [signatureEmpty, setSignatureEmpty] = useState(true);
 
   function openDialog(a: "approve" | "deny") {
     setAction(a);
     setNote("");
     setError("");
-    setSignatureEmpty(true);
     setOpen(true);
   }
 
   function closeDialog() {
     if (isLoading) return;
-    signatureRef.current?.clear();
     setOpen(false);
   }
 
@@ -55,18 +50,10 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
       return;
     }
 
-    if (action === "approve" && signatureRef.current?.isEmpty()) {
-      setError("Your signature is required to approve.");
-      return;
-    }
-
     setIsLoading(true);
     try {
       const endpoint = action === "approve" ? "approve" : "deny";
       const body: Record<string, unknown> = { note: note.trim() || undefined };
-      if (action === "approve") {
-        body.approverSignature = signatureRef.current!.toDataURL();
-      }
 
       const res = await fetch(`/api/cis/${cisId}/${endpoint}`, {
         method: "PATCH",
@@ -157,20 +144,6 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
             />
           </div>
 
-          {action === "approve" && (
-            <div className="space-y-2">
-              <Label>Your Signature *</Label>
-              <p className="text-xs text-zinc-500">
-                Sign to formally authorize this customer onboarding.
-              </p>
-              <SignaturePad
-                ref={signatureRef}
-                onChange={(isEmpty) => setSignatureEmpty(isEmpty)}
-                disabled={isLoading}
-              />
-            </div>
-          )}
-
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <DialogFooter>
@@ -179,7 +152,7 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isLoading || (action === "approve" && signatureEmpty)}
+              disabled={isLoading}
               variant={action === "deny" ? "destructive" : "default"}
             >
               {isLoading

@@ -67,17 +67,6 @@ export function getFileExpirationStatus(file: FileEntry, now = new Date()) : Doc
   return expiresAt.getTime() < now.getTime() ? "expired" : "valid";
 }
 
-export function hasAtLeastOneValidFile(files: FileEntry[]) {
-  return files.some((file) => getFileExpirationStatus(file) === "valid");
-}
-
-export function getExpirationRequirementErrorMessage(docType: DocType) {
-  if (docType === "docMayorsPermit") {
-    return "A valid, non-expired business permit is required. Please upload the latest permit.";
-  }
-  return "A valid, non-expired document is required.";
-}
-
 export const DOC_COLUMN_MAP: Record<DocType, DocType> = {
   docValidId: "docValidId",
   docMayorsPermit: "docMayorsPermit",
@@ -118,7 +107,7 @@ export const DOC_SLOTS: Array<{ key: DocType; label: string }> = [
   { key: "docGovCertifications", label: "Government and Other Certifications" },
   { key: "docOther", label: "Other Supporting Documents" },
   { key: "docAgentOtherRequirements", label: "Other Requirements (Agent)" },
-  { key: "docSirRestySigned", label: "Approved CIS (Signed by Sir Resty)" },
+  { key: "docSirRestySigned", label: "CIS Signed by Chief Finance Officer" },
   { key: "docSalesSupportOther", label: "Other Documents for New Pricelist" },
 ];
 

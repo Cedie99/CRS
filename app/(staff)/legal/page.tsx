@@ -5,10 +5,9 @@ import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
-import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, Scale, Clock3 } from "lucide-react";
+import { Scale, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 
@@ -43,10 +42,39 @@ export default async function LegalDashboard({
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
-  const conditions: any[] = [
+  const cardSelect = {
+    id: cisSubmissions.id,
+    tradeName: cisSubmissions.tradeName,
+    contactPerson: cisSubmissions.contactPerson,
+    customerType: cisSubmissions.customerType,
+    agentCode: cisSubmissions.agentCode,
+    status: cisSubmissions.status,
+    createdAt: cisSubmissions.createdAt,
+    updatedAt: cisSubmissions.updatedAt,
+  };
+
+  const [history] = await Promise.all([
+    db
+      .select({ cisId: workflowEvents.cisId, action: workflowEvents.action })
+      .from(workflowEvents)
+      .where(
+        and(
+          eq(workflowEvents.actorId, session.user.id),
+          inArray(workflowEvents.action, ["forwarded_to_approver", "denied"])
+        )
+      ),
+  ]);
+
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+  const conditions = [
     isAllView
-      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES as any)
-      : eq(cisSubmissions.status, "pending_legal_review"),
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
+      : actedCisIds.length > 0
+        ? or(
+            eq(cisSubmissions.status, "pending_legal_review"),
+            inArray(cisSubmissions.id, actedCisIds)
+          )!
+        : eq(cisSubmissions.status, "pending_legal_review"),
   ];
 
   if (q) {
@@ -62,18 +90,7 @@ export default async function LegalDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const cardSelect = {
-    id: cisSubmissions.id,
-    tradeName: cisSubmissions.tradeName,
-    contactPerson: cisSubmissions.contactPerson,
-    customerType: cisSubmissions.customerType,
-    agentCode: cisSubmissions.agentCode,
-    status: cisSubmissions.status,
-    createdAt: cisSubmissions.createdAt,
-    updatedAt: cisSubmissions.updatedAt,
-  };
-
-  const [submissions, filteredCountRow, history] = await Promise.all([
+  const [submissions, filteredCountRow] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -85,19 +102,10 @@ export default async function LegalDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...conditions)),
-    db
-      .select({ action: workflowEvents.action })
-      .from(workflowEvents)
-      .where(
-        and(
-          eq(workflowEvents.actorId, session.user.id),
-          inArray(workflowEvents.action, ["forwarded_to_finance", "denied"])
-        )
-      ),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
 
-  const forwarded = history.filter((e) => e.action === "forwarded_to_finance").length;
+  const forwarded = history.filter((e) => e.action === "forwarded_to_approver").length;
   const denied = history.filter((e) => e.action === "denied").length;
   const total = forwarded + denied;
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
@@ -155,7 +163,10 @@ export default async function LegalDashboard({
 
       <DashboardFilters />
 
-      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
+      <div className="rounded-xl border border-zinc-200 bg-white">
+        <div className="px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
+        </div>
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{isAllView ? "Visible Forms" : "In Queue"}</p>
@@ -178,7 +189,7 @@ export default async function LegalDashboard({
             <p className="mt-1 text-[11px] text-zinc-500">all time</p>
           </div>
         </div>
-      </AnimatedDisclosure>
+      </div>
 
       <CustomerTypeNavCards
         basePath="/legal"

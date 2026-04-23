@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Upload, Camera, RefreshCw, FileText, Trash2, Pencil, Check } from "lucide-react";
 import {
-  docTypeRequiresExpiration,
-  getFileExpirationStatus,
   sortFilesByUploadedAtDesc,
   type DocType,
   type FileEntry,
@@ -21,48 +19,6 @@ function formatUploadedAt(value?: string) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
-}
-
-function formatExpiration(value?: string) {
-  if (!value) return "No expiration date recorded";
-  const parsed = Date.parse(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(parsed)) return "Invalid expiration date";
-  return `Expires ${new Date(parsed).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })}`;
-}
-
-function expirationStatusLabel(file: FileEntry) {
-  const status = getFileExpirationStatus(file);
-  if (status === "valid") return "valid";
-  if (status === "expired") return "expired";
-  return "unknown";
-}
-
-function ExpirationStatusBadge({ status }: { status: "valid" | "expired" | "unknown" }) {
-  if (status === "expired") {
-    return (
-      <span className="inline-flex items-center rounded-md border border-red-300 bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-800">
-        Expired - Reupload Required
-      </span>
-    );
-  }
-
-  if (status === "valid") {
-    return (
-      <span className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
-        Valid
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-      Unknown
-    </span>
-  );
 }
 
 function FileRow({
@@ -206,8 +162,6 @@ export function DocUploadSlot({
   const [cameraError, setCameraError] = useState("");
   const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("environment");
   const [error, setError] = useState("");
-  const [expirationDate, setExpirationDate] = useState("");
-  const requiresExpiration = docTypeRequiresExpiration(docType);
   const sortedFiles = sortFilesByUploadedAtDesc(files);
   const hasAcceptedFiles = sortedFiles.length > 0;
 
@@ -233,7 +187,6 @@ export function DocUploadSlot({
     const fd = new FormData();
     fd.append("file", file);
     fd.append("docType", docType);
-    if (requiresExpiration) fd.append("expirationDate", expirationDate);
 
     const res = await fetch(endpoint, { method: "POST", body: fd });
     const json = await res.json();
@@ -249,12 +202,6 @@ export function DocUploadSlot({
     setUploading(true);
     const results: FileEntry[] = [];
 
-    if (requiresExpiration && !expirationDate) {
-      setError("Expiration date is required for this document type.");
-      setUploading(false);
-      return;
-    }
-
     for (const file of Array.from(fileList)) {
       try {
         const uploaded = await uploadSingleFile(file);
@@ -266,7 +213,6 @@ export function DocUploadSlot({
     }
 
     if (results.length) onChange(sortFilesByUploadedAtDesc([...files, ...results]));
-    if (results.length && requiresExpiration) setExpirationDate("");
     setUploading(false);
   }
 
@@ -328,11 +274,6 @@ export function DocUploadSlot({
       return;
     }
 
-    if (requiresExpiration && !expirationDate) {
-      setError("Expiration date is required for this document type.");
-      return;
-    }
-
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -357,7 +298,6 @@ export function DocUploadSlot({
       const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
       const uploaded = await uploadSingleFile(file);
       onChange(sortFilesByUploadedAtDesc([...files, uploaded]));
-      if (requiresExpiration) setExpirationDate("");
       closeCamera();
     } catch {
       setError("Upload failed. Please try again.");
@@ -407,21 +347,6 @@ export function DocUploadSlot({
           )}
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          {requiresExpiration && (
-            <div className="flex w-full flex-col gap-0.5 sm:w-auto">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">
-                Document Expiry Date
-              </span>
-              <input
-                type="date"
-                value={expirationDate}
-                onChange={(e) => setExpirationDate(e.target.value)}
-                disabled={disabled || uploading}
-                className="h-8 w-full rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:ring-1 focus:ring-amber-400 sm:w-auto"
-                aria-label={`${label} expiration date`}
-              />
-            </div>
-          )}
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -535,12 +460,6 @@ export function DocUploadSlot({
               />
                 <div className="pl-1 text-[10px] text-zinc-400">
                   <p>{formatUploadedAt(f.uploadedAt)}</p>
-                  <p>{formatExpiration(f.expirationDate)}</p>
-                  {requiresExpiration && (
-                    <div className="mt-0.5">
-                      <ExpirationStatusBadge status={expirationStatusLabel(f)} />
-                    </div>
-                  )}
                 </div>
             </div>
           ))}

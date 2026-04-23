@@ -6,7 +6,6 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
-import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { buttonVariants } from "@/lib/button-variants";
 import { Plus, FileText, Link as LinkIcon, UserRound, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
@@ -250,7 +249,10 @@ export default async function AgentDashboard({
       />
 
       {/* Stats — hidden in archived view */}
-      {!effectiveShowArchived && <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
+      {!effectiveShowArchived && <div className="rounded-xl border border-zinc-200 bg-white">
+        <div className="px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
+        </div>
         <div className="space-y-3 border-t border-zinc-100 p-3">
           <div className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
             <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Submissions</span>
@@ -292,7 +294,7 @@ export default async function AgentDashboard({
             ))}
           </div>
         </div>
-      </AnimatedDisclosure>}
+      </div>}
 
       <CustomerTypeNavCards
         basePath="/agent"

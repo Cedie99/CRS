@@ -2,7 +2,7 @@ import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cisSubmissions } from "@/lib/db/schema";
+import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { CisCardGrid } from "@/components/cis-card-grid";
@@ -45,10 +45,26 @@ export default async function FinanceCustomerTypePage({
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
-  const conditions: any[] = [
+  const history = await db
+    .select({ cisId: workflowEvents.cisId })
+    .from(workflowEvents)
+    .where(
+      and(
+        eq(workflowEvents.actorId, session.user.id),
+        inArray(workflowEvents.action, ["forwarded_to_approver", "denied"])
+      )
+    );
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+
+  const conditions = [
     isAllView
-      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES as any)
-      : eq(cisSubmissions.status, "pending_finance_review"),
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
+      : actedCisIds.length > 0
+        ? or(
+            eq(cisSubmissions.status, "pending_finance_review"),
+            inArray(cisSubmissions.id, actedCisIds)
+          )!
+        : eq(cisSubmissions.status, "pending_finance_review"),
     eq(cisSubmissions.customerType, customerType),
   ];
 

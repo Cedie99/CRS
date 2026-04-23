@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import type { NextAuthConfig } from "next-auth";
 
-const STAFF_ROUTES: Record<string, string> = {
+export const STAFF_ROUTES: Record<string, string> = {
   sales_agent: "/agent",
   rsr: "/agent",
   sales_manager: "/manager",

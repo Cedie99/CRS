@@ -33,6 +33,7 @@ const ROLE_LABELS: Record<string, string> = {
   legal_approver: "Legal Approver",
   senior_approver: "Senior Approver",
   sales_support: "Sales Support",
+  project_development_specialist: "Project Dev Specialist",
   admin: "Admin",
 };
 

@@ -50,6 +50,10 @@ export default async function FinanceCisDetailPage({
     .orderBy(workflowEvents.createdAt);
 
   const canAct = cis.status === "pending_finance_review" && !isReadOnlyContextView;
+  const hasFinanceAndLegalInfo =
+    Boolean(cis.financeCreditLimit?.trim()) &&
+    Boolean(cis.financeCreditTerms?.trim());
+  const canPrint = hasFinanceAndLegalInfo;
 
   return (
     <div className="space-y-5">
@@ -77,6 +81,8 @@ export default async function FinanceCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            printEnabled={canPrint}
+            hidePrintButton
             cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}

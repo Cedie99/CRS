@@ -4,8 +4,6 @@ import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import {
   DOC_COLUMN_MAP,
-  docTypeRequiresExpiration,
-  normalizeExpirationDate,
   sortFilesByUploadedAtDesc,
   type DocType,
   type FileEntry,
@@ -59,7 +57,6 @@ export async function POST(
   const formData = await req.formData();
   const file = formData.get("file");
   const docType = formData.get("docType");
-  const expirationDate = formData.get("expirationDate");
 
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -68,18 +65,6 @@ export async function POST(
     return NextResponse.json({ error: "Invalid document type" }, { status: 400 });
   }
   const typedDocType = docType as DocType;
-
-  let normalizedExpirationDate: string | undefined;
-  if (docTypeRequiresExpiration(typedDocType)) {
-    if (typeof expirationDate !== "string") {
-      return NextResponse.json({ error: "Expiration date is required for this document" }, { status: 400 });
-    }
-    const normalized = normalizeExpirationDate(expirationDate);
-    if (!normalized) {
-      return NextResponse.json({ error: "Invalid expiration date" }, { status: 400 });
-    }
-    normalizedExpirationDate = normalized;
-  }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
     return NextResponse.json({ error: "Only PDF, JPEG, PNG, or WebP files allowed" }, { status: 400 });
@@ -99,7 +84,6 @@ export async function POST(
     size: bytes.byteLength,
     type: file.type,
     uploadedAt: new Date().toISOString(),
-    expirationDate: normalizedExpirationDate,
   };
 
   const colKey = DOC_COLUMN_MAP[typedDocType];

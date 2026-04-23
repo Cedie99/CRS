@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { DOC_SLOTS, type DocType, type FileEntry } from "@/lib/doc-types";
 
@@ -15,9 +16,11 @@ export function AgentDocSection({
 }) {
   const [docs, setDocs] = useState<Record<DocType, FileEntry[]>>(initialDocs);
   const endpoint = `/api/cis/${cisId}/docs`;
+  const router = useRouter();
 
   function setDocFiles(key: DocType, files: FileEntry[]) {
     setDocs((prev) => ({ ...prev, [key]: files }));
+    router.refresh();
   }
 
   return (

@@ -33,6 +33,7 @@ import {
 import { PrintButton } from "@/components/print-button";
 import { PdfPrintRenderer } from "@/components/pdf-print-renderer";
 import { DocxRenderer } from "@/components/docx-renderer";
+import { PrintLayoutOptimizer } from "@/components/print-layout-optimizer";
 import { humanizeDisplayValue } from "@/lib/utils";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
@@ -245,6 +246,8 @@ interface CisInfoCardProps {
   docGovCertifications?: unknown;
   docSirRestySigned?: unknown;
   docOther?: unknown;
+  docAgentOtherRequirements?: unknown;
+  docSalesSupportOther?: unknown;
   // Signatures
   customerSignature?: string | null;
   customerSignedAt?: Date | null;
@@ -259,6 +262,8 @@ interface CisInfoCardProps {
   doeAccreditationNo?: string | null;
   specialAccountType?: string | null;
   specialAccountRemarks?: string | null;
+  printEnabled?: boolean;
+  hidePrintButton?: boolean;
   agentUpload?: {
     cisId: string;
   };
@@ -299,12 +304,12 @@ function Field({
   mono?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:bg-white print:p-0 print:pb-2">
-      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-zinc-500">
+    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-3">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-[12px] print:text-zinc-500">
         {Icon && <Icon className="h-3 w-3 print:hidden" />}
         {label}
       </p>
-      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-0.5 print:text-[11px] print:leading-snug ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-1 print:text-[16px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
         {value || <span className="text-zinc-300 print:text-zinc-400">—</span>}
       </p>
     </div>
@@ -314,16 +319,18 @@ function Field({
 function SectionTitle({
   icon: Icon,
   label,
+  className = "",
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  className?: string;
 }) {
   return (
-    <div className="mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-3 print:border-zinc-300 print:pb-1.5">
+    <div className={`mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-4 print:border-zinc-300 print:pb-2 ${className}`}>
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-zinc-700">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[12px] print:text-zinc-700">
         {label}
       </p>
     </div>
@@ -333,7 +340,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-0 print:break-inside-avoid print:rounded-none print:border-0 print:border-t print:border-zinc-300 print:bg-white print:px-0 print:pt-3 print:pb-2 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-1 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-4 print:pb-3 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -472,6 +479,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
     approverSignature,
     approverSignedAt,
     approverSignatureSeal,
+    printEnabled = false,
+    hidePrintButton = false,
     agentUpload,
     financePlTs,
     financePossiblePoints,
@@ -531,6 +540,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
     allDocEntries.map((entry) => [entry.key, entry.files])
   ) as Record<DocType, FileEntry[]>;
 
+  const hasCfoSigned = (allDocsByType.docSirRestySigned ?? []).length > 0;
+  const canPrint = printEnabled || status === "erp_encoded";
+  const printDisabledReason = "Printing is not available for your role, it will be available once the approval process is complete";
+  const showCfoSignatureBox = !hasCfoSigned && canPrint;
+
   const hasAgentInfo = agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast;
   const hasFinanceData = financeEu || financeDl || financeDr || financePlTs || financePossiblePoints != null || financeApprovedPoints != null || financeCreditLimit || financeCreditTerms;
   const hasSalesSupportData = salesSupportAccountType || salesSupportPriceList1 || salesSupportPriceList2 || salesSupportSalesType || salesSupportVatCode || salesSupportOtherRemarks;
@@ -542,7 +556,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
     || tradeRefRows.length > 0 || bankRefRows.length > 0 || achievements || otherMerits;
 
   return (
-    <Card className="overflow-hidden print:border-0 print:shadow-none">
+    <Card className="overflow-hidden print:border-0 print:shadow-none" data-print-root>
+      <PrintLayoutOptimizer />
 
       {/* ── PRINT HEADER ── */}
       <div className="hidden print:block px-0 pt-0 pb-4">
@@ -599,7 +614,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-end">
-            <PrintButton />
+            {!hidePrintButton && <PrintButton disabled={!canPrint} disabledReason={printDisabledReason} />}
             <StatusBadge status={status} />
             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
               <Building2 className="h-3 w-3" />
@@ -620,7 +635,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Business Information ── */}
         <SectionCard>
           <SectionTitle icon={Briefcase} label="Business Information" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             {corporateName && <div className="sm:col-span-2 lg:col-span-3"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} /></div>}
             <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} />
             {dateOfBusinessReg && <Field label="Date of Registration" value={dateOfBusinessReg} />}
@@ -631,7 +646,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Contact Details ── */}
         <SectionCard>
           <SectionTitle icon={User} label="Contact Details" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             <Field label="Contact Person" value={contactPerson} icon={User} />
             <Field label="Email Address" value={emailAddress} icon={Mail} />
             <Field label="Mobile Number" value={contactNumber} icon={Phone} />
@@ -643,7 +658,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Office Address ── */}
         <SectionCard>
           <SectionTitle icon={MapPin} label="Office Address" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             <div className="sm:col-span-2 lg:col-span-3">
               <Field label="Street Address" value={businessAddress} icon={MapPin} />
             </div>
@@ -656,7 +671,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasDelivery && (
           <SectionCard>
               <SectionTitle icon={MapPin} label="Delivery Address" />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:gap-2">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
                 {deliveryAddress && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} /></div>}
                 {deliveryLandmarks && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Landmarks" value={deliveryLandmarks} /></div>}
                 {deliveryMobile && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} />}
@@ -696,7 +711,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-xs">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[14px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -723,7 +738,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div>
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-xs">
+                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[14px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -770,7 +785,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-xs">
+                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[14px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Company</th>
@@ -797,7 +812,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-xs">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[14px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Bank</th>
@@ -854,7 +869,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Document Uploads ── */}
         {docEntries.length > 0 && (
           <SectionCard>
-              <SectionTitle icon={Paperclip} label="Supporting Documents" />
+              <SectionTitle icon={Paperclip} label="Supporting Documents" className="print:hidden" />
               <div className="space-y-5 print:hidden">
                 {docEntries.map((entry) => (
                   <div key={entry.label}>
@@ -916,16 +931,29 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </div>
 
               <div className="h-0 overflow-hidden print:h-auto print:overflow-visible">
-                {docEntries.map((entry) =>
-                  sortFilesByUploadedAtDesc(entry.files).map((f) => {
+                {docEntries.map((entry, entryIndex) =>
+                  sortFilesByUploadedAtDesc(entry.files).map((f, fileIndex) => {
                     const isImage = isImageFile(f);
                     const isPdf = isPdfFile(f);
                     const isDocx = isDocxFile(f);
                     const needsExpiration = docTypeRequiresExpiration(entry.key);
                     const expirationStatus = needsExpiration ? getFileExpirationStatus(f) : null;
+                    const isFirst = entryIndex === 0 && fileIndex === 0;
 
                     return (
-                      <div key={`${entry.key}-${f.url}`} className="print:break-before-page print:min-h-[240mm] print:py-2">
+                      <div
+                        key={`${entry.key}-${f.url}`}
+                        className={`print:py-2 ${isFirst ? "" : "print:break-before-page"}`}
+                        style={{ breakInside: "avoid-page", pageBreakInside: "avoid" }}
+                        data-print-file-block
+                      >
+                        {isFirst && (
+                          <div className="mb-2 print:break-after-avoid">
+                            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-700">
+                              Supporting Documents
+                            </p>
+                          </div>
+                        )}
                         <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-700">{entry.label}</p>
                         <p className="mt-0.5 text-[10px] text-zinc-500">{f.name}</p>
                         <p className="mt-0.5 text-[10px] text-zinc-500">{formatUploadedAt(f.uploadedAt)}</p>
@@ -937,12 +965,16 @@ export function CisInfoCard(props: CisInfoCardProps) {
                         )}
 
                         {isImage && (
-                          <div className="mt-2 border border-zinc-300 p-2">
+                          <div
+                            className="mt-2 flex h-[160mm] items-center justify-center border border-zinc-300 p-3"
+                            style={{ breakInside: "avoid-page", pageBreakInside: "avoid" }}
+                            data-print-file-image-frame
+                          >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={f.url}
                               alt={f.name}
-                              className="max-h-205 w-full object-contain"
+                              className="h-full w-full object-contain"
                             />
                           </div>
                         )}
@@ -968,7 +1000,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <FileText className="h-3.5 w-3.5 print:hidden" />
                 Additional Notes
               </p>
-              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-xs print:border-l-2 print:border-zinc-300 print:pl-3">
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-[16px] print:border-l-2 print:border-zinc-300 print:pl-3">
                 {additionalNotes}
               </p>
           </SectionCard>
@@ -1046,22 +1078,25 @@ export function CisInfoCard(props: CisInfoCardProps) {
           </SectionCard>
         )}
 
-        {/* ── Physical Sign-off (Sir Resty) ── */}
-        <SectionCard className="print:break-inside-avoid">
+        {/* ── Physical Sign-off — shown only after finance review starts and before CFO doc is uploaded ── */}
+        {showCfoSignatureBox && <SectionCard className="print:break-inside-avoid">
             <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400 print:text-zinc-700 print:border-b print:border-zinc-300 print:pb-1.5">
               <PenLine className="h-3.5 w-3.5 print:hidden" />
-              Senior Approver Physical Signature (Sir Resty)
+              Physical Signature
             </p>
 
             {/* Screen helper */}
             <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-4 print:hidden">
               <p className="text-sm text-zinc-700">
-                For printed copies: have Sir Resty sign in the designated signature panel.
+                For printed copies: have the Chief Finance Officer sign in the designated signature panel.
               </p>
-              <div className="mt-6 border-b-2 border-zinc-400" />
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-                <span>Signature over printed name: Sir Resty</span>
-                <span>Date: ____________________</span>
+              <div className="mt-12 flex items-end gap-8">
+                <div className="w-48 border-b-2 border-zinc-400" />
+                <div className="w-32 border-b-2 border-zinc-400" />
+              </div>
+              <div className="mt-1.5 flex gap-8 text-xs text-zinc-500">
+                <span className="w-48">Signature over printed name — Chief Finance Officer</span>
+                <span className="w-32">Date:</span>
               </div>
             </div>
 
@@ -1071,23 +1106,25 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 Sign-off Required Before Final Approval
               </p>
               <p className="mt-1 text-[10px] leading-relaxed text-zinc-700">
-                The Senior Approver must physically sign this printed CIS.
+                The Chief Finance Officer must physically sign this printed CIS.
               </p>
 
-              <div className="mt-5 min-h-[26mm] border-b-2 border-zinc-700" />
+              <div className="mt-5 min-h-[26mm] flex items-end gap-8">
+                <div className="w-48 border-b-2 border-zinc-700" />
+                <div className="w-32 border-b-2 border-zinc-700" />
+              </div>
 
-              <div className="mt-1 grid grid-cols-2 gap-3 text-[10px] text-zinc-700">
-                <div>
+              <div className="mt-1 flex gap-8 text-[10px] text-zinc-700">
+                <div className="w-48">
                   <p className="font-semibold">Signature over printed name</p>
-                  <p className="mt-0.5">Sir Resty</p>
+                  <p className="mt-0.5 italic text-zinc-500">Chief Finance Officer</p>
                 </div>
-                <div className="text-right">
+                <div className="w-32">
                   <p className="font-semibold">Date signed</p>
-                  <p className="mt-0.5">____________________</p>
                 </div>
               </div>
             </div>
-        </SectionCard>
+        </SectionCard>}
 
         {/* Screen footer */}
         <div className="print:hidden">
@@ -1108,7 +1145,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </span>
             </span>
           </div>
-          <PrintButton />
+          <PrintButton disabled={!canPrint} disabledReason={printDisabledReason} />
           </div>
 
         </div>

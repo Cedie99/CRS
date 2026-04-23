@@ -5,22 +5,27 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
-import { AuditTimeline } from "@/components/audit-timeline";
+import { AuditTimeline, type WorkflowAction } from "@/components/audit-timeline";
 import { SpecialistActions } from "@/components/actions/specialist-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
+import type { CisStatus } from "@/components/status-badge";
 
 export default async function SpecialistCisDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
+  const { view } = await searchParams;
+  const isReadOnlyContextView = view === "all";
 
   const [cis] = await db
     .select()
@@ -44,20 +49,33 @@ export default async function SpecialistCisDetailPage({
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
+  const typedEvents = events as Array<{
+    id: string;
+    action: WorkflowAction;
+    note: string | null;
+    createdAt: Date;
+    actorName: string;
+    actorRole: string | null;
+    actorAvatarUrl: string | null;
+  }>;
 
-  const canAct = cis.status === "pending_erp_encoding";
+  const canAct = cis.status === "pending_erp_encoding" && !isReadOnlyContextView;
 
   return (
     <div className="space-y-5">
       <Link
-        href="/specialist"
+        href={isReadOnlyContextView ? "/specialist?view=all" : "/specialist"}
         className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to encoding queue
       </Link>
 
-      {canAct && <SpecialistActions cisId={id} />}
+      {isReadOnlyContextView && (
+        <div className="print:hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Context view enabled: this record is read-only from All Submissions mode.
+        </div>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
@@ -75,7 +93,7 @@ export default async function SpecialistCisDetailPage({
             customerType={cis.customerType}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
-            status={cis.status as any}
+            status={cis.status as CisStatus}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
             customerSignature={cis.customerSignature}
@@ -157,8 +175,8 @@ export default async function SpecialistCisDetailPage({
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
-          <WorkflowStepper status={cis.status as any} customerType={cis.customerType ?? ""} />
-          <WorkflowHandoff status={cis.status as any} customerType={cis.customerType ?? ""} />
+          <WorkflowStepper status={cis.status as CisStatus} customerType={cis.customerType ?? ""} />
+          <WorkflowHandoff status={cis.status as CisStatus} customerType={cis.customerType ?? ""} />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">
@@ -167,11 +185,13 @@ export default async function SpecialistCisDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AuditTimeline events={events as any} />
+              <AuditTimeline events={typedEvents} />
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {canAct && <SpecialistActions cisId={id} />}
     </div>
   );
 }

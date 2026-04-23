@@ -154,7 +154,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
       <div className="mb-3.5 flex gap-1 rounded-md bg-white/70 px-1 py-1">
         {Array.from({ length: totalSegments }).map((_, i) => {
           const isFilled = i < filledSegments;
-          const hue = 18 + Math.round((36 * i) / Math.max(totalSegments - 1, 1));
+          const hue = Math.round((120 * i) / Math.max(totalSegments - 1, 1));
 
           return (
             <span

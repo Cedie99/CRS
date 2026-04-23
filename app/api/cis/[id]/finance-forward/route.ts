@@ -37,7 +37,7 @@ export async function PATCH(
   const sirRestyFiles = (cis.docSirRestySigned as FileEntry[] | null) ?? [];
   if (sirRestyFiles.length === 0) {
     return NextResponse.json(
-      { error: "Please attach the approved CIS signed by Sir Resty before forwarding." },
+      { error: "Please attach the approved CIS signed by the Chief Finance Officer before forwarding." },
       { status: 422 }
     );
   }

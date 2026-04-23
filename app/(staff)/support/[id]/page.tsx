@@ -14,13 +14,17 @@ import { ArrowLeft, History } from "lucide-react";
 
 export default async function SupportCisDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
+  const { view } = await searchParams;
+  const isReadOnlyContextView = view === "all";
 
   const [cis] = await db
     .select()
@@ -45,18 +49,26 @@ export default async function SupportCisDetailPage({
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
 
-  const canAct = cis.status === "approved";
+  const canAct = cis.status === "approved" && !isReadOnlyContextView;
+  const needsPhysicalSignature = ((cis.docSirRestySigned as any[] | null) ?? []).length === 0;
+  const canPrint = needsPhysicalSignature || cis.status === "erp_encoded";
 
 
   return (
     <div className="space-y-5">
       <Link
-        href="/support"
+        href={isReadOnlyContextView ? "/support?view=all" : "/support"}
         className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to support queue
       </Link>
+
+      {isReadOnlyContextView && (
+        <div className="print:hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Context view enabled: this record is read-only from All Submissions mode.
+        </div>
+      )}
 
       {canAct && (
         <SalesSupportFillOutActions
@@ -68,6 +80,7 @@ export default async function SupportCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            printEnabled={canPrint}
             cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}

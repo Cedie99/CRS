@@ -90,12 +90,21 @@ async function notifyParties({
   isDealer?: boolean;
   tx: Tx;
 }) {
+  const CUSTOMER_TYPE_LABELS: Record<string, string> = {
+    dealer: "Dealer",
+    distributor: "Distributor",
+    private_label: "Private Label",
+    toll_blend: "Toll Blend",
+    end_user: "End User",
+  };
+
   const [cis] = await tx
     .select({
       agentId: cisSubmissions.agentId,
       tradeName: cisSubmissions.tradeName,
       contactPerson: cisSubmissions.contactPerson,
       emailAddress: cisSubmissions.emailAddress,
+      customerType: cisSubmissions.customerType,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, cisId))
@@ -104,6 +113,7 @@ async function notifyParties({
   if (!cis) return [];
 
   const label = cis.tradeName ?? cisId.slice(0, 8);
+  const custType = cis.customerType ? (CUSTOMER_TYPE_LABELS[cis.customerType] ?? cis.customerType) : "Pending";
   const rows: (typeof notifications.$inferInsert)[] = [];
   const emailJobs: WorkflowEmailJob[] = [];
   const appUrl =
@@ -176,22 +186,33 @@ async function notifyParties({
       const customerName = cis.contactPerson ?? "Valued Customer";
       emailJobs.push({
         to: cis.emailAddress,
-        subject: `[CRS] Your CIS form has been received: ${label}`,
+        subject: `[CRS] Your CIS form has been received – ${label}`,
         text: [
           `Hello ${customerName},`,
           "",
           `Thank you for completing your Customer Information Sheet for ${label}.`,
-          "Your application has been received and is currently under review by our team.",
-          "We will notify you of any updates as your application progresses.",
+          "Your form has been successfully received. Our assigned agent will now review and complete the remaining details on your behalf.",
+          "",
+          "You will receive another notification once your application moves to the next stage of the approval process.",
+          "",
+          `Business Name: ${label}`,
+          `CIS ID: ${cisId}`,
+          "",
+          "If you have any questions, please contact your assigned sales agent.",
           "",
           "This is an automated notification from the Oracle Petroleum CRS.",
         ].join("\n"),
         html: buildEmailHtml({
           name: customerName,
-          title: "Form Received – Under Review",
-          body: `Thank you for completing your Customer Information Sheet for <strong>${label}</strong>. Your application has been received and is currently under review by our team. We will keep you informed as your application progresses.`,
+          title: "CIS Form Received",
+          body: `Thank you for completing your Customer Information Sheet. Your form has been successfully received and your assigned agent will now review and complete the remaining details on your behalf.<br><br>You will receive another notification once your application moves to the next stage of the approval process. If you have any questions, please contact your assigned sales agent.`,
           cisId,
           accentColor: "#1a6e3c",
+          statusBadge: { label: "Received", color: "#16a34a" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          ],
         }),
       });
     }
@@ -201,16 +222,20 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Your customer has completed the CIS form for "${label}". Please fill out the agent section.`,
+        `Your customer "${label}" has completed the CIS form. Please fill out the agent section.`,
         agent.email,
-        `[CRS] Customer completed CIS form: ${label}`,
+        `[CRS] Action required – Complete agent section: ${label}`,
         {
           name: agent.fullName,
-          title: "Customer Form Completed",
-          body: `Your customer has completed and signed the CIS form for <strong>${label}</strong>. Please log in and fill out the agent section to route it for review.`,
-          reviewUrl: appUrl ? `${appUrl}/agent/${cisId}` : null,
-          ctaLabel: "Fill Out Now",
+          title: "Customer Form Completed – Your Action Needed",
+          body: `Your customer has completed and signed the CIS form for <strong>${label}</strong>.<br><br>Please log in and fill out the <strong>Agent Section</strong> — including the customer type classification and account specialist details — so the form can be routed for review.`,
+          reviewUrl: viewUrl,
+          ctaLabel: "Fill Out Agent Section",
           accentColor: "#1a6e3c",
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          ],
         },
       );
     }
@@ -226,16 +251,23 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/manager/${cisId}` : null;
       addNotification(
         manager?.id ?? managerId,
-        `CIS form for "${label}" has been submitted by your agent and is now in review.`,
+        `CIS form for "${label}" (${custType}) has been submitted by ${agent?.fullName ?? "an agent"} and is now in review.`,
         manager?.email,
-        `[CRS] CIS in review: ${label}`,
+        `[CRS] New CIS submitted by your agent – ${label}`,
         {
           name: manager?.fullName ?? "there",
-          title: "CIS Now In Review",
-          body: `A CIS form for <strong>${label}</strong> has been submitted by your agent and is now in the review pipeline. No action is required from you.`,
+          title: "New CIS Submitted by Your Agent",
+          body: `A Customer Information Sheet for <strong>${label}</strong> has been submitted by <strong>${agent?.fullName ?? "your agent"}</strong> and is now in the approval pipeline.<br><br>This notification is for your awareness only — no action is required from you at this time. You can view the full form details below.`,
           reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          ctaLabel: "View Submission",
           accentColor: "#0f2340",
+          statusBadge: { label: "In Review", color: "#2563eb" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Submitted By", value: agent?.fullName ?? "—" },
+          ],
         },
       );
     }
@@ -244,54 +276,82 @@ async function notifyParties({
     if (isDealer) {
       await notifyRole(
         "legal_approver",
-        `A new CIS for "${label}" requires legal review.`,
-        `[CRS] CIS pending legal review: ${label}`,
+        `New CIS for "${label}" (Dealer) requires your legal review.`,
+        `[CRS] Action required – Legal review: ${label}`,
         "legal",
         (_name, _url) => ({
-          title: "CIS Pending Legal Review",
-          body: `A CIS form for <strong>${label}</strong> has been routed to you for legal review (Dealer account).`,
+          title: "New CIS Pending Your Legal Review",
+          body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your legal review.<br><br>This is a <strong>Dealer</strong> account and must pass legal clearance before proceeding to finance. Please review the customer details and supporting documents, then approve or deny the submission.`,
           ctaLabel: "Review Now",
           accentColor: "#0f2340",
+          statusBadge: { label: "Pending Legal Review", color: "#d97706" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: "Dealer" },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Agent", value: agent?.fullName ?? "—" },
+          ],
         }),
       );
     } else {
       await notifyRole(
         "finance_reviewer",
-        `A new CIS for "${label}" requires finance review.`,
-        `[CRS] CIS pending finance review: ${label}`,
+        `New CIS for "${label}" (${custType}) requires your finance review.`,
+        `[CRS] Action required – Finance review: ${label}`,
         "finance",
         (_name, _url) => ({
-          title: "CIS Pending Finance Review",
-          body: `A CIS form for <strong>${label}</strong> has been routed to you for finance review.`,
+          title: "New CIS Pending Your Finance Review",
+          body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your finance review.<br><br>Please review the customer details, set the credit limit and terms, print and obtain the required signature, then approve or deny the submission.`,
           ctaLabel: "Review Now",
           accentColor: "#0f2340",
+          statusBadge: { label: "Pending Finance Review", color: "#d97706" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Agent", value: agent?.fullName ?? "—" },
+          ],
         }),
       );
     }
   } else if (action === "forwarded_to_legal") {
     await notifyRole(
       "legal_approver",
-      `A new CIS for "${label}" requires legal review.`,
-      `[CRS] CIS pending legal review: ${label}`,
+      `New CIS for "${label}" (${custType}) requires your legal review.`,
+      `[CRS] Action required – Legal review: ${label}`,
       "legal",
       (_name, _url) => ({
-        title: "CIS Pending Legal Review",
-        body: `A CIS form for <strong>${label}</strong> has been forwarded for your legal review.`,
+        title: "CIS Forwarded for Legal Review",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has been forwarded and requires your legal review.<br><br>Please review the customer details and supporting documents, then approve or deny the submission.`,
         ctaLabel: "Review Now",
         accentColor: "#0f2340",
+        statusBadge: { label: "Pending Legal Review", color: "#d97706" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
   } else if (action === "endorsed") {
     await notifyRole(
       "finance_reviewer",
-      `CIS for "${label}" has been endorsed and is ready for finance review.`,
-      `[CRS] CIS endorsed – pending finance review: ${label}`,
+      `CIS for "${label}" (${custType}) has been endorsed and is ready for your finance review.`,
+      `[CRS] Action required – Finance review: ${label}`,
       "finance",
       (_name, _url) => ({
-        title: "CIS Ready for Finance Review",
-        body: `A CIS form for <strong>${label}</strong> has been endorsed by the manager and is now pending finance review.`,
+        title: "CIS Endorsed – Ready for Finance Review",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has been endorsed by the manager and is now awaiting your finance review.<br><br>Please review the customer details, set the credit limit and terms, then approve or deny the submission.`,
         ctaLabel: "Review Now",
         accentColor: "#0f2340",
+        statusBadge: { label: "Pending Finance Review", color: "#d97706" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
   } else if (action === "returned") {
@@ -299,56 +359,84 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Your CIS submission for "${label}" has been returned. Please review the note and submit a new form.`,
+        `Your CIS submission for "${label}" has been returned. Please review the note and resubmit.`,
         agent.email,
-        `[CRS] CIS returned: ${label}`,
+        `[CRS] Action required – CIS returned: ${label}`,
         {
           name: agent.fullName,
-          title: "CIS Returned",
-          body: `Your CIS submission for <strong>${label}</strong> has been returned. Please review the manager's note and submit a new form.`,
+          title: "CIS Returned – Revisions Needed",
+          body: `Your CIS submission for <strong>${label}</strong> has been returned and requires your attention.<br><br>Please review the reviewer's note for details on what needs to be corrected, then resubmit the form once the changes have been made.`,
           reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          ctaLabel: "Review & Resubmit",
           accentColor: "#c17a00",
+          statusBadge: { label: "Returned", color: "#d97706" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+          ],
         },
       );
     }
   } else if (action === "forwarded_to_finance") {
     await notifyRole(
       "finance_reviewer",
-      `CIS for "${label}" has been forwarded for finance review after legal clearance.`,
-      `[CRS] CIS forwarded to finance (post-legal): ${label}`,
+      `CIS for "${label}" (${custType}) has cleared legal review and requires your finance review.`,
+      `[CRS] Action required – Finance review (post-legal): ${label}`,
       "finance",
       (_name, _url) => ({
-        title: "CIS Forwarded to Finance",
-        body: `A CIS form for <strong>${label}</strong> has cleared legal review and is now pending finance review.`,
+        title: "CIS Cleared Legal – Pending Finance Review",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has passed legal review and is now awaiting your finance decision.<br><br>Please review the customer details, set the credit limit and terms, print and obtain the CFO signature, then approve or deny the submission.`,
         ctaLabel: "Review Now",
         accentColor: "#0f2340",
+        statusBadge: { label: "Pending Finance Review", color: "#d97706" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+          { label: "Legal Status", value: "Cleared" },
+        ],
       }),
     );
   } else if (action === "forwarded_to_approver") {
     await notifyRole(
       "senior_approver",
-      `CIS for "${label}" is ready for final approval.`,
-      `[CRS] CIS pending final approval: ${label}`,
+      `CIS for "${label}" (${custType}) has been reviewed by Finance and is ready for your final approval.`,
+      `[CRS] Action required – Final approval: ${label}`,
       "approver",
       (_name, _url) => ({
-        title: "CIS Pending Final Approval",
-        body: `A CIS form for <strong>${label}</strong> is ready for your final approval.`,
+        title: "CIS Pending Your Final Approval",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has been reviewed and approved by Finance and is now awaiting your final decision.<br><br>Please review the complete form — including the customer details, agent section, and finance credit evaluation — then approve or deny the submission.`,
         ctaLabel: "Review & Approve",
         accentColor: "#0f2340",
+        statusBadge: { label: "Pending Final Approval", color: "#7c3aed" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+          { label: "Finance Status", value: "Approved" },
+        ],
       }),
     );
   } else if (action === "sales_support_submitted") {
     await notifyRole(
       "project_development_specialist",
-      `CIS for "${label}" is ready for ERP encoding.`,
-      `[CRS] CIS pending ERP encoding: ${label}`,
+      `CIS for "${label}" (${custType}) is ready for ERP encoding.`,
+      `[CRS] Action required – ERP encoding: ${label}`,
       "specialist",
       (_name, _url) => ({
-        title: "CIS Pending ERP Encoding",
-        body: `CIS for <strong>${label}</strong> has been processed by Sales Support and is now ready for ERP encoding.`,
+        title: "CIS Ready for ERP Encoding",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has completed all approval stages and Sales Support has finished their section.<br><br>Please review the full form details and mark the customer as <strong>Encoded in ERP</strong> once complete. The agent will be notified automatically upon encoding.`,
         ctaLabel: "Encode Now",
         accentColor: "#3730a3",
+        statusBadge: { label: "Pending ERP Encoding", color: "#4f46e5" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
   } else if (action === "approved") {
@@ -356,41 +444,60 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Your CIS submission for "${label}" has been approved and is pending ERP encoding.`,
+        `Great news! Your CIS for "${label}" (${custType}) has been approved by the Senior Approver.`,
         agent.email,
-        `[CRS] CIS approved: ${label}`,
+        `[CRS] CIS approved – ${label}`,
         {
           name: agent.fullName,
-          title: "CIS Approved",
-          body: `Great news! Your CIS submission for <strong>${label}</strong> has been approved and is now pending ERP encoding.`,
+          title: "CIS Approved by Senior Approver",
+          body: `Great news — the Customer Information Sheet for <strong>${label}</strong> has been approved by the Senior Approver.<br><br>The form will now proceed to Sales Support for final processing and ERP encoding. You will receive one more notification once the customer has been fully onboarded in the system.`,
           reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          ctaLabel: "View Submission",
           accentColor: "#1a6e3c",
+          statusBadge: { label: "Approved", color: "#16a34a" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          ],
         },
       );
     }
     await notifyRole(
       "sales_support",
-      `CIS for "${label}" has been approved. ERP encoding required.`,
-      `[CRS] CIS approved – ERP encoding required: ${label}`,
+      `CIS for "${label}" (${custType}) has been approved. Please fill out the Sales Support section.`,
+      `[CRS] Action required – Sales Support fill-out: ${label}`,
       "support",
       (_name, _url) => ({
-        title: "CIS Approved – ERP Encoding Required",
-        body: `CIS for <strong>${label}</strong> has been approved. Please proceed with ERP encoding.`,
-        ctaLabel: "View Form",
+        title: "CIS Approved – Sales Support Fill-Out Needed",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has been approved by the Senior Approver and is now assigned to Sales Support.<br><br>Please fill out your section — including account type, price list, sales type, and VAT code — then submit to move the form to ERP encoding.`,
+        ctaLabel: "Fill Out Now",
         accentColor: "#1a6e3c",
+        statusBadge: { label: "Pending Sales Support", color: "#2563eb" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
     await notifyRole(
       "admin",
-      `CIS for "${label}" has been approved. ERP encoding required.`,
-      `[CRS] CIS approved – ERP encoding required: ${label}`,
+      `CIS for "${label}" (${custType}) has been approved and is pending Sales Support fill-out.`,
+      `[CRS] CIS approved – pending Sales Support: ${label}`,
       "admin",
       (_name, _url) => ({
-        title: "CIS Approved – ERP Encoding Required",
-        body: `CIS for <strong>${label}</strong> has been approved. Please proceed with ERP encoding.`,
+        title: "CIS Approved – Pending Sales Support",
+        body: `A Customer Information Sheet for <strong>${label}</strong> has been approved by the Senior Approver and is now pending Sales Support fill-out before ERP encoding.`,
         ctaLabel: "View Form",
         accentColor: "#1a6e3c",
+        statusBadge: { label: "Approved", color: "#16a34a" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
   } else if (action === "denied") {
@@ -398,29 +505,41 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Your CIS submission for "${label}" has been denied. Please check the details for the reason.`,
+        `Your CIS submission for "${label}" (${custType}) has been denied. Please check the denial reason.`,
         agent.email,
-        `[CRS] CIS denied: ${label}`,
+        `[CRS] CIS denied – ${label}`,
         {
           name: agent.fullName,
-          title: "CIS Denied",
-          body: `Your CIS submission for <strong>${label}</strong> has been denied. Please check the form details for the reason.`,
+          title: "CIS Submission Denied",
+          body: `Unfortunately, the Customer Information Sheet for <strong>${label}</strong> has been denied.<br><br>Please review the denial reason in the activity log. If the denial is due to missing or incomplete requirements, you may coordinate with your customer to gather the necessary documents and submit a new application.`,
           reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          ctaLabel: "View Denial Details",
           accentColor: "#8b2020",
+          statusBadge: { label: "Denied", color: "#dc2626" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+          ],
         },
       );
     }
     await notifyRole(
       "sales_support",
-      `CIS for "${label}" has been denied.`,
-      `[CRS] CIS denied: ${label}`,
+      `CIS for "${label}" (${custType}) has been denied.`,
+      `[CRS] CIS denied – ${label}`,
       "support",
       (_name, _url) => ({
-        title: "CIS Denied",
-        body: `CIS for <strong>${label}</strong> has been denied.`,
+        title: "CIS Submission Denied",
+        body: `The Customer Information Sheet for <strong>${label}</strong> has been denied. No further action is required from Sales Support for this submission.`,
         ctaLabel: "View Form",
         accentColor: "#8b2020",
+        statusBadge: { label: "Denied", color: "#dc2626" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
       }),
     );
   } else if (action === "erp_encoded") {
@@ -428,16 +547,23 @@ async function notifyParties({
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(
         agent.id,
-        `Customer "${label}" has been encoded in the ERP system. Onboarding is complete.`,
+        `Customer "${label}" (${custType}) has been encoded in the ERP system. Onboarding is complete!`,
         agent.email,
-        `[CRS] Customer onboarded – ERP encoded: ${label}`,
+        `[CRS] Onboarding complete – ${label}`,
         {
           name: agent.fullName,
           title: "Customer Onboarding Complete",
-          body: `Customer <strong>${label}</strong> has been successfully encoded in the ERP system. Onboarding is complete.`,
+          body: `The Customer Information Sheet for <strong>${label}</strong> has been successfully encoded in the ERP system.<br><br>The entire registration process is now <strong>complete</strong>. The customer is fully onboarded and ready for transactions. No further action is required.`,
           reviewUrl: viewUrl,
-          ctaLabel: "View Form",
+          ctaLabel: "View Completed Form",
           accentColor: "#1a6e3c",
+          statusBadge: { label: "ERP Encoded", color: "#16a34a" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Status", value: "Onboarding Complete" },
+          ],
         },
       );
     }

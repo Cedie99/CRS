@@ -226,7 +226,6 @@ export const endorseSchema = z.object({
 
 export const approveSchema = z.object({
   note: z.string().max(1000).optional(),
-  approverSignature: z.string().min(1, "Signature is required"),
 });
 
 export const returnSchema = z.object({

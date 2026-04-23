@@ -5,23 +5,39 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
-import { AnimatedDisclosure } from "@/components/animated-disclosure";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { FileText, Database, XCircle, Clock, LayoutList } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 
 export const metadata = { title: "Sales Support — CRS" };
 
+const ALL_VISIBLE_STATUSES: CisStatus[] = [
+  "draft",
+  "submitted",
+  "pending_endorsement",
+  "pending_legal_review",
+  "pending_finance_review",
+  "pending_approval",
+  "approved",
+  "pending_erp_encoding",
+  "erp_encoded",
+  "denied",
+  "returned",
+];
+
 export default async function SupportDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { q, status, page } = await searchParams;
+  const { q, status, page, view } = await searchParams;
+  const viewMode = view === "all" ? "all" : "queue";
+  const isAllView = viewMode === "all";
   const currentPage = getPageNumber(page);
   const pageSize = 12;
   const offset = (currentPage - 1) * pageSize;
@@ -41,7 +57,12 @@ export default async function SupportDashboard({
     searchConditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const pendingConditions = [eq(cisSubmissions.status, "approved"), ...searchConditions];
+  const pendingConditions = [
+    isAllView
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES as any)
+      : eq(cisSubmissions.status, "approved"),
+    ...searchConditions,
+  ];
   const encodedConditions = [eq(cisSubmissions.status, "erp_encoded"), ...searchConditions];
   const deniedConditions = [eq(cisSubmissions.status, "denied"), ...searchConditions];
 
@@ -93,11 +114,19 @@ export default async function SupportDashboard({
   const pendingTotal = Number(pendingCountRow[0]?.total ?? 0);
   const encodedTotal = Number(encodedCountRow[0]?.total ?? 0);
   const deniedTotal = Number(deniedCountRow[0]?.total ?? 0);
-  const total = pendingTotal + encodedTotal + deniedTotal;
+  const total = isAllView ? pendingTotal : pendingTotal + encodedTotal + deniedTotal;
+  const buildModeHref = (mode: "queue" | "all") => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status) params.set("status", status);
+    if (mode === "all") params.set("view", "all");
+    const suffix = params.toString();
+    return `/support${suffix ? `?${suffix}` : ""}`;
+  };
 
   const stats = [
     {
-      label: "Ready to Onboard",
+      label: isAllView ? "Visible Forms" : "Ready to Onboard",
       value: pendingTotal,
       icon: Clock,
       iconBg: "bg-amber-50",
@@ -131,13 +160,39 @@ export default async function SupportDashboard({
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">Sales Support</h1>
         <p className="mt-0.5 text-sm text-zinc-500">
-          Enter approved customers into the system and review denied forms.
+          {isAllView
+            ? "Browse all submissions in read-only mode."
+            : "Enter approved customers into the system and review denied forms."}
         </p>
       </div>
 
+      <div className="inline-flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
+        <Link
+          href={buildModeHref("queue")}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${!isAllView ? "bg-emerald-100 text-emerald-800" : "text-zinc-600 hover:text-zinc-900"}`}
+        >
+          My Queue
+        </Link>
+        <Link
+          href={buildModeHref("all")}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isAllView ? "bg-blue-100 text-blue-800" : "text-zinc-600 hover:text-zinc-900"}`}
+        >
+          All Submissions (Read-only)
+        </Link>
+      </div>
+
+      {isAllView && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Context mode: you can view all submissions across customer types and statuses. Actions are disabled when opened from this mode.
+        </div>
+      )}
+
       <DashboardFilters />
 
-      <AnimatedDisclosure title="Performance Snapshot" className="rounded-xl border border-zinc-200 bg-white">
+      <div className="rounded-xl border border-zinc-200 bg-white">
+        <div className="px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
+        </div>
         <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 p-3 sm:grid-cols-4">
           {stats.map(({ label, value, icon: Icon, iconBg, iconColor }) => (
             <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
@@ -153,12 +208,12 @@ export default async function SupportDashboard({
             </div>
           ))}
         </div>
-      </AnimatedDisclosure>
+      </div>
 
       <CustomerTypeNavCards
         basePath="/support"
-        searchParams={{ q, status }}
-        submissions={[...pendingEncoding, ...encoded, ...denied]}
+        searchParams={{ q, status, view: isAllView ? "all" : undefined }}
+        submissions={isAllView ? pendingEncoding : [...pendingEncoding, ...encoded, ...denied]}
       />
 
       {total === 0 && (
@@ -168,14 +223,18 @@ export default async function SupportDashboard({
             {q || status ? "No matching submissions" : "No submissions yet"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {q || status ? "Try adjusting your search or filters." : "Approved submissions will appear here."}
+            {q || status ? "Try adjusting your search or filters." : isAllView ? "No submissions match this context view." : "Approved submissions will appear here."}
           </p>
         </div>
       )}
 
       {total > 0 && (
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          <strong className="text-zinc-800">Highlighted cards</strong> have submissions to process. Select one to open it.
+          {isAllView ? (
+            <span>You are in read-only mode — select a card to browse, but actions are disabled.</span>
+          ) : (
+            <span><strong className="text-zinc-800">Highlighted cards</strong> have submissions to process. Select one to open it.</span>
+          )}
         </div>
       )}
     </div>

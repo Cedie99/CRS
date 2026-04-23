@@ -15,6 +15,8 @@ export interface EmailContentOpts {
   reviewUrl?: string | null;
   ctaLabel?: string;
   accentColor?: string;
+  details?: Array<{ label: string; value: string }>;
+  statusBadge?: { label: string; color: string };
 }
 
 export function buildEmailHtml({
@@ -25,6 +27,8 @@ export function buildEmailHtml({
   reviewUrl,
   ctaLabel = "View Form",
   accentColor = "#0f2340",
+  details,
+  statusBadge,
 }: EmailContentOpts): string {
   const btn = reviewUrl
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:28px;">
@@ -86,9 +90,30 @@ export function buildEmailHtml({
             <p style="margin:0 0 4px;color:#333;font-size:14px;">
               Hello <strong>${name}</strong>,
             </p>
-            <p style="margin:0 0 28px;color:#555;font-size:14px;line-height:1.75;">
+            <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.75;">
               ${body}
             </p>
+
+            ${statusBadge ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:20px;">
+              <tr><td>
+                <span style="display:inline-block;background:${statusBadge.color};color:#ffffff;font-size:11px;font-weight:700;
+                             letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:4px;">
+                  ${statusBadge.label}
+                </span>
+              </td></tr>
+            </table>` : ""}
+
+            ${details && details.length > 0 ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+              style="margin-bottom:24px;border:1px solid #e3e7ef;border-radius:8px;overflow:hidden;">
+              ${details.map((d, i) => `<tr>
+                <td style="background:${i % 2 === 0 ? "#f8f9fb" : "#ffffff"};padding:10px 16px;width:40%;vertical-align:top;">
+                  <p style="margin:0;color:#888;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;">${d.label}</p>
+                </td>
+                <td style="background:${i % 2 === 0 ? "#f8f9fb" : "#ffffff"};padding:10px 16px;vertical-align:top;">
+                  <p style="margin:0;color:#333;font-size:13px;font-weight:600;">${d.value}</p>
+                </td>
+              </tr>`).join("")}
+            </table>` : ""}
 
             <!-- CIS reference -->
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">

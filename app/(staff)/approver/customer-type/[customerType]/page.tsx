@@ -1,8 +1,8 @@
-import { and, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cisSubmissions } from "@/lib/db/schema";
+import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { CisCardGrid } from "@/components/cis-card-grid";
@@ -12,12 +12,26 @@ import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
 
+const ALL_VISIBLE_STATUSES: CisStatus[] = [
+  "draft",
+  "submitted",
+  "pending_endorsement",
+  "pending_legal_review",
+  "pending_finance_review",
+  "pending_approval",
+  "approved",
+  "pending_erp_encoding",
+  "erp_encoded",
+  "denied",
+  "returned",
+];
+
 export default async function ApproverCustomerTypePage({
   params,
   searchParams,
 }: {
   params: Promise<{ customerType: string }>;
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -25,13 +39,32 @@ export default async function ApproverCustomerTypePage({
   const { customerType } = await params;
   if (!isDashboardCustomerType(customerType)) notFound();
 
-  const { q, status, page } = await searchParams;
+  const { q, status, page, view } = await searchParams;
+  const isAllView = view === "all";
   const currentPage = getPageNumber(page);
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
-  const conditions: any[] = [
-    eq(cisSubmissions.status, "pending_approval"),
+  const history = await db
+    .select({ cisId: workflowEvents.cisId })
+    .from(workflowEvents)
+    .where(
+      and(
+        eq(workflowEvents.actorId, session.user.id),
+        inArray(workflowEvents.action, ["approved", "denied"])
+      )
+    );
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+
+  const conditions = [
+    isAllView
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
+      : actedCisIds.length > 0
+        ? or(
+            eq(cisSubmissions.status, "pending_approval"),
+            inArray(cisSubmissions.id, actedCisIds)
+          )!
+        : eq(cisSubmissions.status, "pending_approval"),
     eq(cisSubmissions.customerType, customerType),
   ];
 
@@ -78,13 +111,22 @@ export default async function ApproverCustomerTypePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/approver" className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
+        <Link href={isAllView ? "/approver?view=all" : "/approver"} className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
           <ArrowLeft className="h-4 w-4" />
           Back to customer types
         </Link>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType]} Submissions</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+          {CUSTOMER_TYPE_LABELS[customerType]} Submissions
+          {isAllView ? " (All Statuses)" : ""}
+        </h1>
         <p className="mt-1 text-sm text-zinc-500">{CUSTOMER_TYPE_DESCRIPTIONS[customerType]}</p>
       </div>
+
+      {isAllView && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Read-only context mode is active on detail pages opened from this list.
+        </div>
+      )}
 
       <DashboardFilters />
 
@@ -99,13 +141,14 @@ export default async function ApproverCustomerTypePage({
           <CisCardGrid
             submissions={submissions.map((s) => ({ ...s, status: s.status as CisStatus }))}
             hrefPrefix="approver"
+            readOnlyView={isAllView}
           />
           <DashboardPagination
             basePath={`/approver/customer-type/${customerType}`}
             currentPage={currentPage}
             totalItems={total}
             pageSize={pageSize}
-            searchParams={{ q, status }}
+            searchParams={{ q, status, view: isAllView ? "all" : undefined }}
           />
         </>
       )}

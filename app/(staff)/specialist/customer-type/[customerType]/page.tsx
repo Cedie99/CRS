@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -11,6 +11,20 @@ import { CUSTOMER_TYPE_DESCRIPTIONS, CUSTOMER_TYPE_LABELS, isDashboardCustomerTy
 import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
+
+const ALL_VISIBLE_STATUSES: CisStatus[] = [
+  "draft",
+  "submitted",
+  "pending_endorsement",
+  "pending_legal_review",
+  "pending_finance_review",
+  "pending_approval",
+  "approved",
+  "pending_erp_encoding",
+  "erp_encoded",
+  "denied",
+  "returned",
+];
 
 const SUBMISSION_COLS = {
   id: cisSubmissions.id,
@@ -30,7 +44,7 @@ export default async function SpecialistCustomerTypePage({
   searchParams,
 }: {
   params: Promise<{ customerType: string }>;
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -38,13 +52,16 @@ export default async function SpecialistCustomerTypePage({
   const { customerType } = await params;
   if (!isDashboardCustomerType(customerType)) notFound();
 
-  const { q, page } = await searchParams;
+  const { q, status, page, view } = await searchParams;
+  const isAllView = view === "all";
   const currentPage = getPageNumber(page);
-  const pageSize = 12;
+  const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
-  const conditions: any[] = [
-    eq(cisSubmissions.status, "pending_erp_encoding"),
+  const conditions = [
+    isAllView
+      ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
+      : eq(cisSubmissions.status, "pending_erp_encoding"),
     eq(cisSubmissions.customerType, customerType),
   ];
 
@@ -55,6 +72,10 @@ export default async function SpecialistCustomerTypePage({
         ilike(cisSubmissions.contactPerson, `%${q}%`)
       )
     );
+  }
+
+  if (status) {
+    conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
   const [submissions, countRow] = await Promise.all([
@@ -77,13 +98,22 @@ export default async function SpecialistCustomerTypePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/specialist" className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
+        <Link href={isAllView ? "/specialist?view=all" : "/specialist"} className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
           <ArrowLeft className="h-4 w-4" />
           Back to customer types
         </Link>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType]} Submissions</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+          {CUSTOMER_TYPE_LABELS[customerType]} Submissions
+          {isAllView ? " (All Statuses)" : ""}
+        </h1>
         <p className="mt-1 text-sm text-zinc-500">{CUSTOMER_TYPE_DESCRIPTIONS[customerType]}</p>
       </div>
+
+      {isAllView && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Read-only context mode is active on detail pages opened from this list.
+        </div>
+      )}
 
       <DashboardFilters />
 
@@ -91,20 +121,21 @@ export default async function SpecialistCustomerTypePage({
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
           <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No submissions found</h2>
-          <p className="mt-1 text-sm text-zinc-500">Try adjusting your search.</p>
+          <p className="mt-1 text-sm text-zinc-500">Try adjusting your search or filters.</p>
         </div>
       ) : (
         <>
           <CisCardGrid
             submissions={submissions.map((s) => ({ ...s, status: s.status as CisStatus }))}
             hrefPrefix="specialist"
+            readOnlyView={isAllView}
           />
           <DashboardPagination
             basePath={`/specialist/customer-type/${customerType}`}
             currentPage={currentPage}
             totalItems={total}
             pageSize={pageSize}
-            searchParams={{ q }}
+            searchParams={{ q, status, view: isAllView ? "all" : undefined }}
           />
         </>
       )}

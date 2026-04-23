@@ -9,7 +9,7 @@ const updateUserSchema = z.object({
   role: z.enum([
     "sales_agent", "rsr", "sales_manager", "rsr_manager",
     "finance_reviewer", "legal_approver", "senior_approver",
-    "sales_support", "admin",
+    "sales_support", "project_development_specialist", "admin",
   ]).optional(),
   agentType: z.enum(["sales_agent", "rsr"]).nullable().optional(),
   managerId: z.string().uuid().nullable().optional(),

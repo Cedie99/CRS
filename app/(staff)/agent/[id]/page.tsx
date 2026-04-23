@@ -95,6 +95,8 @@ export default async function AgentCisDetailPage({
       docSocialMedia: cisSubmissions.docSocialMedia,
       docCertifications: cisSubmissions.docCertifications,
       docOther: cisSubmissions.docOther,
+      docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
+      docSalesSupportOther: cisSubmissions.docSalesSupportOther,
       isArchived: cisSubmissions.isArchived,
       createdAt: cisSubmissions.createdAt,
       updatedAt: cisSubmissions.updatedAt,
@@ -209,7 +211,7 @@ export default async function AgentCisDetailPage({
       {cis.status === "submitted" && (
         <AgentFillOutForm
           cisId={cis.id}
-          initialOtherRequirements={(cis as any).docAgentOtherRequirements ?? []}
+          initialOtherRequirements={(cis.docAgentOtherRequirements as any) ?? []}
         />
       )}
 
@@ -288,6 +290,8 @@ export default async function AgentCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
             agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
             agentSalesSpecialist={cis.agentSalesSpecialist}

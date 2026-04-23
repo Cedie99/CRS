@@ -98,6 +98,8 @@ export default async function LegalCisDetailPage({
       docSocialMedia: cisSubmissions.docSocialMedia,
       docCertifications: cisSubmissions.docCertifications,
       docOther: cisSubmissions.docOther,
+      docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
+      docSalesSupportOther: cisSubmissions.docSalesSupportOther,
       financeEu: cisSubmissions.financeEu,
       financeDl: cisSubmissions.financeDl,
       financeDr: cisSubmissions.financeDr,
@@ -141,6 +143,11 @@ export default async function LegalCisDetailPage({
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
 
+  const hasFinanceAndLegalInfo =
+    Boolean(cis.financeCreditLimit?.trim()) &&
+    Boolean(cis.financeCreditTerms?.trim());
+  const canPrint = hasFinanceAndLegalInfo;
+
   return (
     <div className="space-y-5">
       <Link
@@ -170,6 +177,8 @@ export default async function LegalCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            printEnabled={canPrint}
+            hidePrintButton
             cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
@@ -240,6 +249,8 @@ export default async function LegalCisDetailPage({
             docSocialMedia={cis.docSocialMedia}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             financeEu={cis.financeEu}
             financeDl={cis.financeDl}
             financeDr={cis.financeDr}
