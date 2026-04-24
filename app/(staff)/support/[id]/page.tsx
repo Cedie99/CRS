@@ -26,28 +26,29 @@ export default async function SupportCisDetailPage({
   const { view } = await searchParams;
   const isReadOnlyContextView = view === "all";
 
-  const [cis] = await db
-    .select()
-    .from(cisSubmissions)
-    .where(eq(cisSubmissions.id, id))
-    .limit(1);
-
+  const [cisRows, events] = await Promise.all([
+    db
+      .select()
+      .from(cisSubmissions)
+      .where(eq(cisSubmissions.id, id))
+      .limit(1),
+    db
+      .select({
+        id: workflowEvents.id,
+        action: workflowEvents.action,
+        note: workflowEvents.note,
+        createdAt: workflowEvents.createdAt,
+        actorName: users.fullName,
+        actorRole: users.role,
+        actorAvatarUrl: users.avatarUrl,
+      })
+      .from(workflowEvents)
+      .innerJoin(users, eq(workflowEvents.actorId, users.id))
+      .where(eq(workflowEvents.cisId, id))
+      .orderBy(workflowEvents.createdAt),
+  ]);
+  const cis = cisRows[0];
   if (!cis) notFound();
-
-  const events = await db
-    .select({
-      id: workflowEvents.id,
-      action: workflowEvents.action,
-      note: workflowEvents.note,
-      createdAt: workflowEvents.createdAt,
-      actorName: users.fullName,
-      actorRole: users.role,
-      actorAvatarUrl: users.avatarUrl,
-    })
-    .from(workflowEvents)
-    .innerJoin(users, eq(workflowEvents.actorId, users.id))
-    .where(eq(workflowEvents.cisId, id))
-    .orderBy(workflowEvents.createdAt);
 
   const canAct = cis.status === "approved" && !isReadOnlyContextView;
   const needsPhysicalSignature = ((cis.docSirRestySigned as any[] | null) ?? []).length === 0;

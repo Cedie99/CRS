@@ -81,34 +81,39 @@ export default async function AgentDashboard({
       }
     }
 
-    filteredCount = Number(
-      (
-        await db
-          .select({ total: count() })
-          .from(cisSubmissions)
-          .where(and(...conditions))
-      )[0]?.total ?? 0
-    );
+    // Run all 4 queries in parallel — they're independent
+    const [filteredCountRow, submissionRows, statsRows, archivedRows] = await Promise.all([
+      db
+        .select({ total: count() })
+        .from(cisSubmissions)
+        .where(and(...conditions)),
+      db
+        .select(cardSelect)
+        .from(cisSubmissions)
+        .where(and(...conditions))
+        .orderBy(desc(cisSubmissions.createdAt))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({
+          total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
+          draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
+          awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
+          active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+          completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+          denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+        })
+        .from(cisSubmissions)
+        .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true))),
+      db
+        .select({ total: count() })
+        .from(cisSubmissions)
+        .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true))),
+    ]);
 
-    submissions = await db
-      .select(cardSelect)
-      .from(cisSubmissions)
-      .where(and(...conditions))
-      .orderBy(desc(cisSubmissions.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    const [statsRow] = await db
-      .select({
-        total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
-        draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
-        awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
-        completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
-        denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
-      })
-      .from(cisSubmissions)
-      .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true)));
+    filteredCount = Number(filteredCountRow[0]?.total ?? 0);
+    submissions = submissionRows;
+    const statsRow = statsRows[0];
     statsCounts = {
       total: Number(statsRow?.total ?? 0),
       draft: Number(statsRow?.draft ?? 0),
@@ -117,12 +122,7 @@ export default async function AgentDashboard({
       completed: Number(statsRow?.completed ?? 0),
       denied: Number(statsRow?.denied ?? 0),
     };
-
-    const [archivedRow] = await db
-      .select({ total: count() })
-      .from(cisSubmissions)
-      .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true)));
-    archivedCount = Number(archivedRow?.total ?? 0);
+    archivedCount = Number(archivedRows[0]?.total ?? 0);
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
       throw error;
@@ -142,34 +142,34 @@ export default async function AgentDashboard({
       fallbackConditions.push(eq(cisSubmissions.status, status as CisStatus));
     }
 
-    filteredCount = Number(
-      (
-        await db
-          .select({ total: count() })
-          .from(cisSubmissions)
-          .where(and(...fallbackConditions))
-      )[0]?.total ?? 0
-    );
+    const [fbCountRow, fbSubmissions, fbStatsRows] = await Promise.all([
+      db
+        .select({ total: count() })
+        .from(cisSubmissions)
+        .where(and(...fallbackConditions)),
+      db
+        .select(cardSelect)
+        .from(cisSubmissions)
+        .where(and(...fallbackConditions))
+        .orderBy(desc(cisSubmissions.createdAt))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({
+          total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
+          draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
+          awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
+          active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+          completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+          denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+        })
+        .from(cisSubmissions)
+        .where(eq(cisSubmissions.agentId, session!.user.id)),
+    ]);
 
-    submissions = await db
-      .select(cardSelect)
-      .from(cisSubmissions)
-      .where(and(...fallbackConditions))
-      .orderBy(desc(cisSubmissions.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    const [fallbackStatsRow] = await db
-      .select({
-        total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
-        draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
-        awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
-        active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
-        completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
-        denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
-      })
-      .from(cisSubmissions)
-      .where(eq(cisSubmissions.agentId, session!.user.id));
+    filteredCount = Number(fbCountRow[0]?.total ?? 0);
+    submissions = fbSubmissions;
+    const fallbackStatsRow = fbStatsRows[0];
     statsCounts = {
       total: Number(fallbackStatsRow?.total ?? 0),
       draft: Number(fallbackStatsRow?.draft ?? 0),

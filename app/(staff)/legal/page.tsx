@@ -53,17 +53,16 @@ export default async function LegalDashboard({
     updatedAt: cisSubmissions.updatedAt,
   };
 
-  const [history] = await Promise.all([
-    db
-      .select({ cisId: workflowEvents.cisId, action: workflowEvents.action })
-      .from(workflowEvents)
-      .where(
-        and(
-          eq(workflowEvents.actorId, session.user.id),
-          inArray(workflowEvents.action, ["forwarded_to_approver", "denied"])
-        )
-      ),
-  ]);
+  const history = await db
+    .select({ cisId: workflowEvents.cisId, action: workflowEvents.action })
+    .from(workflowEvents)
+    .where(
+      and(
+        eq(workflowEvents.actorId, session.user.id),
+        inArray(workflowEvents.action, ["forwarded_to_approver", "denied"])
+      )
+    )
+    .limit(1000);
 
   const actedCisIds = [...new Set(history.map((e) => e.cisId))];
   const conditions = [

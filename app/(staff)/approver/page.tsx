@@ -53,17 +53,16 @@ export default async function ApproverDashboard({
     updatedAt: cisSubmissions.updatedAt,
   };
 
-  const [history] = await Promise.all([
-    db
-      .select({ action: workflowEvents.action })
-      .from(workflowEvents)
-      .where(
-        and(
-          eq(workflowEvents.actorId, session.user.id),
-          inArray(workflowEvents.action, ["approved", "denied"])
-        )
-      ),
-  ]);
+  const history = await db
+    .select({ action: workflowEvents.action })
+    .from(workflowEvents)
+    .where(
+      and(
+        eq(workflowEvents.actorId, session.user.id),
+        inArray(workflowEvents.action, ["approved", "denied"])
+      )
+    )
+    .limit(1000);
   const conditions = [
     isAllView
       ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)

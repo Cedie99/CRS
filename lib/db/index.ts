@@ -4,10 +4,10 @@ import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL!;
 
-// In development, HMR causes this module to re-execute on every file change,
-// creating a new connection pool each time and quickly exhausting Supabase's
-// connection limit. Storing the client on the global object ensures a single
-// pool is reused across all HMR cycles for the lifetime of the dev server.
+// Storing the client on the global object ensures a single pool is reused.
+// In development this prevents HMR from exhausting Supabase connections;
+// in production (Vercel serverless) it keeps the pool alive across warm
+// invocations of the same isolate instead of creating a new one every call.
 declare global {
   // eslint-disable-next-line no-var
   var __pgClient: postgres.Sql | undefined;
@@ -16,13 +16,12 @@ declare global {
 function createClient() {
   return postgres(connectionString, {
     prepare: false, // Required for Supabase pgbouncer transaction mode
-    max: 20,
+    idle_timeout: 20, // Close idle connections after 20s
+    max_lifetime: 60 * 30, // Recycle connections every 30 min
+    max: 6, // Keep pool small — serverless functions share Supabase's limit
   });
 }
 
-const client =
-  process.env.NODE_ENV === "development"
-    ? (global.__pgClient ??= createClient())
-    : createClient();
+const client = (globalThis.__pgClient ??= createClient());
 
 export const db = drizzle(client, { schema });

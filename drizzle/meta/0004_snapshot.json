@@ -1,0 +1,1202 @@
+{
+  "id": "a0c1e24b-17f4-4cda-824f-83d6060e2271",
+  "prevId": "481ba32b-f493-403c-9250-38af80dc0d4d",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.cis_submissions": {
+      "name": "cis_submissions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "public_token": {
+          "name": "public_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "agent_id": {
+          "name": "agent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agent_code": {
+          "name": "agent_code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agent_type": {
+          "name": "agent_type",
+          "type": "agent_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_type": {
+          "name": "customer_type",
+          "type": "customer_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "cis_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "trade_name": {
+          "name": "trade_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_person": {
+          "name": "contact_person",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_number": {
+          "name": "contact_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_address": {
+          "name": "email_address",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_address": {
+          "name": "business_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city_municipality": {
+          "name": "city_municipality",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_type": {
+          "name": "business_type",
+          "type": "business_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tin_number": {
+          "name": "tin_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "additional_notes": {
+          "name": "additional_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corporate_name": {
+          "name": "corporate_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_of_business_reg": {
+          "name": "date_of_business_reg",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "number_of_employees": {
+          "name": "number_of_employees",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website": {
+          "name": "website",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telephone_number": {
+          "name": "telephone_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "landmarks": {
+          "name": "landmarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_same_as_office": {
+          "name": "delivery_same_as_office",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "delivery_address": {
+          "name": "delivery_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_landmarks": {
+          "name": "delivery_landmarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_mobile": {
+          "name": "delivery_mobile",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_telephone": {
+          "name": "delivery_telephone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "line_of_business": {
+          "name": "line_of_business",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "line_of_business_other": {
+          "name": "line_of_business_other",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_activity": {
+          "name": "business_activity",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_activity_other": {
+          "name": "business_activity_other",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owners": {
+          "name": "owners",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "officers": {
+          "name": "officers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_terms": {
+          "name": "payment_terms",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_life": {
+          "name": "business_life",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "how_long_at_address": {
+          "name": "how_long_at_address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "number_of_branches": {
+          "name": "number_of_branches",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gov_certifications": {
+          "name": "gov_certifications",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "trade_references": {
+          "name": "trade_references",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bank_references": {
+          "name": "bank_references",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "achievements": {
+          "name": "achievements",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_merits": {
+          "name": "other_merits",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_valid_id": {
+          "name": "doc_valid_id",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_mayors_permit": {
+          "name": "doc_mayors_permit",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_sec_dti": {
+          "name": "doc_sec_dti",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_bir_certificate": {
+          "name": "doc_bir_certificate",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_location_map": {
+          "name": "doc_location_map",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_financial_statement": {
+          "name": "doc_financial_statement",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_bank_statement": {
+          "name": "doc_bank_statement",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_proof_of_billing": {
+          "name": "doc_proof_of_billing",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_lease_contract": {
+          "name": "doc_lease_contract",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_proof_of_ownership": {
+          "name": "doc_proof_of_ownership",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_store_photo": {
+          "name": "doc_store_photo",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_supplier_invoice": {
+          "name": "doc_supplier_invoice",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_social_media": {
+          "name": "doc_social_media",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_certifications": {
+          "name": "doc_certifications",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_gov_certifications": {
+          "name": "doc_gov_certifications",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_other": {
+          "name": "doc_other",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_account_specialist_first": {
+          "name": "agent_account_specialist_first",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_account_specialist_last": {
+          "name": "agent_account_specialist_last",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_sales_specialist": {
+          "name": "agent_sales_specialist",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_sales_manager": {
+          "name": "agent_sales_manager",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_tpc_first": {
+          "name": "agent_tpc_first",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_tpc_last": {
+          "name": "agent_tpc_last",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_agent_other_requirements": {
+          "name": "doc_agent_other_requirements",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_notes": {
+          "name": "sales_support_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "petroleum_license_no": {
+          "name": "petroleum_license_no",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "depot_station_type": {
+          "name": "depot_station_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tank_capacity": {
+          "name": "tank_capacity",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doe_accreditation_no": {
+          "name": "doe_accreditation_no",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "special_account_type": {
+          "name": "special_account_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "special_account_remarks": {
+          "name": "special_account_remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_signature": {
+          "name": "customer_signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_signed_at": {
+          "name": "customer_signed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_signature_seal": {
+          "name": "customer_signature_seal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approver_signature": {
+          "name": "approver_signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approver_signed_at": {
+          "name": "approver_signed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approver_signature_seal": {
+          "name": "approver_signature_seal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_eu": {
+          "name": "finance_eu",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_dl": {
+          "name": "finance_dl",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_dr": {
+          "name": "finance_dr",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_pl_ts": {
+          "name": "finance_pl_ts",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_possible_points": {
+          "name": "finance_possible_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_approved_points": {
+          "name": "finance_approved_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_credit_terms": {
+          "name": "finance_credit_terms",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_credit_limit": {
+          "name": "finance_credit_limit",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_sir_resty_signed": {
+          "name": "doc_sir_resty_signed",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_account_type": {
+          "name": "sales_support_account_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_price_list_1": {
+          "name": "sales_support_price_list_1",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_price_list_2": {
+          "name": "sales_support_price_list_2",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_sales_type": {
+          "name": "sales_support_sales_type",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_vat_code": {
+          "name": "sales_support_vat_code",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_other_remarks": {
+          "name": "sales_support_other_remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_sales_support_other": {
+          "name": "doc_sales_support_other",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "cis_agent_id_created_at_idx": {
+          "name": "cis_agent_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "agent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cis_agent_id_status_created_at_idx": {
+          "name": "cis_agent_id_status_created_at_idx",
+          "columns": [
+            {
+              "expression": "agent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cis_status_updated_at_idx": {
+          "name": "cis_status_updated_at_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cis_status_created_at_idx": {
+          "name": "cis_status_created_at_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cis_customer_type_idx": {
+          "name": "cis_customer_type_idx",
+          "columns": [
+            {
+              "expression": "customer_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cis_submissions_agent_id_users_id_fk": {
+          "name": "cis_submissions_agent_id_users_id_fk",
+          "tableFrom": "cis_submissions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "agent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cis_submissions_public_token_unique": {
+          "name": "cis_submissions_public_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "public_token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notifications": {
+      "name": "notifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "cis_id": {
+          "name": "cis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient_id": {
+          "name": "recipient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "notif_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'in_app'"
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_read": {
+          "name": "is_read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "notif_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "notifications_recipient_id_sent_at_idx": {
+          "name": "notifications_recipient_id_sent_at_idx",
+          "columns": [
+            {
+              "expression": "recipient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sent_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notifications_cis_id_cis_submissions_id_fk": {
+          "name": "notifications_cis_id_cis_submissions_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "cis_submissions",
+          "columnsFrom": [
+            "cis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "notifications_recipient_id_users_id_fk": {
+          "name": "notifications_recipient_id_users_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "recipient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'sales_agent'"
+        },
+        "agent_code": {
+          "name": "agent_code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agent_type": {
+          "name": "agent_type",
+          "type": "agent_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manager_id": {
+          "name": "manager_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "users_manager_id_idx": {
+          "name": "users_manager_id_idx",
+          "columns": [
+            {
+              "expression": "manager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.workflow_events": {
+      "name": "workflow_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "cis_id": {
+          "name": "cis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "workflow_action",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "workflow_events_cis_id_created_at_idx": {
+          "name": "workflow_events_cis_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "cis_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workflow_events_actor_action_idx": {
+          "name": "workflow_events_actor_action_idx",
+          "columns": [
+            {
+              "expression": "actor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "action",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workflow_events_cis_id_cis_submissions_id_fk": {
+          "name": "workflow_events_cis_id_cis_submissions_id_fk",
+          "tableFrom": "workflow_events",
+          "tableTo": "cis_submissions",
+          "columnsFrom": [
+            "cis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflow_events_actor_id_users_id_fk": {
+          "name": "workflow_events_actor_id_users_id_fk",
+          "tableFrom": "workflow_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.agent_type": {
+      "name": "agent_type",
+      "schema": "public",
+      "values": [
+        "sales_agent",
+        "rsr"
+      ]
+    },
+    "public.business_type": {
+      "name": "business_type",
+      "schema": "public",
+      "values": [
+        "corporation",
+        "partnership",
+        "sole_proprietor",
+        "cooperative",
+        "other"
+      ]
+    },
+    "public.cis_status": {
+      "name": "cis_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "submitted",
+        "pending_endorsement",
+        "pending_legal_review",
+        "pending_finance_review",
+        "pending_approval",
+        "approved",
+        "pending_erp_encoding",
+        "erp_encoded",
+        "denied",
+        "returned"
+      ]
+    },
+    "public.customer_type": {
+      "name": "customer_type",
+      "schema": "public",
+      "values": [
+        "standard",
+        "fs_petroleum",
+        "special",
+        "dealer",
+        "distributor",
+        "private_label",
+        "toll_blend",
+        "end_user"
+      ]
+    },
+    "public.notif_status": {
+      "name": "notif_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "sent",
+        "failed"
+      ]
+    },
+    "public.notif_type": {
+      "name": "notif_type",
+      "schema": "public",
+      "values": [
+        "email",
+        "in_app"
+      ]
+    },
+    "public.role": {
+      "name": "role",
+      "schema": "public",
+      "values": [
+        "sales_agent",
+        "rsr",
+        "sales_manager",
+        "rsr_manager",
+        "finance_reviewer",
+        "legal_approver",
+        "senior_approver",
+        "sales_support",
+        "project_development_specialist",
+        "admin"
+      ]
+    },
+    "public.workflow_action": {
+      "name": "workflow_action",
+      "schema": "public",
+      "values": [
+        "submitted",
+        "agent_submitted",
+        "endorsed",
+        "returned",
+        "forwarded_to_legal",
+        "forwarded_to_finance",
+        "forwarded_to_approver",
+        "approved",
+        "denied",
+        "sales_support_submitted",
+        "erp_encoded"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

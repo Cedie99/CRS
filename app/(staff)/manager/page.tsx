@@ -48,23 +48,23 @@ export default async function ManagerDashboard({
   const pageSize = 12;
   const queueOffset = (queueCurrentPage - 1) * pageSize;
 
-  const myAgents = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.managerId, session.user.id));
+  // Run independent queries in parallel: myAgents is always needed, agentFilterName only when filtering
+  const [myAgents, agentFilterRows] = await Promise.all([
+    db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.managerId, session.user.id)),
+    agentId
+      ? db
+          .select({ fullName: users.fullName })
+          .from(users)
+          .where(and(eq(users.id, agentId), eq(users.managerId, session.user.id)))
+          .limit(1)
+      : Promise.resolve([]),
+  ]);
 
   const agentIds = myAgents.map((a) => a.id);
-
-  // Resolve agent name for agentId filter banner (verify agent belongs to this manager)
-  let agentFilterName: string | null = null;
-  if (agentId) {
-    const agentRows = await db
-      .select({ fullName: users.fullName })
-      .from(users)
-      .where(and(eq(users.id, agentId), eq(users.managerId, session.user.id)))
-      .limit(1);
-    agentFilterName = agentRows[0]?.fullName ?? null;
-  }
+  const agentFilterName: string | null = agentFilterRows[0]?.fullName ?? null;
 
   if (agentIds.length === 0) {
     return (
@@ -89,17 +89,56 @@ export default async function ManagerDashboard({
     );
   }
 
-  // Stats (unfiltered, SQL aggregate)
-  const [statsRow] = await db
-    .select({
-      total: count(),
-      activeCount: count(sql`CASE WHEN ${cisSubmissions.status} NOT IN ('draft','erp_encoded','denied','returned') THEN 1 END`),
-      inProgressCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
-      erpCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
-      deniedCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
-    })
-    .from(cisSubmissions)
-    .where(inArray(cisSubmissions.agentId, agentIds));
+  // Stats + action queue in parallel (both depend on agentIds which is now ready)
+  const [statsRows, actionResults] = await Promise.all([
+    db
+      .select({
+        total: count(),
+        activeCount: count(sql`CASE WHEN ${cisSubmissions.status} NOT IN ('draft','erp_encoded','denied','returned') THEN 1 END`),
+        inProgressCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('submitted','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
+        erpCount: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
+        deniedCount: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
+      })
+      .from(cisSubmissions)
+      .where(inArray(cisSubmissions.agentId, agentIds)),
+    // Build action query inline so it runs in parallel with stats
+    (async () => {
+      const actionConditions: any[] = [
+        inArray(cisSubmissions.agentId, agentIds),
+        ne(cisSubmissions.status, "draft"),
+      ];
+      if (agentId && agentFilterName) {
+        actionConditions.push(eq(cisSubmissions.agentId, agentId));
+      }
+      if (status) {
+        actionConditions.push(eq(cisSubmissions.status, status as CisStatus));
+      }
+      if (q) {
+        actionConditions.push(
+          or(
+            ilike(cisSubmissions.tradeName, `%${q}%`),
+            ilike(cisSubmissions.contactPerson, `%${q}%`)
+          )!
+        );
+      }
+      return Promise.all([
+        db
+          .select(SUBMISSION_COLS)
+          .from(cisSubmissions)
+          .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+          .where(and(...actionConditions))
+          .orderBy(desc(cisSubmissions.createdAt))
+          .limit(pageSize)
+          .offset(queueOffset),
+        db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(and(...actionConditions)),
+      ]);
+    })(),
+  ]);
+  const statsRow = statsRows[0];
+  const [actionQueue, actionCountRow] = actionResults;
 
   const total = Number(statsRow?.total ?? 0);
   const activeCount = Number(statsRow?.activeCount ?? 0);
@@ -155,38 +194,6 @@ export default async function ManagerDashboard({
     },
   ];
 
-  // Section 1: Active queue — all non-draft, non-archived submissions
-  const actionConditions: any[] = [
-    inArray(cisSubmissions.agentId, agentIds),
-    ne(cisSubmissions.status, "draft"),
-  ];
-  if (agentId && agentFilterName) {
-    actionConditions.push(eq(cisSubmissions.agentId, agentId));
-  }
-  if (status) {
-    actionConditions.push(eq(cisSubmissions.status, status as CisStatus));
-  }
-  if (q) {
-    actionConditions.push(
-      or(
-        ilike(cisSubmissions.tradeName, `%${q}%`),
-        ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )!
-    );
-  }
-
-  const [actionQueue, actionCountRow] = await Promise.all([
-    db
-      .select(SUBMISSION_COLS)
-      .from(cisSubmissions)
-      .innerJoin(users, eq(cisSubmissions.agentId, users.id))
-      .where(and(...actionConditions))
-      .orderBy(desc(cisSubmissions.createdAt)),
-    db
-      .select({ total: count() })
-      .from(cisSubmissions)
-      .where(and(...actionConditions)),
-  ]);
   const actionTotal = Number(actionCountRow[0]?.total ?? 0);
 
   // Clear-agent-filter URL (preserves q and status)

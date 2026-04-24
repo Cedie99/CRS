@@ -243,6 +243,8 @@ export const cisSubmissions = pgTable("cis_submissions", {
   index("cis_agent_id_created_at_idx").on(t.agentId, t.createdAt.desc()),
   index("cis_agent_id_status_created_at_idx").on(t.agentId, t.status, t.createdAt.desc()),
   index("cis_status_updated_at_idx").on(t.status, t.updatedAt.desc()),
+  index("cis_status_created_at_idx").on(t.status, t.createdAt.desc()),
+  index("cis_customer_type_idx").on(t.customerType),
 ]);
 
 export const workflowEvents = pgTable("workflow_events", {
@@ -258,6 +260,7 @@ export const workflowEvents = pgTable("workflow_events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [
   index("workflow_events_cis_id_created_at_idx").on(t.cisId, t.createdAt),
+  index("workflow_events_actor_action_idx").on(t.actorId, t.action),
 ]);
 
 export const notifications = pgTable("notifications", {
