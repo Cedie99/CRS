@@ -131,6 +131,29 @@
   }
 }
 
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(45deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px 4px rgba(250, 204, 21, 0.4),
+      0 0 40px 8px rgba(250, 204, 21, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 30px 6px rgba(250, 204, 21, 0.6),
+      0 0 60px 12px rgba(250, 204, 21, 0.3);
+  }
+}
+
 @media print {
   @page {
     margin: 1.4cm 1.6cm;

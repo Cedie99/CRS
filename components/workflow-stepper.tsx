@@ -1,4 +1,4 @@
-import { Check, Circle, RotateCcw, X } from "lucide-react";
+import { Check, CheckCircle2, Circle, RotateCcw, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -188,6 +188,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                   const isCompleted = i < currentIndex;
                   const isCurrent = i === currentIndex;
                   const isFuture = i > currentIndex;
+                  const isDoneStep = step.key === "erp_encoded" && isDone && isCurrent;
 
                   return (
                     <div
@@ -196,24 +197,47 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                       style={{ animationDelay: `${i * 55}ms` }}
                     >
                       <div className="relative flex h-7 w-7 items-center justify-center">
-                        {isCurrent && (
+                        {isCurrent && !isDoneStep && (
                           <>
                             <span className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping" />
                             <span className="absolute inset-1 rounded-full border border-emerald-600/40 animate-pulse" />
                           </>
                         )}
+                        {isDoneStep && (
+                          <>
+                            <span className="absolute -inset-1 rounded-full bg-yellow-400/30 animate-[glow-pulse_2s_ease-in-out_infinite]" />
+                            <span className="absolute -inset-0.5 rounded-full border-2 border-yellow-400/60" />
+                          </>
+                        )}
                         <div
                           className={cn(
-                            "relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500",
-                            isCompleted && "bg-emerald-600 text-white",
-                            isCurrent && "bg-emerald-600 text-white ring-2 ring-emerald-200",
-                            isFuture && "bg-zinc-200 text-zinc-400"
+                            "relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500 overflow-hidden",
+                            isCompleted && !isDoneStep && "bg-emerald-600 text-white",
+                            isCurrent && !isDoneStep && "bg-emerald-600 text-white ring-2 ring-emerald-200",
+                            isFuture && "bg-zinc-200 text-zinc-400",
+                            isDoneStep && "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-200 shadow-lg"
                           )}
                         >
+                          {isDoneStep && (
+                            <span
+                              className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent"
+                              style={{
+                                animation: "shine 2s linear infinite",
+                              }}
+                            />
+                          )}
                           {isCompleted ? (
-                            <Check className="h-3 w-3" />
+                            isDoneStep ? (
+                              <Sparkles className="h-3.5 w-3.5 relative z-10" />
+                            ) : (
+                              <Check className="h-3 w-3" />
+                            )
                           ) : isCurrent ? (
-                            <Circle className="h-2.5 w-2.5 fill-current" />
+                            isDoneStep ? (
+                              <CheckCircle2 className="h-4 w-4 relative z-10" />
+                            ) : (
+                              <Circle className="h-2.5 w-2.5 fill-current" />
+                            )
                           ) : (
                             <Circle className="h-2.5 w-2.5" />
                           )}
@@ -223,7 +247,8 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                       <p
                         className={cn(
                           "mt-2 text-center text-xs font-semibold leading-tight",
-                          isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500"
+                          isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500",
+                          isDoneStep && "text-amber-700"
                         )}
                       >
                         {step.label}
@@ -231,12 +256,13 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                       <p
                         className={cn(
                           "mt-0.5 text-[10px] font-medium",
-                          isCompleted && "text-emerald-700",
-                          isCurrent && "text-emerald-700",
-                          isFuture && "text-zinc-400"
+                          isCompleted && !isDoneStep && "text-emerald-700",
+                          isCurrent && !isDoneStep && "text-emerald-700",
+                          isFuture && "text-zinc-400",
+                          isDoneStep && "text-amber-600 font-bold"
                         )}
                       >
-                        {isCompleted ? "Done" : isCurrent ? "Current" : "Next"}
+                        {isDoneStep ? "Complete!" : isCompleted ? "Done" : isCurrent ? "Current" : "Next"}
                       </p>
                     </div>
                   );
