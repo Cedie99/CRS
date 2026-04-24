@@ -44,7 +44,7 @@ export default async function SupportCustomerTypePage({
       or(
         ilike(cisSubmissions.tradeName, `%${q}%`),
         ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )
+      )!
     );
   }
 

@@ -49,7 +49,7 @@ export default async function SupportDashboard({
       or(
         ilike(cisSubmissions.tradeName, `%${q}%`),
         ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )
+      )!
     );
   }
 

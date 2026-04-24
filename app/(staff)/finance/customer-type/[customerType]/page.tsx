@@ -73,7 +73,7 @@ export default async function FinanceCustomerTypePage({
       or(
         ilike(cisSubmissions.tradeName, `%${q}%`),
         ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )
+      )!
     );
   }
 

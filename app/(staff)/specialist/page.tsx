@@ -61,7 +61,7 @@ export default async function SpecialistDashboard({
       or(
         ilike(cisSubmissions.tradeName, `%${q}%`),
         ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )
+      )!
     );
   }
 

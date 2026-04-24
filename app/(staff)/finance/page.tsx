@@ -82,7 +82,7 @@ export default async function FinanceDashboard({
       or(
         ilike(cisSubmissions.tradeName, `%${q}%`),
         ilike(cisSubmissions.contactPerson, `%${q}%`)
-      )
+      )!
     );
   }
 
