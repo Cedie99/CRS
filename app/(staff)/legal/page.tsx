@@ -1,7 +1,8 @@
 import { eq, desc, and, ilike, or, inArray, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
+import { cisSubmissions } from "@/lib/db/schema";
+import { getUserWorkflowHistory } from "@/lib/cached-queries";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
@@ -53,16 +54,7 @@ export default async function LegalDashboard({
     updatedAt: cisSubmissions.updatedAt,
   };
 
-  const history = await db
-    .select({ cisId: workflowEvents.cisId, action: workflowEvents.action })
-    .from(workflowEvents)
-    .where(
-      and(
-        eq(workflowEvents.actorId, session.user.id),
-        inArray(workflowEvents.action, ["forwarded_to_approver", "denied"])
-      )
-    )
-    .limit(1000);
+  const history = await getUserWorkflowHistory(session.user.id, ["forwarded_to_approver", "denied"]);
 
   const actedCisIds = [...new Set(history.map((e) => e.cisId))];
   const conditions = [

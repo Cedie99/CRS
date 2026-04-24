@@ -3,6 +3,7 @@ import { eq, desc, and, ilike, or, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import { getAgentStats } from "@/lib/cached-queries";
 import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
@@ -81,8 +82,8 @@ export default async function AgentDashboard({
       }
     }
 
-    // Run all 4 queries in parallel — they're independent
-    const [filteredCountRow, submissionRows, statsRows, archivedRows] = await Promise.all([
+    // Run all queries in parallel — cached stats (10s) + fresh list data
+    const [filteredCountRow, submissionRows, cachedStats, archivedRows] = await Promise.all([
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -94,17 +95,7 @@ export default async function AgentDashboard({
         .orderBy(desc(cisSubmissions.createdAt))
         .limit(pageSize)
         .offset(offset),
-      db
-        .select({
-          total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
-          draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
-          awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
-          active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
-          completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
-          denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
-        })
-        .from(cisSubmissions)
-        .where(and(eq(cisSubmissions.agentId, session!.user.id), ne(cisSubmissions.isArchived, true))),
+      getAgentStats(session!.user.id),
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -113,15 +104,7 @@ export default async function AgentDashboard({
 
     filteredCount = Number(filteredCountRow[0]?.total ?? 0);
     submissions = submissionRows;
-    const statsRow = statsRows[0];
-    statsCounts = {
-      total: Number(statsRow?.total ?? 0),
-      draft: Number(statsRow?.draft ?? 0),
-      awaitingAgentCompletion: Number(statsRow?.awaitingAgentCompletion ?? 0),
-      active: Number(statsRow?.active ?? 0),
-      completed: Number(statsRow?.completed ?? 0),
-      denied: Number(statsRow?.denied ?? 0),
-    };
+    statsCounts = cachedStats;
     archivedCount = Number(archivedRows[0]?.total ?? 0);
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
@@ -142,7 +125,7 @@ export default async function AgentDashboard({
       fallbackConditions.push(eq(cisSubmissions.status, status as CisStatus));
     }
 
-    const [fbCountRow, fbSubmissions, fbStatsRows] = await Promise.all([
+    const [fbCountRow, fbSubmissions, cachedStats] = await Promise.all([
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -154,30 +137,12 @@ export default async function AgentDashboard({
         .orderBy(desc(cisSubmissions.createdAt))
         .limit(pageSize)
         .offset(offset),
-      db
-        .select({
-          total: count(sql`CASE WHEN ${cisSubmissions.status} != 'draft' THEN 1 END`),
-          draft: count(sql`CASE WHEN ${cisSubmissions.status} = 'draft' THEN 1 END`),
-          awaitingAgentCompletion: count(sql`CASE WHEN ${cisSubmissions.status} = 'submitted' THEN 1 END`),
-          active: count(sql`CASE WHEN ${cisSubmissions.status} IN ('pending_endorsement','pending_legal_review','pending_finance_review','pending_approval','approved','pending_erp_encoding') THEN 1 END`),
-          completed: count(sql`CASE WHEN ${cisSubmissions.status} = 'erp_encoded' THEN 1 END`),
-          denied: count(sql`CASE WHEN ${cisSubmissions.status} IN ('denied','returned') THEN 1 END`),
-        })
-        .from(cisSubmissions)
-        .where(eq(cisSubmissions.agentId, session!.user.id)),
+      getAgentStats(session!.user.id),
     ]);
 
     filteredCount = Number(fbCountRow[0]?.total ?? 0);
     submissions = fbSubmissions;
-    const fallbackStatsRow = fbStatsRows[0];
-    statsCounts = {
-      total: Number(fallbackStatsRow?.total ?? 0),
-      draft: Number(fallbackStatsRow?.draft ?? 0),
-      awaitingAgentCompletion: Number(fallbackStatsRow?.awaitingAgentCompletion ?? 0),
-      active: Number(fallbackStatsRow?.active ?? 0),
-      completed: Number(fallbackStatsRow?.completed ?? 0),
-      denied: Number(fallbackStatsRow?.denied ?? 0),
-    };
+    statsCounts = cachedStats;
   }
 
   const effectiveShowArchived = supportsArchived && showArchived;
