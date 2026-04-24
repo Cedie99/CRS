@@ -1145,7 +1145,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </span>
             </span>
           </div>
-          <PrintButton disabled={!canPrint} disabledReason={printDisabledReason} />
+          {!hidePrintButton && <PrintButton disabled={!canPrint} disabledReason={printDisabledReason} />}
           </div>
 
         </div>
