@@ -11,6 +11,7 @@ import Link from "next/link";
 import { DollarSign, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Finance Review Queue — CRS" };
 
@@ -81,7 +82,7 @@ export default async function FinanceDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const [submissions, filteredCountRow] = await Promise.all([
+  const [submissions, filteredCountRow, actionRows, actionCountRow] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -93,8 +94,23 @@ export default async function FinanceDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...conditions)),
+    isAllView
+      ? Promise.resolve([])
+      : db
+          .select(cardSelect)
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_finance_review"))
+          .orderBy(desc(cisSubmissions.createdAt))
+          .limit(6),
+    isAllView
+      ? Promise.resolve([{ total: 0 }])
+      : db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_finance_review")),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
+  const actionTotal = Number((actionCountRow as { total: number | string }[])[0]?.total ?? 0);
 
   const forwarded = history.filter((e) => e.action === "forwarded_to_approver").length;
   const denied = history.filter((e) => e.action === "denied").length;
@@ -181,6 +197,18 @@ export default async function FinanceDashboard({
           </div>
         </div>
       </div>
+
+      {!isAllView && (
+        <ActionRequiredSection
+          submissions={(actionRows as typeof submissions).map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={actionTotal}
+          hrefPrefix="finance"
+          label="Forms You Need to Review"
+          sublabel="Fill in the credit limit and terms, then forward these to the Senior Approver."
+          accentClass="border-amber-300 bg-amber-50/60"
+          badgeClass="bg-amber-100 text-amber-800"
+        />
+      )}
 
       <CustomerTypeNavCards
         basePath="/finance"

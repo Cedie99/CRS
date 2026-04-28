@@ -141,7 +141,7 @@ export async function POST(req: Request) {
         ${userId},
         ${agentCode},
         ${agentType},
-        ${null},
+        ${parsed.data.customerType},
         ${"draft"},
         ${parsed.data.tradeName || null}
       )

@@ -20,6 +20,7 @@ export const STAFF_ROUTES: Record<string, string> = {
 };
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   cookies: {

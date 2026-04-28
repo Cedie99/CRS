@@ -11,6 +11,7 @@ import Link from "next/link";
 import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText, Activity } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Team Submissions — CRS" };
 
@@ -107,7 +108,13 @@ export default async function ManagerDashboard({
     );
   }
 
-  const [managerStats, actionQueue, actionCountRow] = await Promise.all([
+  // Pending endorsement — forms needing manager action right now
+  const pendingEndorsementConditions = [
+    inArray(cisSubmissions.agentId, agentIds),
+    eq(cisSubmissions.status, "pending_endorsement" as CisStatus),
+  ];
+
+  const [managerStats, actionQueue, actionCountRow, pendingEndorsementRows, pendingEndorsementCountRow] = await Promise.all([
     getManagerStats(agentIds),
     db
       .select(SUBMISSION_COLS)
@@ -121,7 +128,20 @@ export default async function ManagerDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...actionConditions)),
+    db
+      .select(SUBMISSION_COLS)
+      .from(cisSubmissions)
+      .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+      .where(and(...pendingEndorsementConditions))
+      .orderBy(desc(cisSubmissions.createdAt))
+      .limit(6),
+    db
+      .select({ total: count() })
+      .from(cisSubmissions)
+      .where(and(...pendingEndorsementConditions)),
   ]);
+
+  const pendingEndorsementTotal = Number(pendingEndorsementCountRow[0]?.total ?? 0);
 
   const { total, activeCount, inProgressCount, erpCount, deniedCount } = managerStats;
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
@@ -237,6 +257,16 @@ export default async function ManagerDashboard({
         ))}
         </div>
       </div>
+
+      <ActionRequiredSection
+        submissions={pendingEndorsementRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+        totalCount={pendingEndorsementTotal}
+        hrefPrefix="manager"
+        label="Forms You Need to Endorse"
+        sublabel="Your agents have submitted these forms. Review and endorse them to move the workflow forward."
+        accentClass="border-amber-300 bg-amber-50/60"
+        badgeClass="bg-amber-100 text-amber-800"
+      />
 
       <CustomerTypeNavCards
         basePath="/manager"

@@ -5,6 +5,7 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { getCisFormSchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 import { computeSeal, sha256Fingerprint } from "@/lib/signature-integrity";
+import { computePossiblePoints } from "@/lib/scoring";
 
 // GET /api/form/[token] — fetch CIS info for the customer form
 export async function GET(
@@ -80,8 +81,27 @@ export async function POST(
   const seal = computeSeal(cis.id, signedAt, parsed.data.customerSignature);
   const fp = sha256Fingerprint(parsed.data.customerSignature);
 
+  const possiblePoints = computePossiblePoints({
+    docMayorsPermit:       body.docMayorsPermit,
+    docSecDti:             body.docSecDti,
+    docBirCertificate:     body.docBirCertificate,
+    docValidId:            body.docValidId,
+    docLocationMap:        body.docLocationMap,
+    docFinancialStatement: body.docFinancialStatement,
+    docBankStatement:      body.docBankStatement,
+    docProofOfBilling:     body.docProofOfBilling,
+    docLeaseContract:      body.docLeaseContract,
+    docProofOfOwnership:   body.docProofOfOwnership,
+    docStorePhoto:         body.docStorePhoto,
+    docSupplierInvoice:    body.docSupplierInvoice,
+    docSocialMedia:        body.docSocialMedia,
+    docCertifications:     body.docCertifications,
+    docGovCertifications:  body.docGovCertifications,
+    docOther:              body.docOther,
+  });
+
   try {
-    // Save form data and mark as submitted
+    // Save form data, mark as submitted, and store CRS possible points
     await db
       .update(cisSubmissions)
       .set({
@@ -90,6 +110,7 @@ export async function POST(
         status: "submitted",
         customerSignedAt: signedAt,
         customerSignatureSeal: seal,
+        financePossiblePoints: possiblePoints,
         updatedAt: signedAt,
       })
       .where(eq(cisSubmissions.id, cis.id));

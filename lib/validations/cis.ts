@@ -47,8 +47,11 @@ const optionalPhoneLikeString = (label: string, min = 7) =>
     .optional()
     .or(z.literal(""));
 
+const CUSTOMER_TYPE_VALUES = ["dealer", "distributor", "private_label", "toll_blend", "end_user"] as const;
+
 export const initiateSchema = z.object({
   tradeName: z.string().max(255).optional().or(z.literal("")),
+  customerType: z.enum(CUSTOMER_TYPE_VALUES, { error: "Customer type is required" }),
 });
 
 export const LINE_OF_BUSINESS_OPTIONS = [
@@ -249,8 +252,6 @@ export const FINANCE_CREDIT_TERMS_OPTIONS = [
 
 export const financeForwardSchema = z.object({
   note: z.string().max(1000).optional(),
-  financeCreditLimit: z.string().min(1, "Credit limit is required").max(100),
-  financeCreditTerms: z.string().min(1, "Credit Terms selection is required").max(50),
 });
 
 export type FinanceForwardInput = z.infer<typeof financeForwardSchema>;

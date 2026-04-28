@@ -297,11 +297,14 @@ function Field({
   value,
   icon: Icon,
   mono,
+  printBlank,
 }: {
   label: string;
   value?: string | null;
   icon?: React.ComponentType<{ className?: string }>;
   mono?: boolean;
+  /** On print, show a blank underline instead of — when value is empty */
+  printBlank?: boolean;
 }) {
   return (
     <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-3">
@@ -310,7 +313,17 @@ function Field({
         {label}
       </p>
       <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-1 print:text-[16px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
-        {value || <span className="text-zinc-300 print:text-zinc-400">—</span>}
+        {value
+          ? value
+          : printBlank
+            ? (
+              <>
+                <span className="text-zinc-300 print:hidden">—</span>
+                <span className="hidden print:inline-block print:w-full print:border-b-2 print:border-zinc-400 print:pb-2">&nbsp;</span>
+              </>
+            )
+            : <span className="text-zinc-300 print:text-zinc-400">—</span>
+        }
       </p>
     </div>
   );
@@ -1018,8 +1031,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 </div>
               )}
               <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-                <Field label="Credit Limit" value={financeCreditLimit} />
-                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} />
+                <Field label="Credit Limit" value={financeCreditLimit} printBlank />
+                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} printBlank />
                 <Field label="Price List / Terms & Schedule (PL/TS)" value={financePlTs} />
               </div>
               {(financePossiblePoints != null || financeApprovedPoints != null) && (

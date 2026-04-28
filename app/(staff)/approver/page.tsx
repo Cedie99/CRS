@@ -11,6 +11,7 @@ import Link from "next/link";
 import { BadgeCheck, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Approval Queue — CRS" };
 
@@ -74,7 +75,7 @@ export default async function ApproverDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const [submissions, filteredCountRow] = await Promise.all([
+  const [submissions, filteredCountRow, actionRows, actionCountRow] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -86,8 +87,23 @@ export default async function ApproverDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...conditions)),
+    isAllView
+      ? Promise.resolve([])
+      : db
+          .select(cardSelect)
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_approval"))
+          .orderBy(desc(cisSubmissions.createdAt))
+          .limit(6),
+    isAllView
+      ? Promise.resolve([{ total: 0 }])
+      : db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_approval")),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
+  const actionTotal = Number((actionCountRow as { total: number | string }[])[0]?.total ?? 0);
 
   const approved = history.filter((e) => e.action === "approved").length;
   const denied = history.filter((e) => e.action === "denied").length;
@@ -174,6 +190,18 @@ export default async function ApproverDashboard({
           </div>
         </div>
       </div>
+
+      {!isAllView && (
+        <ActionRequiredSection
+          submissions={(actionRows as typeof submissions).map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={actionTotal}
+          hrefPrefix="approver"
+          label="Forms You Need to Approve"
+          sublabel="These submissions have cleared Finance review and are waiting for your final decision."
+          accentClass="border-orange-300 bg-orange-50/60"
+          badgeClass="bg-orange-100 text-orange-800"
+        />
+      )}
 
       <CustomerTypeNavCards
         basePath="/approver"

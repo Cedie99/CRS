@@ -48,12 +48,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const { note, financeCreditLimit, financeCreditTerms } = parsed.data;
-
-  await db
-    .update(cisSubmissions)
-    .set({ financeCreditLimit, financeCreditTerms })
-    .where(eq(cisSubmissions.id, id));
+  const { note } = parsed.data;
 
   await transitionCis({
     cisId: id,

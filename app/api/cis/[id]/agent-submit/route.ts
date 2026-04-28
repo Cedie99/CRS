@@ -7,9 +7,6 @@ import { cisSubmissions, users } from "@/lib/db/schema";
 import { transitionCis } from "@/lib/workflow";
 
 const agentSubmitSchema = z.object({
-  customerType: z.enum(["dealer", "distributor", "private_label", "toll_blend", "end_user"], {
-    error: "Customer type is required",
-  }),
   agentAccountSpecialistFirst: z.string().min(1, "Account Specialist first name is required").max(255),
   agentAccountSpecialistLast: z.string().min(1, "Account Specialist last name is required").max(255),
   agentSalesSpecialist: z.string().min(1, "Sales Specialist is required").max(255),
@@ -44,6 +41,7 @@ export async function PATCH(
       id: cisSubmissions.id,
       status: cisSubmissions.status,
       agentId: cisSubmissions.agentId,
+      customerType: cisSubmissions.customerType,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -51,6 +49,9 @@ export async function PATCH(
 
   if (!cis) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (cis.agentId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!cis.customerType) {
+    return NextResponse.json({ error: "Customer type not set on this submission" }, { status: 422 });
+  }
   if (cis.status !== "submitted") {
     return NextResponse.json({ error: "CIS is not pending agent fill-out" }, { status: 409 });
   }
@@ -62,10 +63,12 @@ export async function PATCH(
   }
 
   const {
-    customerType, agentAccountSpecialistFirst, agentAccountSpecialistLast,
+    agentAccountSpecialistFirst, agentAccountSpecialistLast,
     agentSalesSpecialist, agentSalesManager, agentTpcFirst, agentTpcLast,
     docAgentOtherRequirements,
   } = parsed.data;
+
+  const customerType = cis.customerType;
 
   // Save agent fill-out fields using schema compatibility checks.
   // Some deployments still run older cis_submissions schemas.
@@ -93,7 +96,6 @@ export async function PATCH(
   );
 
   const updatePayload: Record<string, unknown> = {
-    customerType,
     updatedAt: new Date(),
   };
 

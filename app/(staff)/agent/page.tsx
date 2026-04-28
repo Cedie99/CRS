@@ -8,9 +8,10 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
-import { Plus, FileText, Link as LinkIcon, UserRound, ChevronRight } from "lucide-react";
+import { Plus, FileText, Link as LinkIcon, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "My Submissions — CRS" };
 
@@ -61,6 +62,8 @@ export default async function AgentDashboard({
   let filteredCount = 0;
   let statsCounts = { total: 0, draft: 0, awaitingAgentCompletion: 0, active: 0, completed: 0, denied: 0 };
   let archivedCount = 0;
+  let agentCompletionRows: Submission[] = [];
+  let agentCompletionTotal = 0;
 
   try {
     const conditions = [
@@ -83,7 +86,7 @@ export default async function AgentDashboard({
     }
 
     // Run all queries in parallel — cached stats (10s) + fresh list data
-    const [filteredCountRow, submissionRows, cachedStats, archivedRows] = await Promise.all([
+    const [filteredCountRow, submissionRows, cachedStats, archivedRows, acRows, acCountRow] = await Promise.all([
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -100,12 +103,28 @@ export default async function AgentDashboard({
         .select({ total: count() })
         .from(cisSubmissions)
         .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.isArchived, true))),
+      showArchived
+        ? Promise.resolve([])
+        : db
+            .select(cardSelect)
+            .from(cisSubmissions)
+            .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "submitted")))
+            .orderBy(desc(cisSubmissions.createdAt))
+            .limit(6),
+      showArchived
+        ? Promise.resolve([{ total: 0 }])
+        : db
+            .select({ total: count() })
+            .from(cisSubmissions)
+            .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "submitted"))),
     ]);
 
     filteredCount = Number(filteredCountRow[0]?.total ?? 0);
     submissions = submissionRows;
     statsCounts = cachedStats;
     archivedCount = Number(archivedRows[0]?.total ?? 0);
+    agentCompletionRows = acRows as Submission[];
+    agentCompletionTotal = Number((acCountRow as { total: number | string }[])[0]?.total ?? 0);
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
       throw error;
@@ -154,22 +173,13 @@ export default async function AgentDashboard({
 
   const queueCards = [
     {
-      label: "Awaiting Customer",
+      label: "Drafts",
       value: draft,
       sub: draft === 1 ? "1 link sent" : `${draft} links sent`,
       href: "/agent/drafts",
       icon: LinkIcon,
       tone: "border-amber-200 bg-amber-50/40 text-amber-700",
       iconTone: "bg-amber-100 text-amber-600",
-    },
-    {
-      label: "Awaiting Agent Completion",
-      value: awaitingAgentCompletion,
-      sub: awaitingAgentCompletion === 1 ? "1 customer submitted" : `${awaitingAgentCompletion} customer submissions`,
-      href: "/agent/agent-completion",
-      icon: UserRound,
-      tone: "border-blue-200 bg-blue-50/40 text-blue-700",
-      iconTone: "bg-blue-100 text-blue-600",
     },
   ];
 
@@ -214,52 +224,59 @@ export default async function AgentDashboard({
       />
 
       {/* Stats — hidden in archived view */}
-      {!effectiveShowArchived && <div className="rounded-xl border border-zinc-200 bg-white">
-        <div className="px-4 py-3">
-          <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
-        </div>
-        <div className="space-y-3 border-t border-zinc-100 p-3">
-          <div className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Submissions</span>
-            <span className="rounded-full bg-white px-2 py-0.5 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-200">{total}</span>
+      {!effectiveShowArchived && (
+        <div className="rounded-xl border border-zinc-200 bg-white">
+          <div className="flex items-center justify-between px-4 py-3">
+            <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
+            <span className="text-xs text-zinc-400">{total} total</span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {queueCards.map(({ label, value, sub, href, icon: Icon, tone, iconTone }) => (
-              <Link
-                key={label}
-                href={href}
-                className={`group rounded-lg border p-3 transition-all duration-200 hover:shadow-sm ${tone}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
-                    <p className="mt-1 text-3xl font-bold leading-none">{value}</p>
-                    <p className="mt-1.5 text-xs text-zinc-500">{sub}</p>
-                  </div>
-                  <span className={`rounded-lg p-2 ${iconTone}`}>
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center gap-1 text-xs font-semibold">
-                  Open queue
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
-                </div>
-              </Link>
-            ))}
-          </div>
+          <div className="grid grid-cols-2 gap-px border-t border-zinc-100 bg-zinc-100 sm:grid-cols-4">
+            {/* Drafts — actionable tile */}
+            <Link
+              href="/agent/drafts"
+              className="group col-span-2 flex items-center justify-between gap-4 bg-amber-50 p-4 transition-colors hover:bg-amber-100/60 sm:col-span-1"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600">Drafts</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-amber-700">{draft}</p>
+                <p className="mt-1 text-xs text-amber-600/70">{draft === 1 ? "1 link sent" : `${draft} links sent`}</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <span className="rounded-lg bg-amber-100 p-2 text-amber-600 ring-1 ring-amber-200">
+                  <LinkIcon className="h-4 w-4" />
+                </span>
+                <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-600 opacity-0 transition-opacity group-hover:opacity-100">
+                  View <ChevronRight className="h-3 w-3" />
+                </span>
+              </div>
+            </Link>
 
-          <div className="grid gap-2 sm:grid-cols-3">
+            {/* Overview tiles */}
             {overviewTiles.map(({ label, value, sub }) => (
-              <div key={label} className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
-                <p className="mt-1.5 text-xl font-bold text-zinc-900">{value}</p>
-                <p className="mt-1 text-[11px] text-zinc-500">{sub}</p>
+              <div key={label} className="flex flex-col justify-between bg-white p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+                <div>
+                  <p className="mt-2 text-3xl font-bold tabular-nums text-zinc-900">{value}</p>
+                  <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>}
+      )}
+
+      {!effectiveShowArchived && (
+        <ActionRequiredSection
+          submissions={agentCompletionRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={agentCompletionTotal}
+          hrefPrefix="agent"
+          label="Forms You Need to Fill Up"
+          sublabel="Your customers have submitted their forms. Complete your section to move these forward."
+          accentClass="border-blue-300 bg-blue-50/60"
+          badgeClass="bg-blue-100 text-blue-800"
+        />
+      )}
 
       <CustomerTypeNavCards
         basePath="/agent"

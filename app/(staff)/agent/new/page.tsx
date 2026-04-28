@@ -9,12 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft, Copy, Check, Link as LinkIcon,
   QrCode, Download, MessageSquare, UserRound, FileText, GitBranch, Lightbulb,
 } from "lucide-react";
 import { sileo as toast } from "sileo";
 import QRCode from "qrcode";
 import { DeleteDraftButton } from "@/components/delete-draft-button";
+
+const CUSTOMER_TYPES = [
+  { value: "end_user",       label: "End-User",       desc: "Individual or business buying for own use" },
+  { value: "dealer",         label: "Dealer",          desc: "Motorcycle shops, resellers" },
+  { value: "distributor",    label: "Distributor",     desc: "Bulk buyers, 2,000L+ minimum order" },
+  { value: "private_label",  label: "Private Label",   desc: "Products under customer's own brand" },
+  { value: "toll_blend",     label: "Toll Blend",      desc: "Custom blending arrangements" },
+] as const;
 
 const HOW_IT_WORKS = [
   {
@@ -42,7 +53,7 @@ const HOW_IT_WORKS = [
   {
     icon: UserRound,
     title: "Agent fills out details",
-    desc: "After customer submits, you complete the account type and specialist details.",
+    desc: "After customer submits, you complete the account specialist and TPC details.",
     color: {
       bg: "bg-violet-100",
       text: "text-violet-600",
@@ -78,6 +89,7 @@ function NewCisContent() {
   const draftId = searchParams.get("id");
 
   const [customerName, setCustomerName] = useState("");
+  const [customerType, setCustomerType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -100,6 +112,7 @@ function NewCisContent() {
         const link = `${window.location.origin}/form/${data.publicToken}`;
         const qr = await QRCode.toDataURL(link, { width: 260, margin: 1 });
         setCustomerName(data.tradeName ?? "");
+        setCustomerType(data.customerType ?? "");
         setGeneratedLink(link);
         setGeneratedQr(qr);
         setExistingDraftId(draftId);
@@ -122,6 +135,10 @@ function NewCisContent() {
   ].join("\n");
 
   async function handleGenerate() {
+    if (!customerType) {
+      setError("Please select a customer type before generating the link.");
+      return;
+    }
     setError("");
     setIsLoading(true);
     try {
@@ -130,6 +147,7 @@ function NewCisContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tradeName: customerName.trim() || undefined,
+          customerType,
         }),
       });
 
@@ -199,6 +217,7 @@ function NewCisContent() {
     setGeneratedQr("");
     setExistingDraftId(null);
     setCustomerName("");
+    setCustomerType("");
     setCopied(false);
     setMessageCopied(false);
     router.replace("/agent/new");
@@ -243,6 +262,28 @@ function NewCisContent() {
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       className="space-y-5"
                     >
+                      <div className="space-y-1.5">
+                        <Label className="text-sm font-medium text-zinc-700">
+                          Customer Type <span className="text-red-500">*</span>
+                        </Label>
+                        <Select value={customerType} onValueChange={(v) => setCustomerType(v ?? "")} disabled={isLoading}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select customer type…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CUSTOMER_TYPES.map((t) => (
+                              <SelectItem key={t.value} value={t.value}>
+                                <span className="font-medium">{t.label}</span>
+                                <span className="ml-2 text-xs text-zinc-400">{t.desc}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-zinc-400">
+                          This determines the required documents and approval route for the customer.
+                        </p>
+                      </div>
+
                       <div className="space-y-1.5">
                         <Label className="text-sm font-medium text-zinc-700">
                           Customer / Trade Name{" "}
@@ -303,8 +344,13 @@ function NewCisContent() {
                         {customerName.trim() && (
                           <p className="mt-1.5 text-sm font-semibold text-green-800">{customerName.trim()}</p>
                         )}
+                        {customerType && (
+                          <p className="mt-1 text-xs text-green-700">
+                            Type: <span className="font-semibold capitalize">{CUSTOMER_TYPES.find(t => t.value === customerType)?.label ?? customerType}</span>
+                          </p>
+                        )}
                         <p className="mt-1 text-xs text-green-600">
-                          Once your customer submits, you&apos;ll fill in the customer type and account details.
+                          Once your customer submits, you&apos;ll complete the account specialist details.
                         </p>
                       </motion.div>
 

@@ -213,6 +213,7 @@ export default async function AgentCisDetailPage({
       {cis.status === "submitted" && (
         <AgentFillOutForm
           cisId={cis.id}
+          initialCustomerType={cis.customerType ?? ""}
           initialOtherRequirements={(cis.docAgentOtherRequirements as any) ?? []}
         />
       )}

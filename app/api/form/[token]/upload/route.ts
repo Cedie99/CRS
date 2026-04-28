@@ -76,7 +76,15 @@ export async function POST(
   }
 
   const safeFilename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const { url } = await put(`cis/${cis.id}/${docType}/${safeFilename}`, file, { access: "public" });
+  let url: string;
+  try {
+    const result = await put(`cis/${cis.id}/${docType}/${safeFilename}`, file, { access: "public" });
+    url = result.url;
+  } catch (err) {
+    console.error("[upload] Vercel Blob error:", err);
+    const msg = err instanceof Error ? err.message : "Storage error";
+    return NextResponse.json({ error: `Upload failed: ${msg}` }, { status: 500 });
+  }
 
   const entry: FileEntry = {
     name: file.name,

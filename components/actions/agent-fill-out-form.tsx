@@ -18,14 +18,6 @@ import { ArrowRight, CheckCircle2, ClipboardList, Paperclip, UserRound } from "l
 import { sileo as toast } from "sileo";
 import type { FileEntry } from "@/lib/doc-types";
 
-const CUSTOMER_TYPES = [
-  { value: "dealer", label: "Dealer" },
-  { value: "distributor", label: "Distributor" },
-  { value: "private_label", label: "Private Label" },
-  { value: "toll_blend", label: "Toll Blend" },
-  { value: "end_user", label: "End-User" },
-] as const;
-
 const SALES_MANAGERS = [
   "Jan Kevin Siy",
   "Michael Dominic Siy",
@@ -35,13 +27,21 @@ const SALES_MANAGERS = [
   "Joyce Mejarito",
 ] as const;
 
+const CUSTOMER_TYPE_LABELS: Record<string, string> = {
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+  end_user: "End-User",
+};
+
 interface AgentFillOutFormProps {
   cisId: string;
+  initialCustomerType?: string;
   initialOtherRequirements?: FileEntry[];
 }
 
 interface FormFields {
-  customerType: string;
   agentAccountSpecialistFirst: string;
   agentAccountSpecialistLast: string;
   agentSalesSpecialist: string;
@@ -51,17 +51,15 @@ interface FormFields {
 }
 
 interface FormErrors {
-  customerType?: string;
   agentAccountSpecialistFirst?: string;
   agentAccountSpecialistLast?: string;
   agentSalesSpecialist?: string;
   agentSalesManager?: string;
 }
 
-export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: AgentFillOutFormProps) {
+export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [] }: AgentFillOutFormProps) {
   const router = useRouter();
   const [fields, setFields] = useState<FormFields>({
-    customerType: "",
     agentAccountSpecialistFirst: "",
     agentAccountSpecialistLast: "",
     agentSalesSpecialist: "",
@@ -79,9 +77,9 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
     fields.agentAccountSpecialistLast.trim(),
     fields.agentSalesSpecialist.trim(),
     fields.agentSalesManager.trim(),
-    fields.customerType.trim(),
   ].filter(Boolean).length;
-  const isDealer = fields.customerType === "dealer";
+
+  const isDealer = initialCustomerType === "dealer";
 
   function setField<K extends keyof FormFields>(key: K, value: string | null) {
     setFields((f) => ({ ...f, [key]: value ?? "" }));
@@ -90,7 +88,6 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
 
   function validate(): boolean {
     const errs: FormErrors = {};
-    if (!fields.customerType) errs.customerType = "Customer type is required";
     if (!fields.agentAccountSpecialistFirst.trim()) errs.agentAccountSpecialistFirst = "First name is required";
     if (!fields.agentAccountSpecialistLast.trim()) errs.agentAccountSpecialistLast = "Last name is required";
     if (!fields.agentSalesSpecialist.trim()) errs.agentSalesSpecialist = "Sales Specialist is required";
@@ -109,7 +106,6 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerType: fields.customerType,
           agentAccountSpecialistFirst: fields.agentAccountSpecialistFirst,
           agentAccountSpecialistLast: fields.agentAccountSpecialistLast,
           agentSalesSpecialist: fields.agentSalesSpecialist,
@@ -125,7 +121,6 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
         return;
       }
 
-      const isDealer = fields.customerType === "dealer";
       toast.success({
         title: "Form submitted.",
         description: isDealer
@@ -154,12 +149,12 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
             </p>
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-800">
-            {requiredFilledCount === 5 ? (
+            {requiredFilledCount === 4 ? (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
               <UserRound className="h-3.5 w-3.5 text-sky-600" />
             )}
-            Required fields: {requiredFilledCount}/5
+            Required fields: {requiredFilledCount}/4
           </div>
         </div>
       </CardHeader>
@@ -215,7 +210,7 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
             )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="sales-manager">Sales Manager *</Label>
             <Select
               value={fields.agentSalesManager}
@@ -236,41 +231,21 @@ export function AgentFillOutForm({ cisId, initialOtherRequirements = [] }: Agent
               <p className="text-xs text-red-600">{errors.agentSalesManager}</p>
             )}
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="customer-type">Customer Type *</Label>
-            <Select
-              value={fields.customerType}
-              onValueChange={(v) => setField("customerType", v)}
-            >
-              <SelectTrigger id="customer-type" className="bg-white w-full">
-                <SelectValue placeholder="Please Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {CUSTOMER_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.customerType && (
-              <p className="text-xs text-red-600">{errors.customerType}</p>
-            )}
-            </div>
           </div>
 
-          <div className="mt-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/70 px-3 py-2.5 text-xs text-zinc-700">
-            {fields.customerType ? (
-              isDealer ? (
-                <span className="font-medium text-purple-700">Dealer route: this submission will be sent to Legal Review (Maam Cha).</span>
+          {initialCustomerType && (
+            <div className="mt-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/70 px-3 py-2.5 text-xs text-zinc-700">
+              {isDealer ? (
+                <span className="font-medium text-purple-700">
+                  Dealer route: this submission will be sent to Legal Review (Maam Cha).
+                </span>
               ) : (
-                <span className="font-medium text-amber-700">Standard route: this submission will be sent to Finance Review (Maam Nida).</span>
-              )
-            ) : (
-              <span>Select a customer type to preview where this form will be routed.</span>
-            )}
-          </div>
+                <span className="font-medium text-amber-700">
+                  Standard route ({CUSTOMER_TYPE_LABELS[initialCustomerType] ?? initialCustomerType}): this submission will be sent to Finance Review (Maam Nida).
+                </span>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
