@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Scale, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Legal Review Queue — CRS" };
 
@@ -56,7 +57,7 @@ export default async function LegalDashboard({
 
   const history = await getUserWorkflowHistory(session.user.id, ["forwarded_to_approver", "denied"]);
 
-  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))].filter((id) => id != null);
   const conditions = [
     isAllView
       ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
@@ -64,7 +65,7 @@ export default async function LegalDashboard({
         ? or(
             eq(cisSubmissions.status, "pending_legal_review"),
             inArray(cisSubmissions.id, actedCisIds)
-          )!
+          )
         : eq(cisSubmissions.status, "pending_legal_review"),
   ];
 
@@ -81,7 +82,7 @@ export default async function LegalDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const [submissions, filteredCountRow] = await Promise.all([
+  const [submissions, filteredCountRow, actionRows, actionCountRow] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -93,8 +94,23 @@ export default async function LegalDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...conditions)),
+    isAllView
+      ? Promise.resolve([])
+      : db
+          .select(cardSelect)
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_legal_review"))
+          .orderBy(desc(cisSubmissions.createdAt))
+          .limit(6),
+    isAllView
+      ? Promise.resolve([{ total: 0 }])
+      : db
+          .select({ total: count() })
+          .from(cisSubmissions)
+          .where(eq(cisSubmissions.status, "pending_legal_review")),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
+  const actionTotal = Number((actionCountRow as { total: number | string }[])[0]?.total ?? 0);
 
   const forwarded = history.filter((e) => e.action === "forwarded_to_approver").length;
   const denied = history.filter((e) => e.action === "denied").length;
@@ -182,6 +198,18 @@ export default async function LegalDashboard({
         </div>
       </div>
 
+      {!isAllView && (
+        <ActionRequiredSection
+          submissions={(actionRows as typeof submissions).map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={actionTotal}
+          hrefPrefix="legal"
+          label="Forms You Need to Review"
+          sublabel="These FS Petroleum and Special submissions are waiting for your legal clearance."
+          accentClass="border-purple-300 bg-purple-50/60"
+          badgeClass="bg-purple-100 text-purple-800"
+        />
+      )}
+
       <CustomerTypeNavCards
         basePath="/legal"
         searchParams={{ q, status, view: isAllView ? "all" : undefined }}
@@ -209,6 +237,7 @@ export default async function LegalDashboard({
           )}
         </div>
       )}
+
     </div>
   );
 }

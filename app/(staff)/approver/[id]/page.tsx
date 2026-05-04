@@ -11,6 +11,7 @@ import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
+import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import type { FileEntry } from "@/lib/doc-types";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -81,6 +82,14 @@ export default async function ApproverCisDetailPage({
         </div>
       )}
 
+
+      <CusApprovedBanner
+        cisId={cis.id}
+        originalCreditTerms={cis.financeCreditTerms}
+        originalCreditLimit={cis.financeCreditLimit}
+        hrefPrefix="approver"
+      />
+
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
@@ -96,6 +105,7 @@ export default async function ApproverCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
             status={cis.status as CisStatus}
@@ -153,6 +163,8 @@ export default async function ApproverCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docSirRestySigned={cis.docSirRestySigned}
             docOther={cis.docOther}

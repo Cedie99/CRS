@@ -8,8 +8,10 @@ import {
   pgEnum,
   jsonb,
   integer,
+  decimal,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // --- Enums ---
 
@@ -158,6 +160,7 @@ export const cisSubmissions = pgTable("cis_submissions", {
   owners: jsonb("owners"),   // [{name, nationality, percentage, contact}]
   officers: jsonb("officers"), // [{name, position, contact}]
   paymentTerms: varchar("payment_terms", { length: 50 }),
+  salesChannel: varchar("sales_channel", { length: 50 }),
 
   // Business background
   businessLife: varchar("business_life", { length: 50 }),
@@ -183,6 +186,9 @@ export const cisSubmissions = pgTable("cis_submissions", {
   docStorePhoto: jsonb("doc_store_photo"),
   docSupplierInvoice: jsonb("doc_supplier_invoice"),
   docSocialMedia: jsonb("doc_social_media"),
+  docCompanyWebsite: jsonb("doc_company_website"),
+  docIsoCertification: jsonb("doc_iso_certification"),
+  docHalalCertificate: jsonb("doc_halal_certificate"),
   docCertifications: jsonb("doc_certifications"),
   docGovCertifications: jsonb("doc_gov_certifications"),
   docOther: jsonb("doc_other"),
@@ -224,6 +230,10 @@ export const cisSubmissions = pgTable("cis_submissions", {
   financePlTs: varchar("finance_pl_ts", { length: 255 }),
   financePossiblePoints: integer("finance_possible_points"),
   financeApprovedPoints: integer("finance_approved_points"),
+  // Tiered scoring amounts — entered by Finance after reviewing documents
+  annualSalesAmount: decimal("annual_sales_amount", { precision: 18, scale: 2 }),
+  netIncomeAmount:   decimal("net_income_amount",   { precision: 18, scale: 2 }),
+  bankBalanceAmount: decimal("bank_balance_amount",  { precision: 18, scale: 2 }),
   financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
   financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
   docSirRestySigned: jsonb("doc_sir_resty_signed"), // FileEntry[] — CFO-signed approved CIS
@@ -236,6 +246,14 @@ export const cisSubmissions = pgTable("cis_submissions", {
   salesSupportVatCode: varchar("sales_support_vat_code", { length: 100 }),
   salesSupportOtherRemarks: text("sales_support_other_remarks"),
   docSalesSupportOther: jsonb("doc_sales_support_other"), // FileEntry[]
+
+  // Per-document review statuses set by finance/legal reviewers
+  docReviewStatuses: jsonb("doc_review_statuses"), // DocReviewStatuses
+  // Direct metric points entered by Finance (each 0-5)
+  financeMetricPoints: jsonb("finance_metric_points"), // { annualSales, netIncome, bankBalance, businessLife }
+
+  // Fill mode — true when agent fills the form on behalf of the customer
+  directFill: boolean("direct_fill").notNull().default(false),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -268,6 +286,7 @@ export const notifications = pgTable("notifications", {
   cisId: uuid("cis_id")
     .notNull()
     .references(() => cisSubmissions.id),
+  cusId: uuid("cus_id"),
   recipientId: uuid("recipient_id")
     .notNull()
     .references(() => users.id),
@@ -280,6 +299,65 @@ export const notifications = pgTable("notifications", {
   index("notifications_recipient_id_sent_at_idx").on(t.recipientId, t.sentAt.desc()),
 ]);
 
+export const cusSubmissions = pgTable("cus_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cisId: uuid("cis_id")
+    .notNull()
+    .references(() => cisSubmissions.id),
+  agentId: uuid("agent_id")
+    .notNull()
+    .references(() => users.id),
+  status: text("status").notNull().default("draft"),
+  // draft | submitted | pending_legal_review | pending_finance_review | approved | denied
+  note: text("note"),
+
+  // Document uploads (same scoring docs as CIS)
+  docValidId: jsonb("doc_valid_id"),
+  docMayorsPermit: jsonb("doc_mayors_permit"),
+  docSecDti: jsonb("doc_sec_dti"),
+  docBirCertificate: jsonb("doc_bir_certificate"),
+  docLocationMap: jsonb("doc_location_map"),
+  docFinancialStatement: jsonb("doc_financial_statement"),
+  docBankStatement: jsonb("doc_bank_statement"),
+  docProofOfBilling: jsonb("doc_proof_of_billing"),
+  docLeaseContract: jsonb("doc_lease_contract"),
+  docProofOfOwnership: jsonb("doc_proof_of_ownership"),
+  docStorePhoto: jsonb("doc_store_photo"),
+  docSupplierInvoice: jsonb("doc_supplier_invoice"),
+  docSocialMedia: jsonb("doc_social_media"),
+  docCompanyWebsite: jsonb("doc_company_website"),
+  docIsoCertification: jsonb("doc_iso_certification"),
+  docHalalCertificate: jsonb("doc_halal_certificate"),
+  docOther: jsonb("doc_other"),
+
+  // Finance evaluation
+  financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
+  financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
+  financeMetricPoints: jsonb("finance_metric_points"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  index("cus_agent_id_created_at_idx").on(t.agentId, t.createdAt.desc()),
+  index("cus_cis_id_idx").on(t.cisId),
+  index("cus_status_created_at_idx").on(t.status, t.createdAt.desc()),
+]);
+
+export const cusEvents = pgTable("cus_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cusId: uuid("cus_id")
+    .notNull()
+    .references(() => cusSubmissions.id),
+  actorId: uuid("actor_id")
+    .notNull()
+    .references(() => users.id),
+  action: text("action").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("cus_events_cus_id_idx").on(t.cusId, t.createdAt),
+]);
+
 // --- Inferred types ---
 
 export type User = typeof users.$inferSelect;
@@ -288,3 +366,5 @@ export type CisSubmission = typeof cisSubmissions.$inferSelect;
 export type NewCisSubmission = typeof cisSubmissions.$inferInsert;
 export type WorkflowEvent = typeof workflowEvents.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type CusSubmission = typeof cusSubmissions.$inferSelect;
+export type CusEvent = typeof cusEvents.$inferSelect;

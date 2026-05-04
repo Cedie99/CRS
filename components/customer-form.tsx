@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS } from "@/lib/validations/cis";
-import { DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
+import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS, SALES_CHANNEL_OPTIONS } from "@/lib/validations/cis";
+import { DOC_SLOTS, SCORING_DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
 import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import { humanizeDisplayValue } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" | "docValidId", string>>;
+type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" | import("@/lib/doc-types").DocType, string>>;
 
 interface OwnerRow { name: string; nationality: string; percentage: string; contact: string }
 interface OfficerRow { name: string; position: string; contact: string }
@@ -44,6 +44,7 @@ const BUSINESS_TYPES = [
 
 const PAYMENT_TERMS = [
   { value: "cod", label: "COD" },
+  { value: "prepaid", label: "Prepaid" },
   { value: "with_terms", label: "With Terms" },
 ] as const;
 
@@ -193,6 +194,7 @@ interface CustomerFormProps {
   token: string;
   agentCode: string;
   customerType: string;
+  agentFillMode?: boolean;
 }
 
 const EMPTY_OWNER: OwnerRow   = { name: "", nationality: "", percentage: "", contact: "" };
@@ -223,7 +225,7 @@ function sanitizeAccountNumberInput(value: string) {
   return value.replace(/[^0-9\-\s]/g, "");
 }
 
-export function CustomerForm({ token, agentCode, customerType }: CustomerFormProps) {
+export function CustomerForm({ token, agentCode, customerType, agentFillMode = false }: CustomerFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -237,6 +239,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [lineOfBusiness, setLineOfBusiness]     = useState("");
   const [businessActivity, setBusinessActivity] = useState("");
   const [paymentTerms, setPaymentTerms]         = useState("");
+  const [salesChannel, setSalesChannel]         = useState(customerType ?? "");
 
   // Controlled phone/sanitized inputs — direct DOM mutation (e.currentTarget.value = …)
   // doesn't update @base-ui/react InputPrimitive's internal state, so values get
@@ -274,6 +277,17 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [debugStep, setDebugStep] = useState("idle");
   const withTermsSelected = paymentTerms === "with_terms";
 
+  // Documents required based on customer type + payment terms (per business rules from meetings)
+  // COD end_user / dealer → ID only
+  // COD distributor / private_label / toll_blend → ID + DTI/SEC + BIR
+  // With Terms (any type) → ID + DTI/SEC + BIR + Bank Statement
+  const isCorporateType = ["distributor", "private_label", "toll_blend"].includes(salesChannel);
+  const requiredDocs: string[] = withTermsSelected
+    ? ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement"]
+    : isCorporateType
+      ? ["docValidId", "docSecDti", "docBirCertificate"]
+      : ["docValidId"];
+
   // When the user navigates to the signature step, explicitly size the canvas.
   // ResizeObserver alone is unreliable when a parent transitions from display:none
   // in some production browser environments.
@@ -310,6 +324,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     }
     if (step === 3) {
       if (!businessType) errs.businessType = "Required";
+
       if (lineOfBusiness === "other" && !String(fd.get("lineOfBusinessOther") ?? "").trim()) {
         errs.lineOfBusinessOther = "Please specify";
       }
@@ -317,10 +332,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         errs.businessActivityOther = "Please specify";
       }
     }
-    if (step === 5 && withTermsSelected) {
-      const validIdFiles = docs.docValidId ?? [];
-      if (validIdFiles.length === 0) {
-        errs.docValidId = "Valid Government ID is required for With Terms.";
+    if (step === 5) {
+      for (const key of requiredDocs) {
+        if ((docs[key] ?? []).length === 0) {
+          errs[key as keyof FieldErrors] = "This document is required.";
+        }
       }
     }
     if (Object.keys(errs).length > 0) {
@@ -398,6 +414,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       businessActivity:      businessActivity || undefined,
       businessActivityOther: (fd.get("businessActivityOther") as string) || undefined,
       businessType,
+      salesChannel:          salesChannel || undefined,
       tinNumber:             tinNumber || undefined,
 
       owners:       cleanOwners.length ? cleanOwners : undefined,
@@ -420,7 +437,25 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     if (!parsed.success) {
       const fe = parsed.error.flatten().fieldErrors;
       setDebugStep("blocked:zod:" + Object.keys(fe).join(","));
-      setErrors(Object.fromEntries(Object.entries(fe).map(([k, v]) => [k, v?.[0]])));
+      const flatErrors = Object.fromEntries(Object.entries(fe).map(([k, v]) => [k, v?.[0]]));
+      setErrors(flatErrors);
+
+      // Navigate back to the earliest step that contains a validation error
+      // so the user can see which field is failing.
+      const step1Fields = ["corporateName", "tradeName", "contactPerson", "emailAddress", "contactNumber", "telephoneNumber", "website"];
+      const step2Fields = ["businessAddress", "cityMunicipality", "deliveryAddress", "deliveryMobile", "deliveryTelephone"];
+      const step3Fields = ["businessType", "salesChannel", "lineOfBusiness", "lineOfBusinessOther", "businessActivity", "businessActivityOther", "tinNumber"];
+      const step4Fields = ["owners", "officers", "paymentTerms"];
+      const step5Fields = ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement", "docMayorsPermit"];
+      const errorKeys = Object.keys(flatErrors);
+      const firstErrStep =
+        errorKeys.some((k) => step1Fields.includes(k)) ? 1 :
+        errorKeys.some((k) => step2Fields.includes(k)) ? 2 :
+        errorKeys.some((k) => step3Fields.includes(k)) ? 3 :
+        errorKeys.some((k) => step4Fields.includes(k)) ? 4 :
+        errorKeys.some((k) => step5Fields.includes(k)) ? 5 : 6;
+      setCurrentStep(firstErrStep);
+      scrollToTop();
       return;
     }
 
@@ -430,7 +465,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       const res = await fetch(`/api/form/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({ ...parsed.data, ...docs }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -440,7 +475,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         else setErrors({ _form: json.message ?? "Something went wrong. Please try again." });
         return;
       }
-      router.push(`/form/${token}/submitted`);
+      router.push(agentFillMode ? "/agent" : `/form/${token}/submitted`);
     } catch {
       setErrors({ _form: "Something went wrong. Please try again." });
     } finally {
@@ -455,7 +490,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       <CardHeader className="pb-4">
         <CardTitle className="text-xl sm:text-2xl">Customer Registration Sheet</CardTitle>
         <CardDescription>
-          Fields marked with <span className="font-medium text-zinc-700">*</span> are required.
+          Fields marked with <span className="font-bold text-red-600 text-base leading-none">*</span> are required.
           <span className="mt-1 block text-xs text-zinc-400">
             Agent: <span className="font-mono">{agentCode}</span>
             {customerType !== "standard" && (
@@ -465,6 +500,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             )}
           </span>
         </CardDescription>
+        {agentFillMode && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span className="font-semibold">Agent fill mode —</span> you are completing this form on behalf of the customer.
+          </div>
+        )}
       </CardHeader>
 
       <form ref={formRef} noValidate>
@@ -482,12 +522,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               <SectionHeader title="Business Information" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="corporateName">Registered corporate name *</Label>
+                  <Label htmlFor="corporateName">Registered corporate name <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="corporateName" name="corporateName" placeholder="ABC Corporation" disabled={isLoading} />
                   {errors.corporateName && <p className="text-xs text-red-600">{errors.corporateName}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="tradeName">Trade / business name *</Label>
+                  <Label htmlFor="tradeName">Trade / business name <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="tradeName" name="tradeName" placeholder="ABC Trading" disabled={isLoading} />
                   {errors.tradeName && <p className="text-xs text-red-600">{errors.tradeName}</p>}
                 </div>
@@ -520,17 +560,17 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               <SectionHeader title="Contact Details" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="contactPerson">Contact person *</Label>
+                  <Label htmlFor="contactPerson">Contact person <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="contactPerson" name="contactPerson" placeholder="Juan dela Cruz" disabled={isLoading} />
                   {errors.contactPerson && <p className="text-xs text-red-600">{errors.contactPerson}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="emailAddress">Email address *</Label>
+                  <Label htmlFor="emailAddress">Email address <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="emailAddress" name="emailAddress" type="email" placeholder="contact@business.com" disabled={isLoading} />
                   {errors.emailAddress && <p className="text-xs text-red-600">{errors.emailAddress}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="contactNumber">Mobile number *</Label>
+                  <Label htmlFor="contactNumber">Mobile number <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input
                     id="contactNumber"
                     name="contactNumber"
@@ -571,12 +611,12 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
               <SectionHeader title="Office Address" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="businessAddress">Street address *</Label>
+                  <Label htmlFor="businessAddress">Street address <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="businessAddress" name="businessAddress" placeholder="123 Main St., Brgy. Example" disabled={isLoading} />
                   {errors.businessAddress && <p className="text-xs text-red-600">{errors.businessAddress}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cityMunicipality">City / Municipality *</Label>
+                  <Label htmlFor="cityMunicipality">City / Municipality <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Input id="cityMunicipality" name="cityMunicipality" placeholder="Makati City" disabled={isLoading} />
                   {errors.cityMunicipality && <p className="text-xs text-red-600">{errors.cityMunicipality}</p>}
                 </div>
@@ -694,7 +734,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   </div>
                 )}
                 <div className="space-y-1.5">
-                  <Label>Business type *</Label>
+                  <Label>Business type <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
                   <Select value={businessType} onValueChange={(v) => setBusinessType(v ?? "")} disabled={isLoading}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type…">
@@ -708,6 +748,22 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     </SelectContent>
                   </Select>
                   {errors.businessType && <p className="text-xs text-red-600">{errors.businessType}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Sales channel</Label>
+                  <Select value={salesChannel} onValueChange={(v) => setSalesChannel(v ?? "")} disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select channel…">
+                        {salesChannel ? getOptionLabel(SALES_CHANNEL_OPTIONS, salesChannel) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_CHANNEL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(errors as Record<string, string>).salesChannel && <p className="text-xs text-red-600">{(errors as Record<string, string>).salesChannel}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="tinNumber">TIN number</Label>
@@ -791,7 +847,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
 
             <div className="max-w-xs space-y-1.5">
               <Label>Payment terms</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-3">
                 {PAYMENT_TERMS.map((t) => {
                   const checked = paymentTerms === t.value;
                   return (
@@ -828,33 +884,75 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             <section>
               <SectionHeader title="Supporting Documents" />
               <p className="mb-4 text-sm text-zinc-500">
-                Upload PDF, JPG, or PNG files. Max 10MB per file.
+                Upload PDF, JPG, or PNG files. Max 10MB per file.{" "}
+                <span className="text-red-500 font-medium">*</span> marks required documents.
               </p>
-              {withTermsSelected && (
-                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  <p className="font-semibold">With Terms upload requirements</p>
-                  <p className="mt-1">Valid Government ID is required when payment terms are With Terms.</p>
-                  <p className="mt-1 text-xs">For COD, Valid Government ID is optional.</p>
-                </div>
-              )}
-              {errors.docValidId && (
-                <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {errors.docValidId}
+
+              {/* Required document guidance banner */}
+              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                <p className="font-semibold">
+                  Required for {customerType === "end_user" ? "End-User" : customerType === "dealer" ? "Dealer" : customerType === "distributor" ? "Distributor" : customerType === "private_label" ? "Private Label" : customerType === "toll_blend" ? "Toll Blend" : "your account type"}
+                  {withTermsSelected ? " (With Terms)" : " (COD/Prepaid)"}:
                 </p>
-              )}
+                <ul className="mt-1.5 list-disc pl-4 text-xs space-y-0.5">
+                  <li>Valid Government ID</li>
+                  {(isCorporateType || withTermsSelected) && <li>SEC / DTI Registration Certificate</li>}
+                  {(isCorporateType || withTermsSelected) && <li>BIR Certificate of Registration</li>}
+                  {withTermsSelected && <li>3-Month Bank Statement / Bank Authorization Letter</li>}
+                </ul>
+              </div>
+
               <div className="space-y-4">
-                {DOC_SLOTS.map((slot) => (
-                  <DocUploadSlot
-                    key={slot.key}
-                    docType={slot.key}
-                    label={slot.label}
-                    endpoint={`/api/form/${token}/upload`}
-                    files={docs[slot.key]}
-                    onChange={(files) => setDocFiles(slot.key, files)}
-                    disabled={isLoading}
-                    allowDelete={slot.key !== "docMayorsPermit"}
-                  />
-                ))}
+                {SCORING_DOC_SLOTS.filter((s) => s.key !== "docIsoCertification" && s.key !== "docHalalCertificate").map((slot) => {
+                  const isRequired = requiredDocs.includes(slot.key);
+                  const slotError = errors[slot.key as keyof FieldErrors];
+                  return (
+                    <div key={slot.key}>
+                      {isRequired && (
+                        <p className="mb-1 text-xs font-semibold text-red-600 flex items-center gap-1">
+                          <span className="font-bold text-red-600 text-base leading-none">*</span> Required
+                        </p>
+                      )}
+                      <DocUploadSlot
+                        docType={slot.key}
+                        label={slot.label}
+                        endpoint={`/api/form/${token}/upload`}
+                        files={docs[slot.key]}
+                        onChange={(files) => setDocFiles(slot.key, files)}
+                        disabled={isLoading}
+                        allowDelete={slot.key !== "docMayorsPermit"}
+                      />
+                      {slotError && (
+                        <p className="mt-1 text-xs text-red-600">{slotError}</p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Certifications group */}
+                <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                  <div className="bg-zinc-50 border-b border-zinc-200 px-3 py-2">
+                    <p className="text-xs font-semibold text-zinc-700">Certifications</p>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">Upload any applicable certification documents</p>
+                  </div>
+                  <div className="divide-y divide-zinc-100">
+                    {(["docIsoCertification", "docHalalCertificate"] as const).map((key) => {
+                      const slot = SCORING_DOC_SLOTS.find((s) => s.key === key)!;
+                      return (
+                        <div key={key} className="p-3">
+                          <DocUploadSlot
+                            docType={slot.key}
+                            label={slot.label}
+                            endpoint={`/api/form/${token}/upload`}
+                            files={docs[slot.key]}
+                            onChange={(files) => setDocFiles(slot.key, files)}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -944,7 +1042,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 />
               </div>
 
-              <div className="mt-5">
+              {withTermsSelected && <div className="mt-5">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Bank References</p>
                 <DynamicTable<BankRefRow>
                   rows={bankRefs}
@@ -970,7 +1068,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     },
                   ]}
                 />
-              </div>
+              </div>}
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
-import { DOC_SLOTS, type DocType, type FileEntry } from "@/lib/doc-types";
+import { SCORING_DOC_SLOTS, DOC_SLOTS, type DocType, type FileEntry } from "@/lib/doc-types";
 
 export function AgentDocSection({
   cisId,
@@ -29,7 +29,11 @@ export function AgentDocSection({
         Upload supporting files on behalf of the customer. Existing files remain available for printing and review.
       </p>
       <div className="space-y-4">
-        {DOC_SLOTS.map((slot) => (
+        {[
+          ...SCORING_DOC_SLOTS,
+          // Agent-only extra requirements slot (not scored, but agent can attach misc docs)
+          ...DOC_SLOTS.filter((s) => s.key === "docAgentOtherRequirements"),
+        ].map((slot) => (
           <DocUploadSlot
             key={slot.key}
             docType={slot.key}

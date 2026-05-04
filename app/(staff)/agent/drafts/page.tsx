@@ -41,6 +41,7 @@ export default async function AgentDraftsPage({
       tradeName: cisSubmissions.tradeName,
       createdAt: cisSubmissions.createdAt,
       updatedAt: cisSubmissions.updatedAt,
+      directFill: cisSubmissions.directFill,
     })
     .from(cisSubmissions)
     .where(and(...conditions))
@@ -84,7 +85,7 @@ export default async function AgentDraftsPage({
             {drafts.map((d) => (
               <li key={d.id}>
                 <Link
-                  href={`/agent/new?id=${d.id}`}
+                  href={d.directFill ? `/agent/fill/${d.id}` : `/agent/new?id=${d.id}`}
                   className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-50"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50">

@@ -10,8 +10,10 @@ import { DismissButton } from "@/components/dismiss-button";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { AgentFillOutForm } from "@/components/actions/agent-fill-out-form";
+import { AgentResubmitForm } from "@/components/actions/agent-resubmit-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, AlertTriangle, History } from "lucide-react";
+import { CusApprovedBanner } from "@/components/cus-approved-banner";
 
 export default async function AgentCisDetailPage({
   params,
@@ -55,6 +57,7 @@ export default async function AgentCisDetailPage({
         specialAccountType: cisSubmissions.specialAccountType,
         specialAccountRemarks: cisSubmissions.specialAccountRemarks,
         paymentTerms: cisSubmissions.paymentTerms,
+        salesChannel: cisSubmissions.salesChannel,
         docGovCertifications: cisSubmissions.docGovCertifications,
         corporateName: cisSubmissions.corporateName,
         dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
@@ -94,6 +97,8 @@ export default async function AgentCisDetailPage({
         docStorePhoto: cisSubmissions.docStorePhoto,
         docSupplierInvoice: cisSubmissions.docSupplierInvoice,
         docSocialMedia: cisSubmissions.docSocialMedia,
+      docIsoCertification: cisSubmissions.docIsoCertification,
+      docHalalCertificate: cisSubmissions.docHalalCertificate,
         docCertifications: cisSubmissions.docCertifications,
         docOther: cisSubmissions.docOther,
         docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
@@ -122,6 +127,7 @@ export default async function AgentCisDetailPage({
         salesSupportSalesType: cisSubmissions.salesSupportSalesType,
         salesSupportVatCode: cisSubmissions.salesSupportVatCode,
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
+        docReviewStatuses: cisSubmissions.docReviewStatuses,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.id, id))
@@ -149,10 +155,25 @@ export default async function AgentCisDetailPage({
 
   const canAgentUploadDocs =
     session.user.id === cis.agentId &&
-    !["denied", "returned", "erp_encoded"].includes(cis.status);
+    !["denied", "erp_encoded"].includes(cis.status);
 
   const returnedEvent = events.findLast((e) => e.action === "returned");
   const deniedEvent = events.findLast((e) => e.action === "denied");
+
+  // Determine who returned the form for custom messaging
+  let returnedBy: string | null = null;
+  let isFinanceOrLegalReturn = false;
+  if (cis.status === "returned" && returnedEvent) {
+    if (returnedEvent.actorRole === "finance_reviewer") {
+      returnedBy = "Finance";
+      isFinanceOrLegalReturn = true;
+    } else if (returnedEvent.actorRole === "legal_approver") {
+      returnedBy = "Legal";
+      isFinanceOrLegalReturn = true;
+    } else if (returnedEvent.actorRole === "sales_manager" || returnedEvent.actorRole === "rsr_manager") {
+      returnedBy = "Manager";
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -185,9 +206,14 @@ export default async function AgentCisDetailPage({
               }`}
             >
               {cis.status === "returned"
-                ? "This form was sent back for corrections"
+                ? `This form was returned by ${returnedBy ?? "a reviewer"}`
                 : "This form was not approved"}
             </p>
+            {cis.status === "returned" && isFinanceOrLegalReturn && (
+              <p className="mt-1 text-xs text-rose-600">
+                This is likely due to document issues or incomplete information.
+              </p>
+            )}
             {(returnedEvent?.note || deniedEvent?.note) && (
               <p
                 className={`mt-1 text-sm ${
@@ -199,7 +225,7 @@ export default async function AgentCisDetailPage({
             )}
             {cis.status === "returned" && (
               <p className="mt-1.5 text-xs text-rose-500">
-                To resubmit, create a new customer form and apply the corrections above.
+                Review the documents and denial reason above, fix any issues, then use the Resubmit button below.
               </p>
             )}
           </div>
@@ -213,10 +239,23 @@ export default async function AgentCisDetailPage({
       {cis.status === "submitted" && (
         <AgentFillOutForm
           cisId={cis.id}
+          initialCustomerType={cis.customerType ?? ""}
           initialOtherRequirements={(cis.docAgentOtherRequirements as any) ?? []}
         />
       )}
 
+      {/* Agent resubmit prompt — shown when form is returned by finance/legal */}
+      {cis.status === "returned" && (
+        <AgentResubmitForm cisId={cis.id} returnedBy={returnedBy} />
+      )}
+
+
+      <CusApprovedBanner
+        cisId={cis.id}
+        originalCreditTerms={cis.financeCreditTerms}
+        originalCreditLimit={cis.financeCreditLimit}
+        hrefPrefix="agent"
+      />
       {/* Two-column layout */}
       <div className="grid gap-5 xl:grid-cols-5">
         {/* Main */}
@@ -233,6 +272,7 @@ export default async function AgentCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
             status={cis.status as any}
@@ -290,6 +330,8 @@ export default async function AgentCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
             docAgentOtherRequirements={cis.docAgentOtherRequirements}
@@ -315,6 +357,7 @@ export default async function AgentCisDetailPage({
             salesSupportSalesType={cis.salesSupportSalesType}
             salesSupportVatCode={cis.salesSupportVatCode}
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
+            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
             agentUpload={canAgentUploadDocs ? { cisId: cis.id } : undefined}
           />
         </div>

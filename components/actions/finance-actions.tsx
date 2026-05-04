@@ -3,19 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { DecisionNoteTemplates } from "@/components/decision-note-templates";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +25,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { sileo as toast } from "sileo";
-import { FINANCE_CREDIT_TERMS_OPTIONS } from "@/lib/validations/cis";
 import type { FileEntry } from "@/lib/doc-types";
 
 interface FinanceActionsProps {
@@ -45,11 +36,11 @@ interface FinanceActionsProps {
   denyEndpoint?: string;
   /** Dashboard path to redirect to on success. Defaults to /finance */
   dashboardPath?: string;
+  /** Whether printing is allowed. Blocked when there are unreviewed documents. */
+  printEnabled?: boolean;
 }
 
 interface FieldErrors {
-  creditLimit?: string;
-  creditTerms?: string;
   sirRestyFiles?: string;
 }
 
@@ -59,68 +50,33 @@ export function FinanceActions({
   forwardEndpoint,
   denyEndpoint,
   dashboardPath = "/finance",
+  printEnabled = true,
 }: FinanceActionsProps) {
   const router = useRouter();
 
-  const [creditLimit, setCreditLimit] = useState("");
-  const [creditTerms, setCreditTerms] = useState("");
   const [sirRestyFiles, setSirRestyFiles] =
     useState<FileEntry[]>(initialSirRestyFiles);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"forward" | "deny" | null>(null);
+  const [action, setAction] = useState<"forward" | "return" | null>(null);
   const [note, setNote] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  async function handlePrint() {
-    setIsSaving(true);
-    try {
-      const res = await fetch(`/api/cis/${cisId}/finance-save`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          financeCreditLimit: creditLimit.trim(),
-          financeCreditTerms: creditTerms,
-        }),
-      });
-      if (!res.ok) {
-        toast.error({ title: "Failed to save fields before printing." });
-        return;
-      }
-      router.refresh();
-      // Small delay to let the server component re-render with updated data
-      await new Promise((r) => setTimeout(r, 600));
-      window.print();
-    } catch {
-      toast.error({ title: "Something went wrong. Please try again." });
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  const financeInfoFilledCount = [creditLimit.trim(), creditTerms].filter(
-    Boolean,
-  ).length;
-  const financeInfoComplete = financeInfoFilledCount === 2;
   const uploadComplete = sirRestyFiles.length > 0;
-  const requiredFilledCount = financeInfoFilledCount + (uploadComplete ? 1 : 0);
-  const canForward = financeInfoComplete && uploadComplete;
+  const canForward = uploadComplete;
 
   function validateFields(): boolean {
     const errors: FieldErrors = {};
-    if (!creditLimit.trim()) errors.creditLimit = "Credit limit is required";
-    if (!creditTerms) errors.creditTerms = "Credit Terms selection is required";
     if (sirRestyFiles.length === 0)
       errors.sirRestyFiles =
-        "Please attach the approved CIS signed by the Chief Finance Officer";
+        "Please attach the approved CIS signed by CFO";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
-  function openDialog(a: "forward" | "deny") {
+  function openDialog(a: "forward" | "return") {
     if (a === "forward" && !validateFields()) return;
     setAction(a);
     setNote("");
@@ -137,9 +93,9 @@ export function FinanceActions({
     if (!action) return;
     setDialogError("");
 
-    if (action === "deny" && note.trim().length < 10) {
+    if (action === "return" && note.trim().length < 10) {
       setDialogError(
-        "Please provide a denial reason of at least 10 characters.",
+        "Please provide a return reason of at least 10 characters.",
       );
       return;
     }
@@ -154,8 +110,6 @@ export function FinanceActions({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               note: note.trim() || undefined,
-              financeCreditLimit: creditLimit.trim(),
-              financeCreditTerms: creditTerms,
             }),
           },
         );
@@ -193,11 +147,11 @@ export function FinanceActions({
         title:
           action === "forward"
             ? "Forwarded to Senior Approver."
-            : "Submission denied.",
+            : "Returned to agent.",
         description:
           action === "forward"
             ? "The Senior Approver has been notified for final review."
-            : "The submission has been closed as denied.",
+            : "The form has been returned to the agent with your denial reason.",
       });
       router.push(dashboardPath);
       router.refresh();
@@ -218,8 +172,8 @@ export function FinanceActions({
                 Finance and Legal Information
               </CardTitle>
               <p className="mt-1 text-xs text-zinc-600">
-                Complete credit details first, then print for the Chief Finance Officer
-                signature, then upload before forwarding.
+                Print the CIS form, have the CFO physically fill in the Credit Decision
+                details and sign, then upload the signed copy before forwarding.
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
@@ -228,74 +182,11 @@ export function FinanceActions({
               ) : (
                 <AlertCircle className="h-3.5 w-3.5 text-indigo-600" />
               )}
-              Required fields: {requiredFilledCount}/3
+              {uploadComplete ? "Ready to forward" : "Upload required"}
             </span>
           </div>
-          <p className="mt-2 text-xs text-zinc-500">
-            To be filled out by Finance. Printing unlocks after Credit Limit and
-            Credit Terms are completed.
-          </p>
         </CardHeader>
         <CardContent className="space-y-5 pt-5">
-          <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
-            <h3 className="mb-3 text-sm font-semibold text-zinc-900">
-              Credit Decision Details
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="credit-limit">Credit Limit *</Label>
-                <Input
-                  id="credit-limit"
-                  value={creditLimit}
-                  onChange={(e) => {
-                    setCreditLimit(e.target.value);
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      creditLimit: undefined,
-                    }));
-                  }}
-                  placeholder="e.g., 500,000"
-                  disabled={isLoading}
-                />
-                {fieldErrors.creditLimit && (
-                  <p className="text-xs text-red-600">
-                    {fieldErrors.creditLimit}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="credit-terms">Credit Terms *</Label>
-                <Select
-                  value={creditTerms}
-                  onValueChange={(v) => {
-                    setCreditTerms(v ?? "");
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      creditTerms: undefined,
-                    }));
-                  }}
-                >
-                  <SelectTrigger id="credit-terms" className="w-full">
-                    <SelectValue placeholder="Please Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FINANCE_CREDIT_TERMS_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {fieldErrors.creditTerms && (
-                  <p className="text-xs text-red-600">
-                    {fieldErrors.creditTerms}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
           <section className="rounded-xl border border-blue-200/80 bg-linear-to-br from-blue-50 via-sky-50 to-indigo-50 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -303,7 +194,7 @@ export function FinanceActions({
                   Required Physical Sign-off
                 </p>
                 <p className="mt-1 text-sm font-medium text-blue-900">
-                  Print only after Finance and Legal details are complete
+                  CFO fills in Credit Limit, Credit Terms, and signs the printed form
                 </p>
               </div>
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-blue-200 bg-white/75 px-2 py-1 text-[11px] font-semibold text-blue-700">
@@ -325,11 +216,16 @@ export function FinanceActions({
                   type="button"
                   size="sm"
                   className="mt-2 w-full"
-                  onClick={handlePrint}
-                  disabled={isLoading || isSaving || !financeInfoComplete}
+                  onClick={() => window.print()}
+                  disabled={isLoading || !printEnabled}
                 >
-                  {isSaving ? "Saving & printing…" : "Print now"}
+                  Print now
                 </Button>
+                {!printEnabled && (
+                  <p className="mt-1.5 text-[10px] leading-snug text-amber-700">
+                    Review all uploaded documents before printing.
+                  </p>
+                )}
               </div>
               <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
@@ -337,7 +233,7 @@ export function FinanceActions({
                 </p>
                 <p className="mt-1 flex items-center gap-2 text-sm font-medium text-zinc-800">
                   <PenLine className="h-4 w-4 text-blue-600" />
-                  Get Chief Finance Officer signature
+                  CFO fills Credit details &amp; signs
                 </p>
               </div>
               <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
@@ -351,33 +247,23 @@ export function FinanceActions({
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {!financeInfoComplete ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Complete Credit Limit and Credit Terms to unlock printing
-                </span>
-              ) : uploadComplete ? (
+            {uploadComplete && (
+              <div className="mt-3">
                 <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Signed copy uploaded ({sirRestyFiles.length})
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Printing unlocked. Proceed to physical signature and upload.
-                </span>
-              )}
-            </div>
+              </div>
+            )}
           </section>
 
           <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
             <div className="space-y-1.5">
-              <Label>Attach Approved CIS from Chief Finance Officer *</Label>
+              <Label>Attach Signed CIS (by CFO) *</Label>
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <DocUploadSlot
                   docType="docSirRestySigned"
-                  label="Approved CIS (Signed by Chief Finance Officer)"
+                  label="Signed CIS (by CFO)"
                   endpoint={`/api/cis/${cisId}/staff-docs`}
                   files={sirRestyFiles}
                   onChange={(files) => {
@@ -387,15 +273,9 @@ export function FinanceActions({
                       sirRestyFiles: undefined,
                     }));
                   }}
-                  disabled={isLoading || !financeInfoComplete}
+                  disabled={isLoading}
                 />
               </div>
-              {!financeInfoComplete && (
-                <p className="text-xs text-amber-700">
-                  Complete Credit Decision Details first, then print and collect
-                  Chief Finance Officer signature before uploading.
-                </p>
-              )}
               {fieldErrors.sirRestyFiles && (
                 <p className="text-xs text-red-600">
                   {fieldErrors.sirRestyFiles}
@@ -406,7 +286,7 @@ export function FinanceActions({
 
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <p className="text-xs text-zinc-500">
-              Complete all required fields before forwarding.
+              Upload the signed copy before forwarding.
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button
@@ -419,12 +299,12 @@ export function FinanceActions({
               </Button>
               <Button
                 variant="outline"
-                onClick={() => openDialog("deny")}
+                onClick={() => openDialog("return")}
                 disabled={isLoading}
                 className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
               >
                 <XCircle className="h-4 w-4" />
-                Deny
+                Return
               </Button>
             </div>
           </div>
@@ -438,19 +318,19 @@ export function FinanceActions({
             <DialogTitle>
               {action === "forward"
                 ? "Forward to Senior Approver"
-                : "Deny Submission"}
+                : "Return to Agent"}
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
               ? "You are forwarding this submission to the Senior Approver for final decision. You may add an optional note."
-              : "You are denying this submission. Please explain why it cannot be approved."}
+              : "You are returning this submission to the agent. Please explain why it needs corrections."}
           </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="dialog-note">
-              {action === "forward" ? "Note (optional)" : "Denial reason *"}
+              {action === "forward" ? "Note (optional)" : "Return reason *"}
             </Label>
             {action === "forward" ? (
               <DecisionNoteTemplates
@@ -473,7 +353,7 @@ export function FinanceActions({
               placeholder={
                 action === "forward"
                   ? "Finance review notes…"
-                  : "Reason for denial…"
+                  : "Reason for return…"
               }
               disabled={isLoading}
             />
@@ -493,13 +373,13 @@ export function FinanceActions({
             <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              variant={action === "deny" ? "destructive" : "default"}
+              variant={action === "return" ? "destructive" : "default"}
             >
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
                   ? "Yes, Forward"
-                  : "Yes, Deny"}
+                  : "Yes, Return"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -31,6 +31,8 @@ async function getCis(token: string) {
       docStorePhoto: cisSubmissions.docStorePhoto,
       docSupplierInvoice: cisSubmissions.docSupplierInvoice,
       docSocialMedia: cisSubmissions.docSocialMedia,
+      docIsoCertification: cisSubmissions.docIsoCertification,
+      docHalalCertificate: cisSubmissions.docHalalCertificate,
       docCertifications: cisSubmissions.docCertifications,
       docGovCertifications: cisSubmissions.docGovCertifications,
       docOther: cisSubmissions.docOther,
@@ -50,7 +52,7 @@ export async function POST(
 
   const cis = await getCis(token);
   if (!cis) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
-  if (cis.status !== "draft") {
+  if (cis.status !== "draft" && cis.status !== "returned") {
     return NextResponse.json({ error: "Form already submitted" }, { status: 409 });
   }
 
@@ -76,7 +78,15 @@ export async function POST(
   }
 
   const safeFilename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const { url } = await put(`cis/${cis.id}/${docType}/${safeFilename}`, file, { access: "public" });
+  let url: string;
+  try {
+    const result = await put(`cis/${cis.id}/${docType}/${safeFilename}`, file, { access: "public" });
+    url = result.url;
+  } catch (err) {
+    console.error("[upload] Vercel Blob error:", err);
+    const msg = err instanceof Error ? err.message : "Storage error";
+    return NextResponse.json({ error: `Upload failed: ${msg}` }, { status: 500 });
+  }
 
   const entry: FileEntry = {
     name: file.name,
@@ -105,7 +115,7 @@ export async function PATCH(
 
   const cis = await getCis(token);
   if (!cis) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
-  if (cis.status !== "draft") {
+  if (cis.status !== "draft" && cis.status !== "returned") {
     return NextResponse.json({ error: "Form already submitted" }, { status: 409 });
   }
 
@@ -140,7 +150,7 @@ export async function DELETE(
 
   const cis = await getCis(token);
   if (!cis) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
-  if (cis.status !== "draft") {
+  if (cis.status !== "draft" && cis.status !== "returned") {
     return NextResponse.json({ error: "Form already submitted" }, { status: 409 });
   }
 

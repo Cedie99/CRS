@@ -4,13 +4,15 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
-import { CisInfoCard } from "@/components/cis-info-card";
+import { DocReviewPanel } from "@/components/doc-review-panel";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { FinanceActions } from "@/components/actions/finance-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
+import { PointsBreakdownPanel } from "@/components/points-breakdown-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
+import { CusApprovedBanner } from "@/components/cus-approved-banner";
 
 export default async function LegalCisDetailPage({
   params,
@@ -58,6 +60,7 @@ export default async function LegalCisDetailPage({
         specialAccountType: cisSubmissions.specialAccountType,
         specialAccountRemarks: cisSubmissions.specialAccountRemarks,
         paymentTerms: cisSubmissions.paymentTerms,
+        salesChannel: cisSubmissions.salesChannel,
         docGovCertifications: cisSubmissions.docGovCertifications,
         corporateName: cisSubmissions.corporateName,
         dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
@@ -97,6 +100,8 @@ export default async function LegalCisDetailPage({
         docStorePhoto: cisSubmissions.docStorePhoto,
         docSupplierInvoice: cisSubmissions.docSupplierInvoice,
         docSocialMedia: cisSubmissions.docSocialMedia,
+      docIsoCertification: cisSubmissions.docIsoCertification,
+      docHalalCertificate: cisSubmissions.docHalalCertificate,
         docCertifications: cisSubmissions.docCertifications,
         docOther: cisSubmissions.docOther,
         docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
@@ -122,6 +127,7 @@ export default async function LegalCisDetailPage({
         salesSupportSalesType: cisSubmissions.salesSupportSalesType,
         salesSupportVatCode: cisSubmissions.salesSupportVatCode,
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
+        docReviewStatuses: cisSubmissions.docReviewStatuses,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.id, id))
@@ -144,10 +150,27 @@ export default async function LegalCisDetailPage({
   const cis = cisRows[0];
   if (!cis) notFound();
 
+  const canAct = cis.status === "pending_legal_review" && !isReadOnlyContextView;
   const hasFinanceAndLegalInfo =
     Boolean(cis.financeCreditLimit?.trim()) &&
     Boolean(cis.financeCreditTerms?.trim());
-  const canPrint = hasFinanceAndLegalInfo;
+
+  // Docs that carry points and must be reviewed before printing is allowed
+  const SCORED_DOC_FIELDS = [
+    "docMayorsPermit", "docSecDti", "docBirCertificate", "docValidId",
+    "docLocationMap", "docFinancialStatement", "docProofOfBilling",
+    "docLeaseContract", "docProofOfOwnership", "docStorePhoto",
+    "docSupplierInvoice", "docSocialMedia", "docCompanyWebsite",
+    "docIsoCertification", "docHalalCertificate",
+  ] as const;
+  const REVIEWED_STATUSES = new Set(["approved", "rejected", "needs_review"]);
+  const reviewStatuses = (cis.docReviewStatuses as Record<string, { status: string }> | null) ?? {};
+  const hasPendingDocReviews = SCORED_DOC_FIELDS.some((field) => {
+    const val = (cis as Record<string, unknown>)[field];
+    const uploaded = Array.isArray(val) && val.length > 0;
+    return uploaded && !REVIEWED_STATUSES.has(reviewStatuses[field]?.status);
+  });
+  const canPrint = hasFinanceAndLegalInfo && !hasPendingDocReviews;
 
   return (
     <div className="space-y-5">
@@ -165,6 +188,14 @@ export default async function LegalCisDetailPage({
         </div>
       )}
 
+
+      <CusApprovedBanner
+        cisId={cis.id}
+        originalCreditTerms={cis.financeCreditTerms}
+        originalCreditLimit={cis.financeCreditLimit}
+        hrefPrefix="legal"
+      />
+
       {cis.status === "pending_legal_review" && !isReadOnlyContextView && (
         <FinanceActions
           cisId={id}
@@ -172,14 +203,18 @@ export default async function LegalCisDetailPage({
           forwardEndpoint={`/api/cis/${id}/legal-forward`}
           denyEndpoint={`/api/cis/${id}/legal-deny`}
           dashboardPath="/legal"
+          printEnabled={canPrint}
         />
       )}
 
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
-          <CisInfoCard
+          <DocReviewPanel
+            initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            canAct={canAct}
             printEnabled={canPrint}
             hidePrintButton
+            hidePointsPanel
             cisId={cis.id}
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
@@ -191,6 +226,7 @@ export default async function LegalCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
             status={cis.status as any}
@@ -248,6 +284,8 @@ export default async function LegalCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
             docAgentOtherRequirements={cis.docAgentOtherRequirements}
@@ -279,6 +317,31 @@ export default async function LegalCisDetailPage({
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
+          <PointsBreakdownPanel
+            docValidId={cis.docValidId}
+            docMayorsPermit={cis.docMayorsPermit}
+            docSecDti={cis.docSecDti}
+            docBirCertificate={cis.docBirCertificate}
+            docLocationMap={cis.docLocationMap}
+            docFinancialStatement={cis.docFinancialStatement}
+            docBankStatement={cis.docBankStatement}
+            docProofOfBilling={cis.docProofOfBilling}
+            docLeaseContract={cis.docLeaseContract}
+            docProofOfOwnership={cis.docProofOfOwnership}
+            docStorePhoto={cis.docStorePhoto}
+            docSupplierInvoice={cis.docSupplierInvoice}
+            docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
+            docCertifications={cis.docCertifications}
+            docGovCertifications={cis.docGovCertifications}
+            docOther={cis.docOther}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            agentType={cis.agentType}
+            customerType={cis.customerType}
+          />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">

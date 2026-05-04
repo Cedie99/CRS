@@ -10,6 +10,7 @@ import Link from "next/link";
 import { FileText, Database, XCircle, Clock, LayoutList } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Sales Support — CRS" };
 
@@ -209,6 +210,18 @@ export default async function SupportDashboard({
           ))}
         </div>
       </div>
+
+      {!isAllView && (
+        <ActionRequiredSection
+          submissions={pendingEncoding.map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={pendingTotal}
+          hrefPrefix="support"
+          label="Ready to Onboard"
+          sublabel="These customers have been approved and are waiting to be encoded into ERP."
+          accentClass="border-emerald-300 bg-emerald-50/60"
+          badgeClass="bg-emerald-100 text-emerald-800"
+        />
+      )}
 
       <CustomerTypeNavCards
         basePath="/support"

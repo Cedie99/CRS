@@ -10,6 +10,7 @@ import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
+import { CusApprovedBanner } from "@/components/cus-approved-banner";
 
 export default async function ManagerCisDetailPage({
   params,
@@ -53,6 +54,7 @@ export default async function ManagerCisDetailPage({
       specialAccountType: cisSubmissions.specialAccountType,
       specialAccountRemarks: cisSubmissions.specialAccountRemarks,
       paymentTerms: cisSubmissions.paymentTerms,
+        salesChannel: cisSubmissions.salesChannel,
       docGovCertifications: cisSubmissions.docGovCertifications,
       corporateName: cisSubmissions.corporateName,
       dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
@@ -92,6 +94,8 @@ export default async function ManagerCisDetailPage({
       docStorePhoto: cisSubmissions.docStorePhoto,
       docSupplierInvoice: cisSubmissions.docSupplierInvoice,
       docSocialMedia: cisSubmissions.docSocialMedia,
+      docIsoCertification: cisSubmissions.docIsoCertification,
+      docHalalCertificate: cisSubmissions.docHalalCertificate,
       docCertifications: cisSubmissions.docCertifications,
       docOther: cisSubmissions.docOther,
       financeEu: cisSubmissions.financeEu,
@@ -155,6 +159,14 @@ export default async function ManagerCisDetailPage({
         Back to queue
       </Link>
 
+
+      <CusApprovedBanner
+        cisId={cis.id}
+        originalCreditTerms={cis.financeCreditTerms}
+        originalCreditLimit={cis.financeCreditLimit}
+        hrefPrefix="manager"
+      />
+
       <div className="grid gap-5 xl:grid-cols-5">
         {/* Main */}
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
@@ -170,6 +182,7 @@ export default async function ManagerCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
             status={cis.status as any}
@@ -227,6 +240,8 @@ export default async function ManagerCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
             financeEu={cis.financeEu}

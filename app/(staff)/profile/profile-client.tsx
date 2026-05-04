@@ -17,6 +17,7 @@ import {
   Hash,
   Fingerprint,
   Pencil,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface ProfileClientProps {
     role: string;
     agentCode: string | null;
     avatarUrl: string | null;
+    managerName: string | null;
   };
 }
 
@@ -220,6 +222,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
   const roleLabel = user.role
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+  const isAgentRole = user.role === "sales_agent" || user.role === "rsr";
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -468,7 +471,10 @@ export function ProfileClient({ user }: ProfileClientProps) {
           <p className="text-xs text-zinc-400">Read-only — managed by your administrator</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={cn(
+          "grid grid-cols-1 gap-3 p-4 sm:grid-cols-2",
+          isAgentRole ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        )}>
           <DetailTile
             icon={<AtSign className="h-4 w-4" />}
             label="Email"
@@ -480,6 +486,13 @@ export function ProfileClient({ user }: ProfileClientProps) {
             label="Role"
             value={roleLabel}
           />
+          {isAgentRole && (
+            <DetailTile
+              icon={<UserRound className="h-4 w-4" />}
+              label="Manager"
+              value={user.managerName ?? "Not assigned"}
+            />
+          )}
           <DetailTile
             icon={<Hash className="h-4 w-4" />}
             label="Agent Code"
