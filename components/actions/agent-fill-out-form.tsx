@@ -7,25 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ArrowRight, CheckCircle2, ClipboardList, Paperclip, UserRound } from "lucide-react";
 import { sileo as toast } from "sileo";
 import type { FileEntry } from "@/lib/doc-types";
-
-const SALES_MANAGERS = [
-  "Jan Kevin Siy",
-  "Michael Dominic Siy",
-  "Miguel Santos",
-  "Eric Onnagan",
-  "Louie Jay Donato",
-  "Joyce Mejarito",
-] as const;
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   dealer: "Dealer",
@@ -45,7 +29,6 @@ interface FormFields {
   agentAccountSpecialistFirst: string;
   agentAccountSpecialistLast: string;
   agentSalesSpecialist: string;
-  agentSalesManager: string;
   agentTpcFirst: string;
   agentTpcLast: string;
 }
@@ -54,7 +37,6 @@ interface FormErrors {
   agentAccountSpecialistFirst?: string;
   agentAccountSpecialistLast?: string;
   agentSalesSpecialist?: string;
-  agentSalesManager?: string;
 }
 
 export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [] }: AgentFillOutFormProps) {
@@ -63,7 +45,6 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
     agentAccountSpecialistFirst: "",
     agentAccountSpecialistLast: "",
     agentSalesSpecialist: "",
-    agentSalesManager: "",
     agentTpcFirst: "",
     agentTpcLast: "",
   });
@@ -76,7 +57,6 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
     fields.agentAccountSpecialistFirst.trim(),
     fields.agentAccountSpecialistLast.trim(),
     fields.agentSalesSpecialist.trim(),
-    fields.agentSalesManager.trim(),
   ].filter(Boolean).length;
 
   const isDealer = initialCustomerType === "dealer";
@@ -91,7 +71,6 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
     if (!fields.agentAccountSpecialistFirst.trim()) errs.agentAccountSpecialistFirst = "First name is required";
     if (!fields.agentAccountSpecialistLast.trim()) errs.agentAccountSpecialistLast = "Last name is required";
     if (!fields.agentSalesSpecialist.trim()) errs.agentSalesSpecialist = "Sales Specialist is required";
-    if (!fields.agentSalesManager.trim()) errs.agentSalesManager = "Sales Manager is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -109,7 +88,6 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
           agentAccountSpecialistFirst: fields.agentAccountSpecialistFirst,
           agentAccountSpecialistLast: fields.agentAccountSpecialistLast,
           agentSalesSpecialist: fields.agentSalesSpecialist,
-          agentSalesManager: fields.agentSalesManager,
           agentTpcFirst: fields.agentTpcFirst || undefined,
           agentTpcLast: fields.agentTpcLast || undefined,
         }),
@@ -149,12 +127,12 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
             </p>
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-800">
-            {requiredFilledCount === 4 ? (
+            {requiredFilledCount === 3 ? (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
               <UserRound className="h-3.5 w-3.5 text-sky-600" />
             )}
-            Required fields: {requiredFilledCount}/4
+            Required fields: {requiredFilledCount}/3
           </div>
         </div>
       </CardHeader>
@@ -207,28 +185,6 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
             />
             {errors.agentSalesSpecialist && (
               <p className="text-xs text-red-600">{errors.agentSalesSpecialist}</p>
-            )}
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="sales-manager">Sales Manager *</Label>
-            <Select
-              value={fields.agentSalesManager}
-              onValueChange={(v) => setField("agentSalesManager", v)}
-            >
-              <SelectTrigger id="sales-manager" className="bg-white w-full">
-                <SelectValue placeholder="Please Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {SALES_MANAGERS.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.agentSalesManager && (
-              <p className="text-xs text-red-600">{errors.agentSalesManager}</p>
             )}
             </div>
           </div>

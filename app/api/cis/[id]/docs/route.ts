@@ -74,7 +74,7 @@ export async function POST(
   if ("error" in authResult) return authResult.error;
 
   const { cis } = authResult;
-  if (["denied", "returned", "erp_encoded"].includes(cis.status)) {
+  if (["denied", "erp_encoded"].includes(cis.status)) {
     return NextResponse.json({ error: "Document uploads are not allowed in this status" }, { status: 409 });
   }
 

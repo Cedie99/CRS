@@ -135,7 +135,8 @@ export async function POST(req: Request) {
         "agent_type",
         "customer_type",
         "status",
-        "trade_name"
+        "trade_name",
+        "direct_fill"
       )
       values (
         ${userId},
@@ -143,7 +144,8 @@ export async function POST(req: Request) {
         ${agentType},
         ${parsed.data.customerType},
         ${"draft"},
-        ${parsed.data.tradeName || null}
+        ${parsed.data.tradeName || null},
+        ${parsed.data.directFill ?? false}
       )
       returning "id", "public_token" as "publicToken"
     `);

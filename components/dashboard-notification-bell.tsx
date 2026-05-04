@@ -42,6 +42,7 @@ const ROLE_LABELS: Record<string, string> = {
 type Notification = {
   id: string;
   cisId: string;
+  cusId?: string | null;
   message: string;
   isRead: boolean;
   sentAt: string;
@@ -231,12 +232,12 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
                   className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
                   onClick={() => {
                     setNotifOpen(false);
-                    router.push(`${homeHref}/${n.cisId}`);
+                    router.push(n.cusId ? `${homeHref}/cus/${n.cusId}` : `${homeHref}/${n.cisId}`);
                   }}
                 >
                   <div className="flex w-full items-start gap-2">
                     {getNotificationIcon(n.message)}
-                    <p className={`flex-1 text-xs leading-relaxed ${!n.isRead ? "font-medium text-zinc-900" : "text-zinc-500"}`}>
+                    <p className={`flex-1 text-xs leading-relaxed ${!n.isRead ? "font-medium text-zinc-900" : "text-zinc-900"}`}>
                       {n.message}
                     </p>
                   </div>

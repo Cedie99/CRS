@@ -13,10 +13,13 @@ export type CisForScoring = {
   docStorePhoto: unknown;
   docSupplierInvoice: unknown;
   docSocialMedia: unknown;
-  docCertifications: unknown;  // ISO (5pts) or Halal (1pt) — scored as present=2pts until cert type is tracked
-  docGovCertifications: unknown;
-  docOther: unknown;
-  // Tiered inputs — not yet collected in DB, pass null/undefined to score as 0
+  docCompanyWebsite: unknown;
+  docIsoCertification: unknown;   // 5pts
+  docHalalCertificate: unknown;   // 1pt
+  docCertifications: unknown;     // other certs — no points
+  docGovCertifications: unknown;  // no points
+  docOther: unknown;              // misc — no points
+  // Tiered inputs — pass null/undefined to score as 0
   annualSalesAmount?: number | null;
   netIncomeAmount?: number | null;
   bankBalanceAmount?: number | null;
@@ -31,12 +34,17 @@ function hasEntries(field: unknown): boolean {
 
 /**
  * Sales amount tiers (max 5pts)
- * Note: business spec has overlapping labels for the 1pt tier — treated as 5M001–10M=2pts,
- * 1pt bracket reserved for future clarification.
+ *   0 – 5,000,000          → 0pt
+ *   5,000,001 (exact)      → 1pt
+ *   Above 5M – 10M         → 2pts
+ *   10M – 50M              → 3pts
+ *   Above 50M – 100M       → 4pts
+ *   100M and above         → 5pts
  */
 export function scoreSalesAmount(amount: number | null | undefined): number {
   if (!amount || amount <= 0) return 0;
   if (amount <= 5_000_000) return 0;
+  if (amount <= 5_000_001) return 1;
   if (amount <= 10_000_000) return 2;
   if (amount <= 50_000_000) return 3;
   if (amount <= 100_000_000) return 4;
@@ -45,6 +53,12 @@ export function scoreSalesAmount(amount: number | null | undefined): number {
 
 /**
  * Net income tiers (max 5pts)
+ *   250,000 and below            → 0pt
+ *   250,001 – 1,000,000          → 1pt
+ *   1,000,001 – 5,000,000        → 2pts
+ *   5,000,001 – 15,000,000       → 3pts
+ *   15,000,001 – 30,000,000      → 4pts
+ *   30,000,001 and above         → 5pts
  */
 export function scoreNetIncome(amount: number | null | undefined): number {
   if (!amount || amount <= 0) return 0;
@@ -58,8 +72,12 @@ export function scoreNetIncome(amount: number | null | undefined): number {
 
 /**
  * Bank statement / bank authorization average balance tiers (max 5pts)
- * Digit-based: ≤5 digits=0, low 6 digits (100k–399k)=1, mid 6 (400k–699k)=2,
- * high 6 (700k–999k)=3, 7 digits (1M–9.9M)=4, ≥8 digits (10M+)=5
+ *   5 digits and below (≤ 99,999)        → 0pt
+ *   Low 6 digits  (100,000 – 399,999)    → 1pt
+ *   Mid 6 digits  (400,000 – 699,999)    → 2pts
+ *   High 6 digits (700,000 – 999,999)    → 3pts
+ *   7 digits      (1,000,000 – 9,999,999)→ 4pts
+ *   8 digits and above (≥ 10,000,000)    → 5pts
  */
 export function scoreBankBalance(amount: number | null | undefined): number {
   if (!amount || amount <= 0) return 0;
@@ -73,6 +91,12 @@ export function scoreBankBalance(amount: number | null | undefined): number {
 
 /**
  * Business life / years in operation tiers (max 5pts)
+ *   0 – 1 yr      → 0pt
+ *   2 – 5 yrs     → 1pt
+ *   6 – 10 yrs    → 2pts
+ *   11 – 20 yrs   → 3pts
+ *   21 – 30 yrs   → 4pts
+ *   30+ yrs       → 5pts
  */
 export function scoreBusinessLife(years: number | null | undefined): number {
   if (!years || years <= 0) return 0;
@@ -89,52 +113,55 @@ export function scoreBusinessLife(years: number | null | undefined): number {
 /**
  * Computes CRS Possible Points from a CIS submission.
  *
- * Fixed document points (max 29pts from docs):
- *   Mayor / Barangay Permit            2
- *   SEC / DTI Registration             2
- *   BIR Certificate of Registration    2
- *   Owner's Valid ID                   1
- *   Location Map                       1
- *   Audited FS / Annual ITR            2
- *   3-month Bank Statement             (tiered — see below)
- *   Proof of Billing Address           1
- *   Lease Contract                     1
- *   Proof of Ownership                 4
- *   Photo of Plant / Office / Store    1
- *   Reference Supplier Invoice         2
- *   Screenshot of Social Media         2
- *   Website Screenshot (docOther)      2 (placeholder — no dedicated upload slot)
- *   Certifications (ISO=5, Halal=1)    2 (conservative until cert type is tracked)
+ * Fixed document points (max 31pts from docs):
+ *   Mayor / Barangay Permit              2
+ *   SEC / DTI Registration               2
+ *   BIR Certificate of Registration      2
+ *   Owner's Valid ID                     1
+ *   Location Map                         1
+ *   Audited FS / Annual ITR              2
+ *   Proof of Billing Address             1
+ *   Lease Contract                       1
+ *   Proof of Ownership                   4
+ *   Photo of Plant / Office / Store      1
+ *   Reference Supplier Invoice           2
+ *   Screenshot of Company Website        2
+ *   Screenshot of Social Media Account   2
+ *   ISO Certification                    5
+ *   Halal Certificate                    1
+ *                                       ──
+ *                                       31
  *
- * Tiered scoring (max 20pts — requires annualSalesAmount, netIncomeAmount,
- *   bankBalanceAmount, businessLifeYears columns; score 0 until collected):
- *   Sales amount                       0–5
- *   Net income                         0–5
- *   Bank balance                       0–5
- *   Business life (years)              0–5
+ * Tiered scoring (max 20pts):
+ *   Sales amount          0 – 5
+ *   Net income            0 – 5
+ *   Bank balance          0 – 5
+ *   Business life (yrs)   0 – 5
+ *
+ * Total max: 51pts
  */
 export function computePossiblePoints(cis: CisForScoring): number {
   let pts = 0;
 
   // ── Fixed document points ──
-  if (hasEntries(cis.docMayorsPermit))       pts += 2;
-  if (hasEntries(cis.docSecDti))             pts += 2;
-  if (hasEntries(cis.docBirCertificate))     pts += 2;
-  if (hasEntries(cis.docValidId))            pts += 1;
-  if (hasEntries(cis.docLocationMap))        pts += 1;
-  if (hasEntries(cis.docFinancialStatement)) pts += 2;
-  if (hasEntries(cis.docProofOfBilling))     pts += 1;
-  if (hasEntries(cis.docLeaseContract))      pts += 1;
-  if (hasEntries(cis.docProofOfOwnership))   pts += 4;
-  if (hasEntries(cis.docStorePhoto))         pts += 1;
-  if (hasEntries(cis.docSupplierInvoice))    pts += 2;
-  if (hasEntries(cis.docSocialMedia))        pts += 2;
-  // Website screenshot has no dedicated slot yet — scored from docOther presence
-  if (hasEntries(cis.docOther))              pts += 2;
-  // Certifications: ISO=5pts, Halal=1pt — scored as 2pts until cert type is tracked per upload
-  if (hasEntries(cis.docCertifications) || hasEntries(cis.docGovCertifications)) pts += 2;
+  if (hasEntries(cis.docMayorsPermit))        pts += 2;
+  if (hasEntries(cis.docSecDti))              pts += 2;
+  if (hasEntries(cis.docBirCertificate))      pts += 2;
+  if (hasEntries(cis.docValidId))             pts += 1;
+  if (hasEntries(cis.docLocationMap))         pts += 1;
+  if (hasEntries(cis.docFinancialStatement))  pts += 2;
+  if (hasEntries(cis.docProofOfBilling))      pts += 1;
+  if (hasEntries(cis.docLeaseContract))       pts += 1;
+  if (hasEntries(cis.docProofOfOwnership))    pts += 4;
+  if (hasEntries(cis.docStorePhoto))          pts += 1;
+  if (hasEntries(cis.docSupplierInvoice))     pts += 2;
+  if (hasEntries(cis.docSocialMedia))         pts += 2;
+  if (hasEntries(cis.docCompanyWebsite))      pts += 2;
+  // Certifications — scored separately
+  if (hasEntries(cis.docIsoCertification))    pts += 5;
+  if (hasEntries(cis.docHalalCertificate))    pts += 1;
 
-  // ── Tiered scoring (0 until new DB columns are added) ──
+  // ── Tiered scoring ──
   pts += scoreSalesAmount(cis.annualSalesAmount);
   pts += scoreNetIncome(cis.netIncomeAmount);
   pts += scoreBankBalance(cis.bankBalanceAmount);

@@ -36,6 +36,8 @@ interface FinanceActionsProps {
   denyEndpoint?: string;
   /** Dashboard path to redirect to on success. Defaults to /finance */
   dashboardPath?: string;
+  /** Whether printing is allowed. Blocked when there are unreviewed documents. */
+  printEnabled?: boolean;
 }
 
 interface FieldErrors {
@@ -48,6 +50,7 @@ export function FinanceActions({
   forwardEndpoint,
   denyEndpoint,
   dashboardPath = "/finance",
+  printEnabled = true,
 }: FinanceActionsProps) {
   const router = useRouter();
 
@@ -56,7 +59,7 @@ export function FinanceActions({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"forward" | "deny" | null>(null);
+  const [action, setAction] = useState<"forward" | "return" | null>(null);
   const [note, setNote] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +76,7 @@ export function FinanceActions({
     return Object.keys(errors).length === 0;
   }
 
-  function openDialog(a: "forward" | "deny") {
+  function openDialog(a: "forward" | "return") {
     if (a === "forward" && !validateFields()) return;
     setAction(a);
     setNote("");
@@ -90,9 +93,9 @@ export function FinanceActions({
     if (!action) return;
     setDialogError("");
 
-    if (action === "deny" && note.trim().length < 10) {
+    if (action === "return" && note.trim().length < 10) {
       setDialogError(
-        "Please provide a denial reason of at least 10 characters.",
+        "Please provide a return reason of at least 10 characters.",
       );
       return;
     }
@@ -144,11 +147,11 @@ export function FinanceActions({
         title:
           action === "forward"
             ? "Forwarded to Senior Approver."
-            : "Submission denied.",
+            : "Returned to agent.",
         description:
           action === "forward"
             ? "The Senior Approver has been notified for final review."
-            : "The submission has been closed as denied.",
+            : "The form has been returned to the agent with your denial reason.",
       });
       router.push(dashboardPath);
       router.refresh();
@@ -214,10 +217,15 @@ export function FinanceActions({
                   size="sm"
                   className="mt-2 w-full"
                   onClick={() => window.print()}
-                  disabled={isLoading}
+                  disabled={isLoading || !printEnabled}
                 >
                   Print now
                 </Button>
+                {!printEnabled && (
+                  <p className="mt-1.5 text-[10px] leading-snug text-amber-700">
+                    Review all uploaded documents before printing.
+                  </p>
+                )}
               </div>
               <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
@@ -291,12 +299,12 @@ export function FinanceActions({
               </Button>
               <Button
                 variant="outline"
-                onClick={() => openDialog("deny")}
+                onClick={() => openDialog("return")}
                 disabled={isLoading}
                 className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
               >
                 <XCircle className="h-4 w-4" />
-                Deny
+                Return
               </Button>
             </div>
           </div>
@@ -310,19 +318,19 @@ export function FinanceActions({
             <DialogTitle>
               {action === "forward"
                 ? "Forward to Senior Approver"
-                : "Deny Submission"}
+                : "Return to Agent"}
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
               ? "You are forwarding this submission to the Senior Approver for final decision. You may add an optional note."
-              : "You are denying this submission. Please explain why it cannot be approved."}
+              : "You are returning this submission to the agent. Please explain why it needs corrections."}
           </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="dialog-note">
-              {action === "forward" ? "Note (optional)" : "Denial reason *"}
+              {action === "forward" ? "Note (optional)" : "Return reason *"}
             </Label>
             {action === "forward" ? (
               <DecisionNoteTemplates
@@ -345,7 +353,7 @@ export function FinanceActions({
               placeholder={
                 action === "forward"
                   ? "Finance review notes…"
-                  : "Reason for denial…"
+                  : "Reason for return…"
               }
               disabled={isLoading}
             />
@@ -365,13 +373,13 @@ export function FinanceActions({
             <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              variant={action === "deny" ? "destructive" : "default"}
+              variant={action === "return" ? "destructive" : "default"}
             >
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
                   ? "Yes, Forward"
-                  : "Yes, Deny"}
+                  : "Yes, Return"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -11,6 +11,7 @@ import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
+import { CusApprovedBanner } from "@/components/cus-approved-banner";
 
 export default async function SupportCisDetailPage({
   params,
@@ -78,6 +79,14 @@ export default async function SupportCisDetailPage({
         />
       )}
 
+
+      <CusApprovedBanner
+        cisId={cis.id}
+        originalCreditTerms={cis.financeCreditTerms}
+        originalCreditLimit={cis.financeCreditLimit}
+        hrefPrefix="support"
+      />
+
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
@@ -93,6 +102,7 @@ export default async function SupportCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
             status={cis.status as any}
@@ -150,6 +160,8 @@ export default async function SupportCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docIsoCertification={cis.docIsoCertification}
+            docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
             financeEu={cis.financeEu}

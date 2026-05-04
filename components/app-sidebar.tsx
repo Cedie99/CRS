@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Plus,
+  RefreshCw,
   ClipboardCheck,
   DollarSign,
   Scale,
@@ -31,10 +32,12 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   sales_agent: [
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
+    { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
   ],
   rsr: [
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
+    { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
   ],
   sales_manager: [
     { label: "My Team", href: "/manager", icon: ClipboardCheck, exact: true },
@@ -45,10 +48,12 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "My Agents", href: "/manager/agents", icon: Users },
   ],
   finance_reviewer: [
-    { label: "Finance Review", href: "/finance", icon: DollarSign },
+    { label: "Finance Review", href: "/finance", icon: DollarSign, exact: true },
+    { label: "Customer Updates", href: "/finance/cus", icon: RefreshCw },
   ],
   legal_approver: [
-    { label: "Legal Review", href: "/legal", icon: Scale },
+    { label: "Legal Review", href: "/legal", icon: Scale, exact: true },
+    { label: "Customer Updates", href: "/legal/cus", icon: RefreshCw },
   ],
   senior_approver: [
     { label: "Approval Queue", href: "/approver", icon: BadgeCheck },

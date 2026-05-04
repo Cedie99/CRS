@@ -1,15 +1,22 @@
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type CisStatus } from "@/components/status-badge";
-import { verifySeal, displayFingerprint } from "@/lib/signature-integrity";
+import { displayFingerprint } from "@/lib/signature-integrity";
 import { AgentDocSection } from "@/components/agent-doc-section";
+import { PointsBreakdownPanel } from "@/components/points-breakdown-panel";
+import { SignatureVerificationBadge } from "@/components/signature-verification-badge";
 import {
   DOC_LABELS,
   DOC_SLOTS,
+  DENIAL_REASON_CODES,
   docTypeRequiresExpiration,
   getFileExpirationStatus,
   sortFilesByUploadedAtDesc,
   type DocType,
+  type DocReviewStatus,
+  type DocReviewStatuses,
   type FileEntry,
 } from "@/lib/doc-types";
 import {
@@ -29,12 +36,24 @@ import {
   Users,
   BookOpen,
   Paperclip,
+  Check,
+  AlertCircle,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 import { PrintButton } from "@/components/print-button";
 import { PdfPrintRenderer } from "@/components/pdf-print-renderer";
 import { DocxRenderer } from "@/components/docx-renderer";
 import { PrintLayoutOptimizer } from "@/components/print-layout-optimizer";
-import { humanizeDisplayValue } from "@/lib/utils";
+import { humanizeDisplayValue, cn } from "@/lib/utils";
+
+const SALES_CHANNEL_LABELS: Record<string, string> = {
+  end_user: "End User",
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+};
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   standard: "End-User",
@@ -155,6 +174,141 @@ function formatExpirationDate(value?: string) {
   })}`;
 }
 
+function DocReviewBadge({ status }: { status: DocReviewStatus }) {
+  if (status === "approved") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
+        <Check className="h-3 w-3" />
+        Approved
+      </span>
+    );
+  }
+  if (status === "needs_review") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+        <AlertCircle className="h-3 w-3" />
+        Needs Review
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 border border-red-200">
+      <X className="h-3 w-3" />
+      Rejected
+    </span>
+  );
+}
+
+function DocReviewActions({
+  docType,
+  currentStatus,
+  onReview,
+}: {
+  docType: DocType;
+  currentStatus?: DocReviewStatus;
+  onReview: (docType: DocType, status: DocReviewStatus, reason?: string | null) => Promise<void>;
+}) {
+  const [isPending, setIsPending] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<DocReviewStatus | null>(null);
+  const [reason, setReason] = useState<string>("");
+  const [showReasonFor, setShowReasonFor] = useState<"needs_review" | "rejected" | null>(null);
+  const actionLabel = currentStatus ? "Update decision" : "Set decision";
+
+  async function handleAction(status: DocReviewStatus) {
+    if (status === "rejected" || status === "needs_review") {
+      setShowReasonFor(status);
+      setPendingStatus(status);
+      return;
+    }
+    await submit(status, null);
+  }
+
+  async function submit(status: DocReviewStatus, r: string | null) {
+    setIsPending(true);
+    try {
+      await onReview(docType, status, r || null);
+      setShowReasonFor(null);
+      setReason("");
+      setPendingStatus(null);
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 print:hidden">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+        {actionLabel}
+      </p>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={isPending || !!currentStatus}
+          onClick={() => handleAction("approved")}
+          className="inline-flex items-center gap-1.5 rounded-md border border-green-300 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
+        >
+          <Check className="h-3 w-3" />
+          Mark Approved
+        </button>
+        <button
+          type="button"
+          disabled={isPending || !!currentStatus}
+          onClick={() => handleAction("needs_review")}
+          className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+        >
+          <AlertCircle className="h-3 w-3" />
+          Request Update
+        </button>
+        <button
+          type="button"
+          disabled={isPending || !!currentStatus}
+          onClick={() => handleAction("rejected")}
+          className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+        >
+          <X className="h-3 w-3" />
+          Reject Document
+        </button>
+      </div>
+      {showReasonFor && (
+        <div className="mt-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-2">
+          <label className="text-[11px] font-semibold text-zinc-500">
+            Reason (optional)
+          </label>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="min-w-40 rounded border border-zinc-300 bg-white px-2 py-1 text-[11px] text-zinc-700"
+              disabled={isPending}
+            >
+              <option value="">Select a reason</option>
+              {DENIAL_REASON_CODES.map((code) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => submit(pendingStatus!, reason || null)}
+            className="rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
+          >
+            Save Decision
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => { setShowReasonFor(null); setReason(""); setPendingStatus(null); }}
+            className="rounded-md border border-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExpirationStatusBadge({ status }: { status: "valid" | "expired" | "unknown" }) {
   if (status === "expired") {
     return (
@@ -192,6 +346,7 @@ interface CisInfoCardProps {
   tinNumber: string | null;
   additionalNotes: string | null;
   customerType?: string | null;
+  salesChannel?: string | null;
   agentCode: string;
   agentType: string | null;
   status: CisStatus;
@@ -242,6 +397,9 @@ interface CisInfoCardProps {
   docStorePhoto?: unknown;
   docSupplierInvoice?: unknown;
   docSocialMedia?: unknown;
+  docCompanyWebsite?: unknown;
+  docIsoCertification?: unknown;
+  docHalalCertificate?: unknown;
   docCertifications?: unknown;
   docGovCertifications?: unknown;
   docSirRestySigned?: unknown;
@@ -281,6 +439,8 @@ interface CisInfoCardProps {
   financePlTs?: string | null;
   financePossiblePoints?: number | null;
   financeApprovedPoints?: number | null;
+  // Direct metric points set by Finance (each 0–5)
+  metricPoints?: { annualSales?: number | null; netIncome?: number | null; bankBalance?: number | null; businessLife?: number | null } | null;
   financeCreditLimit?: string | null;
   financeCreditTerms?: string | null;
   // Sales support
@@ -290,6 +450,224 @@ interface CisInfoCardProps {
   salesSupportSalesType?: string | null;
   salesSupportVatCode?: string | null;
   salesSupportOtherRemarks?: string | null;
+  // Document review
+  docReviewStatuses?: DocReviewStatuses;
+  onDocReview?: (docType: DocType, status: DocReviewStatus, reason?: string | null) => Promise<void>;
+  /** Called when Finance saves metric points inline from the doc review panel */
+  onMetricSave?: (metricPoints: Record<string, number>) => Promise<void>;
+  /** Hide the PointsBreakdownPanel from the main form (it will still be shown in print mode) */
+  hidePointsPanel?: boolean;
+}
+
+const METRIC_TIERS: Record<string, { label: string; hint: string; tiers: { range: string; pts: number }[] }> = {
+  annualSales: {
+    label: "Annual Sales",
+    hint: "Total annual sales revenue from financial statements or ITR",
+    tiers: [
+      { pts: 0, range: "5,000,000 and below" },
+      { pts: 1, range: "5,000,001 – 10,000,000" },
+      { pts: 2, range: "10,000,001 – 50,000,000" },
+      { pts: 3, range: "50,000,001 – 100,000,000" },
+      { pts: 4, range: "Above 100,000,000" },
+      { pts: 5, range: "100,000,000 and above (≥100M+)" },
+    ],
+  },
+  netIncome: {
+    label: "Net Income",
+    hint: "Net income after tax from financial statements or ITR",
+    tiers: [
+      { pts: 0, range: "250,000 and below" },
+      { pts: 1, range: "250,001 – 1,000,000" },
+      { pts: 2, range: "1,000,001 – 5,000,000" },
+      { pts: 3, range: "5,000,001 – 15,000,000" },
+      { pts: 4, range: "15,000,001 – 30,000,000" },
+      { pts: 5, range: "Above 30,000,000" },
+    ],
+  },
+  bankBalance: {
+    label: "Bank Statement / Average Balance",
+    hint: "Average daily balance shown in the 3-month bank statement",
+    tiers: [
+      { pts: 0, range: "99,999 and below (5 digits or less)" },
+      { pts: 1, range: "100,000 – 399,999 (low 6 digits)" },
+      { pts: 2, range: "400,000 – 699,999 (mid 6 digits)" },
+      { pts: 3, range: "700,000 – 999,999 (high 6 digits)" },
+      { pts: 4, range: "1,000,000 – 9,999,999 (7 digits)" },
+      { pts: 5, range: "10,000,000 and above (8 digits or more)" },
+    ],
+  },
+  businessLife: {
+    label: "Years in Business",
+    hint: "How long the business has been in operation",
+    tiers: [
+      { pts: 0, range: "1 year and below" },
+      { pts: 1, range: "2 to 5 years" },
+      { pts: 2, range: "6 to 10 years" },
+      { pts: 3, range: "11 to 20 years" },
+      { pts: 4, range: "21 to 30 years" },
+      { pts: 5, range: "Above 30 years" },
+    ],
+  },
+};
+
+function MetricPointPicker({
+  metricKeys,
+  initialPoints,
+  onSave,
+}: {
+  metricKeys: string[];
+  initialPoints: Record<string, number | null | undefined>;
+  onSave: (points: Record<string, number>) => Promise<void>;
+}) {
+  const [values, setValues] = useState<Record<string, number | null>>(
+    Object.fromEntries(metricKeys.map((k) => [k, initialPoints[k] ?? null]))
+  );
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    const payload: Record<string, number> = {};
+    for (const k of metricKeys) {
+      if (values[k] != null) payload[k] = values[k]!;
+    }
+    try {
+      await onSave(payload);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const hasExistingPoints = metricKeys.some((k) => initialPoints[k] != null);
+  const allSelected = metricKeys.every((k) => values[k] != null);
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-lg border border-violet-200 bg-white print:hidden shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-2 border-b border-violet-100 bg-violet-600 px-3 py-2.5">
+        <svg className="h-3.5 w-3.5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-white">Financial Scoring Points</span>
+        {hasExistingPoints && (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Saved
+          </span>
+        )}
+      </div>
+
+      {hasExistingPoints && (
+        <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
+          <p className="text-[10px] text-emerald-700">
+            <span className="font-semibold">Points have been recorded.</span> To make changes, contact the system administrator.
+          </p>
+        </div>
+      )}
+
+      <div className="divide-y divide-zinc-100">
+        {metricKeys.map((key) => {
+          const meta = METRIC_TIERS[key];
+          const selected = values[key];
+          return (
+            <div key={key} className="px-3 py-3">
+              {/* Metric label + hint */}
+              <div className="mb-2">
+                <p className="text-[11px] font-semibold text-zinc-800">{meta.label}</p>
+                <p className="text-[10px] text-zinc-400">{meta.hint}</p>
+              </div>
+              {/* Tier options as radio-style rows */}
+              <div className="overflow-hidden rounded-md border border-zinc-200">
+                {meta.tiers.map((tier, i) => {
+                  const isSelected = selected === tier.pts;
+                  return (
+                    <button
+                      key={tier.pts}
+                      type="button"
+                      onClick={() => !hasExistingPoints && setValues((prev) => ({ ...prev, [key]: tier.pts }))}
+                      disabled={hasExistingPoints}
+                      className={cn(
+                        "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
+                        i !== 0 && "border-t border-zinc-100",
+                        isSelected
+                          ? "bg-violet-50"
+                          : "bg-white hover:bg-zinc-50",
+                        hasExistingPoints && "cursor-default",
+                      )}
+                    >
+                      {/* Radio circle */}
+                      <span className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                        isSelected ? "border-violet-600 bg-violet-600" : "border-zinc-300 bg-white",
+                      )}>
+                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      </span>
+                      {/* Range label */}
+                      <span className={cn(
+                        "flex-1 text-[11px]",
+                        isSelected ? "font-semibold text-violet-800" : "text-zinc-600",
+                      )}>
+                        {tier.range}
+                      </span>
+                      {/* Points badge */}
+                      <span className={cn(
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums",
+                        isSelected
+                          ? "bg-violet-600 text-white"
+                          : "bg-zinc-100 text-zinc-500",
+                      )}>
+                        {tier.pts} {tier.pts === 1 ? "pt" : "pts"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Save button */}
+      {!hasExistingPoints && (
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2.5">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !allSelected}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition-all",
+              allSelected && !saving
+                ? "bg-violet-600 text-white shadow-sm hover:bg-violet-700 active:scale-[0.98]"
+                : "bg-zinc-200 text-zinc-400 cursor-not-allowed",
+            )}
+          >
+            {saving ? (
+              <>
+                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Saving Points…
+              </>
+            ) : (
+              <>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {allSelected ? "Save Scoring Points" : "Select all metrics to save"}
+              </>
+            )}
+          </button>
+          {!allSelected && (
+            <p className="mt-1.5 text-center text-[10px] text-zinc-400">
+              {metricKeys.filter((k) => values[k] == null).length} of {metricKeys.length} metrics not yet scored
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Field({
@@ -364,14 +742,16 @@ function SignatureBlock({
   label,
   dataUrl,
   signedAt,
-  verified,
   hasSeal,
+  cisId,
+  seal,
 }: {
   label: string;
   dataUrl: string;
   signedAt?: Date | null;
-  verified: boolean;
   hasSeal: boolean;
+  cisId: string;
+  seal?: string | null;
 }) {
   const fp = displayFingerprint(dataUrl);
 
@@ -381,17 +761,12 @@ function SignatureBlock({
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
           {hasSeal && (
-            verified ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
-                <ShieldCheck className="h-3 w-3" />
-                Verified
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 border border-red-200">
-                <ShieldAlert className="h-3 w-3" />
-                Seal mismatch
-              </span>
-            )
+            <SignatureVerificationBadge
+              cisId={cisId}
+              signedAt={signedAt ?? null}
+              dataUrl={dataUrl}
+              seal={seal ?? null}
+            />
           )}
         </div>
         <div className="rounded-md border border-zinc-200 bg-white p-2 inline-block">
@@ -430,11 +805,6 @@ function SignatureBlock({
               })}
             </p>
           )}
-          {hasSeal && (
-            <p className="text-[9px] text-zinc-500 mt-0.5">
-              {verified ? "✓ Digitally verified" : "⚠ Seal mismatch"}
-            </p>
-          )}
           <p className="font-mono text-[8px] text-zinc-400 mt-0.5 break-all">{fp}</p>
         </div>
       </div>
@@ -455,6 +825,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     tinNumber,
     additionalNotes,
     customerType,
+    salesChannel,
     agentCode,
     agentType,
     status,
@@ -515,19 +886,19 @@ export function CisInfoCard(props: CisInfoCardProps) {
     salesSupportSalesType,
     salesSupportVatCode,
     salesSupportOtherRemarks,
+    docReviewStatuses,
+    onDocReview,
+    onMetricSave,
+    metricPoints,
+    hidePointsPanel = false,
   } = props;
 
   const hasSignatures = customerSignature || approverSignature;
 
-  const customerVerified =
-    customerSignature && customerSignedAt && customerSignatureSeal
-      ? verifySeal(cisId, customerSignedAt, customerSignature, customerSignatureSeal)
-      : false;
-
-  const approverVerified =
-    approverSignature && approverSignedAt && approverSignatureSeal
-      ? verifySeal(cisId, approverSignedAt, approverSignature, approverSignatureSeal)
-      : false;
+  // Signature verification is done client-side to avoid hydration mismatch
+  // (verifySeal depends on SIGNATURE_HMAC_SECRET which isn't available on client)
+  const customerVerified = false; // Will be computed by client component
+  const approverVerified = false; // Will be computed by client component
 
   const lobLabel = lineOfBusiness === "other"
     ? lineOfBusinessOther
@@ -596,6 +967,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
             <div className="flex gap-5 mt-1 text-[10px] text-zinc-600">
               <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? humanizeDisplayValue(status)}</strong></span>
               <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "—"}</strong></span>
+              {salesChannel && <span>Channel: <strong className="text-zinc-900">{SALES_CHANNEL_LABELS[salesChannel] ?? humanizeDisplayValue(salesChannel)}</strong></span>}
               <span>Agent: <strong className="font-mono text-zinc-900">{agentCode}</strong>{agentType && <span className="ml-1 text-zinc-500">({agentType === "sales_agent" ? "Sales" : "RSR"})</span>}</span>
             </div>
           </div>
@@ -789,6 +1161,15 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 {howLongAtAddress && <Field label="Years at Address" value={howLongAtAddress} />}
                 {numberOfBranches && <Field label="No. of Branches" value={numberOfBranches} />}
               </div>
+              {onMetricSave && (
+                <div className="mb-4">
+                  <MetricPointPicker
+                    metricKeys={["businessLife"]}
+                    initialPoints={{ businessLife: metricPoints?.businessLife }}
+                    onSave={onMetricSave}
+                  />
+                </div>
+              )}
               {govCertifications && (
                 <div className="mb-4">
                   <Field label="Government Certifications" value={govCertifications} />
@@ -935,6 +1316,56 @@ export function CisInfoCard(props: CisInfoCardProps) {
                                 <ExpirationStatusBadge status={expirationStatus} />
                               </div>
                             )}
+                            {(() => {
+                              const review = docReviewStatuses?.[entry.key as DocType];
+                              return (
+                                <>
+                                  <div className="mt-2 rounded-md border border-zinc-200 bg-white px-2.5 py-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                                        Document Review
+                                      </p>
+                                      {review ? (
+                                        <DocReviewBadge status={review.status} />
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 border border-zinc-200">
+                                          Not reviewed
+                                        </span>
+                                      )}
+                                    </div>
+                                    {review?.reason && (
+                                      <p className="mt-1 text-[11px] text-zinc-600">
+                                        Reason: <span className="font-medium text-zinc-700">{review.reason}</span>
+                                      </p>
+                                    )}
+                                    {onDocReview && (
+                                      <DocReviewActions
+                                        docType={entry.key as DocType}
+                                        currentStatus={review?.status}
+                                        onReview={onDocReview}
+                                      />
+                                    )}
+                                    {onMetricSave && entry.key === "docFinancialStatement" && (
+                                      <MetricPointPicker
+                                        metricKeys={["annualSales", "netIncome"]}
+                                        initialPoints={{
+                                          annualSales: metricPoints?.annualSales,
+                                          netIncome:   metricPoints?.netIncome,
+                                        }}
+                                        onSave={onMetricSave}
+                                      />
+                                    )}
+                                    {onMetricSave && entry.key === "docBankStatement" && (
+                                      <MetricPointPicker
+                                        metricKeys={["bankBalance"]}
+                                        initialPoints={{ bankBalance: metricPoints?.bankBalance }}
+                                        onSave={onMetricSave}
+                                      />
+                                    )}
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         );
                       })}
@@ -1035,13 +1466,17 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} printBlank />
                 <Field label="Price List / Terms & Schedule (PL/TS)" value={financePlTs} />
               </div>
-              {(financePossiblePoints != null || financeApprovedPoints != null) && (
-                <div className="mt-5 grid gap-5 sm:grid-cols-3 print:gap-3">
-                  <Field label="Possible Points" value={financePossiblePoints != null ? String(financePossiblePoints) : null} />
-                  <Field label="Approved Points" value={financeApprovedPoints != null ? String(financeApprovedPoints) : null} />
-                  <Field label="Credit Decision" value={financeApprovedPoints != null && financePossiblePoints != null ? `${financeApprovedPoints}/${financePossiblePoints}` : null} />
-                </div>
-              )}
+              <div className={hidePointsPanel ? "hidden print:block" : ""}>
+                <PointsBreakdownPanel
+                  {...allDocsByType}
+                  metricPoints={metricPoints}
+                  financePossiblePoints={financePossiblePoints}
+                  financeApprovedPoints={financeApprovedPoints}
+                  docReviewStatuses={docReviewStatuses as Record<string, { status: string; reason?: string | null }> | null}
+                  agentType={agentType}
+                  customerType={customerType}
+                />
+              </div>
           </SectionCard>
         )}
 
@@ -1073,7 +1508,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                     label="Customer Signature"
                     dataUrl={customerSignature}
                     signedAt={customerSignedAt}
-                    verified={customerVerified}
+                    cisId={cisId}
+                    seal={customerSignatureSeal}
                     hasSeal={!!customerSignatureSeal}
                   />
                 )}
@@ -1082,7 +1518,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                     label="Approver Signature"
                     dataUrl={approverSignature}
                     signedAt={approverSignedAt}
-                    verified={approverVerified}
+                    cisId={cisId}
+                    seal={approverSignatureSeal}
                     hasSeal={!!approverSignatureSeal}
                   />
                 )}

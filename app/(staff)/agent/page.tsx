@@ -17,11 +17,16 @@ export const metadata = { title: "My Submissions — CRS" };
 
 function isMissingArchivedColumnError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const maybeError = error as { code?: string; message?: string };
-  return (
-    maybeError.code === "42703" &&
-    (maybeError.message ?? "").toLowerCase().includes("is_archived")
-  );
+  const check = (e: unknown): boolean => {
+    if (!e || typeof e !== "object") return false;
+    const maybeError = e as { code?: string; message?: string; cause?: unknown };
+    if (
+      maybeError.code === "42703" &&
+      (maybeError.message ?? "").toLowerCase().includes("is_archived")
+    ) return true;
+    return check(maybeError.cause);
+  };
+  return check(error);
 }
 
 export default async function AgentDashboard({
@@ -307,6 +312,7 @@ export default async function AgentDashboard({
           <strong className="text-zinc-800">Highlighted cards</strong> have submissions. Select one to open its list.
         </div>
       )}
+
     </div>
   );
 }

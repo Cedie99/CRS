@@ -57,7 +57,7 @@ export default async function FinanceDashboard({
 
   const history = await getUserWorkflowHistory(session.user.id, ["forwarded_to_approver", "denied"]);
 
-  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))].filter((id) => id != null);
   const conditions = [
     isAllView
       ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
@@ -65,7 +65,7 @@ export default async function FinanceDashboard({
         ? or(
             eq(cisSubmissions.status, "pending_finance_review"),
             inArray(cisSubmissions.id, actedCisIds)
-          )!
+          )
         : eq(cisSubmissions.status, "pending_finance_review"),
   ];
 
@@ -110,6 +110,7 @@ export default async function FinanceDashboard({
           .where(eq(cisSubmissions.status, "pending_finance_review")),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
+
   const actionTotal = Number((actionCountRow as { total: number | string }[])[0]?.total ?? 0);
 
   const forwarded = history.filter((e) => e.action === "forwarded_to_approver").length;
@@ -237,6 +238,7 @@ export default async function FinanceDashboard({
           )}
         </div>
       )}
+
     </div>
   );
 }

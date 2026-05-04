@@ -13,21 +13,21 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft, Copy, Check, Link as LinkIcon,
-  QrCode, Download, MessageSquare, UserRound, FileText, GitBranch, Lightbulb,
+  QrCode, Download, MessageSquare, UserRound, FileText, GitBranch, Lightbulb, PenLine,
 } from "lucide-react";
 import { sileo as toast } from "sileo";
 import QRCode from "qrcode";
 import { DeleteDraftButton } from "@/components/delete-draft-button";
 
 const CUSTOMER_TYPES = [
-  { value: "end_user",       label: "End-User",       desc: "Individual or business buying for own use" },
   { value: "dealer",         label: "Dealer",          desc: "Motorcycle shops, resellers" },
   { value: "distributor",    label: "Distributor",     desc: "Bulk buyers, 2,000L+ minimum order" },
   { value: "private_label",  label: "Private Label",   desc: "Products under customer's own brand" },
   { value: "toll_blend",     label: "Toll Blend",      desc: "Custom blending arrangements" },
+  { value: "end_user",       label: "End-User",       desc: "Individual or business buying for own use" },
 ] as const;
 
-const HOW_IT_WORKS = [
+const HOW_IT_WORKS_LINK = [
   {
     icon: LinkIcon,
     title: "Generate a unique link",
@@ -64,7 +64,7 @@ const HOW_IT_WORKS = [
   {
     icon: GitBranch,
     title: "Auto-routed for approval",
-    desc: "Based on the customer type you select, the form routes to Legal (Dealer) or Finance (others).",
+    desc: "Based on the customer type, the form routes to Legal (Dealer) or Finance (others).",
     color: {
       bg: "bg-orange-100",
       text: "text-orange-600",
@@ -73,6 +73,28 @@ const HOW_IT_WORKS = [
     },
   },
 ];
+
+const HOW_IT_WORKS_DIRECT = [
+  {
+    icon: UserRound,
+    title: "Select customer type",
+    desc: "Choose the account type that matches this customer.",
+    color: { bg: "bg-blue-100", text: "text-blue-600", ring: "ring-blue-200/70", label: "text-blue-500" },
+  },
+  {
+    icon: PenLine,
+    title: "You fill the form on the spot",
+    desc: "Complete the Customer Registration Sheet on behalf of your customer.",
+    color: { bg: "bg-amber-100", text: "text-amber-600", ring: "ring-amber-200/70", label: "text-amber-500" },
+  },
+  {
+    icon: GitBranch,
+    title: "Auto-routed for approval",
+    desc: "Based on the customer type, the form routes to Legal (Dealer) or Finance (others).",
+    color: { bg: "bg-orange-100", text: "text-orange-600", ring: "ring-orange-200/70", label: "text-orange-500" },
+  },
+];
+
 
 const listVariants: Variants = {
   hidden: {},
@@ -92,6 +114,7 @@ function NewCisContent() {
   const [customerType, setCustomerType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fillMode, setFillMode] = useState<"link" | "direct" | null>(null);
 
   const [generatedLink, setGeneratedLink] = useState("");
   const [generatedQr, setGeneratedQr] = useState("");
@@ -134,6 +157,55 @@ function NewCisContent() {
     "Should you have any questions, feel free to reach out. Thank you!",
   ].join("\n");
 
+  async function handleFillDirectly() {
+    if (!customerType) {
+      setError("Please select a customer type before continuing.");
+      return;
+    }
+    setError("");
+    setIsLoading(true);
+    setFillMode("direct");
+    try {
+      const res = await fetch("/api/cis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tradeName: customerName.trim() || undefined,
+          customerType,
+          directFill: true,
+        }),
+      });
+
+      let json: unknown = null;
+      try { json = await res.json(); } catch { json = null; }
+
+      const data = json as { error?: unknown; id?: unknown } | null;
+
+      if (!res.ok) {
+        const errorMessage =
+          typeof data?.error === "string"
+            ? data.error
+            : "Unable to create the form. Please try again.";
+        setError(errorMessage);
+        setFillMode(null);
+        return;
+      }
+
+      if (typeof data?.id !== "string" || data.id.length === 0) {
+        setError("Unable to create the form. Please try again.");
+        setFillMode(null);
+        return;
+      }
+
+      router.push(`/agent/fill/${data.id}`);
+    } catch {
+      setError("Unable to create the form. Please try again.");
+      setFillMode(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleGenerate() {
     if (!customerType) {
       setError("Please select a customer type before generating the link.");
@@ -141,6 +213,7 @@ function NewCisContent() {
     }
     setError("");
     setIsLoading(true);
+    setFillMode("link");
     try {
       const res = await fetch("/api/cis", {
         method: "POST",
@@ -220,6 +293,7 @@ function NewCisContent() {
     setCustomerType("");
     setCopied(false);
     setMessageCopied(false);
+    setFillMode(null);
     router.replace("/agent/new");
   }
 
@@ -268,7 +342,9 @@ function NewCisContent() {
                         </Label>
                         <Select value={customerType} onValueChange={(v) => setCustomerType(v ?? "")} disabled={isLoading}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select customer type…" />
+                            <SelectValue placeholder="Select customer type…">
+                              {customerType ? CUSTOMER_TYPES.find((t) => t.value === customerType)?.label : undefined}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {CUSTOMER_TYPES.map((t) => (
@@ -316,9 +392,13 @@ function NewCisContent() {
 
                       <div className="flex flex-wrap gap-3">
                         <Button onClick={handleGenerate} disabled={isLoading}>
-                          {isLoading ? "Generating…" : "Generate Customer Link"}
+                          {isLoading && fillMode === "link" ? "Generating…" : "Generate Customer Link"}
                         </Button>
-                        <Button variant="outline" onClick={() => router.back()} disabled={isLoading}>
+                        <Button variant="outline" onClick={handleFillDirectly} disabled={isLoading}>
+                          <PenLine className="h-4 w-4" />
+                          {isLoading && fillMode === "direct" ? "Creating…" : "Fill Up Directly"}
+                        </Button>
+                        <Button variant="ghost" onClick={() => router.back()} disabled={isLoading}>
                           Cancel
                         </Button>
                       </div>
@@ -458,41 +538,82 @@ function NewCisContent() {
                       How it works
                     </p>
 
-                    <ol className="space-y-0">
-                      {HOW_IT_WORKS.map((step, i) => {
-                        const Icon = step.icon;
-                        const isLast = i === HOW_IT_WORKS.length - 1;
-                        return (
-                          <li key={i} className="relative flex gap-3.5">
-                            {/* Connecting vertical line */}
-                            {!isLast && (
-                              <div className="absolute left-[15px] top-8 bottom-0 w-px bg-zinc-100" />
-                            )}
-
-                            {/* Icon bubble */}
-                            <div
-                              className={[
-                                "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
-                                step.color.bg,
-                                step.color.text,
-                                step.color.ring,
-                              ].join(" ")}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
+                    {fillMode === null ? (
+                      /* Options overview — Step 1 branches into two paths */
+                      <ol className="space-y-0">
+                        {/* Step 1 — branching */}
+                        <li className="relative flex gap-3.5">
+                          <div className="absolute left-[15px] top-8 bottom-0 w-px bg-zinc-100" />
+                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 bg-blue-100 text-blue-600 ring-blue-200/70">
+                            <FileText className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 pb-3 pt-0.5">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Step 1</p>
+                            <p className="mt-0.5 text-sm font-semibold text-zinc-800">Start the submission</p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">Choose how to collect the customer&apos;s information:</p>
+                            <div className="mt-2 space-y-1.5">
+                              <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-2">
+                                <LinkIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                <div>
+                                  <p className="text-xs font-semibold text-blue-800">Send a link</p>
+                                  <p className="text-[11px] text-blue-600">Your customer fills the form themselves via a unique link or QR code.</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-2 rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2">
+                                <PenLine className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                <div>
+                                  <p className="text-xs font-semibold text-amber-800">Fill up directly</p>
+                                  <p className="text-[11px] text-amber-600">You complete the form on behalf of your customer, on the spot.</p>
+                                </div>
+                              </div>
                             </div>
+                          </div>
+                        </li>
 
-                            {/* Text */}
-                            <div className={`min-w-0 ${isLast ? "pb-0" : "pb-5"} pt-0.5`}>
-                              <p className={`text-[10px] font-bold uppercase tracking-widest ${step.color.label}`}>
-                                Step {i + 1}
-                              </p>
-                              <p className="mt-0.5 text-sm font-semibold text-zinc-800">{step.title}</p>
-                              <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{step.desc}</p>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ol>
+                        {/* Step 2 — routing */}
+                        <li className="relative flex gap-3.5">
+                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 bg-orange-100 text-orange-600 ring-orange-200/70">
+                            <GitBranch className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 pb-0 pt-0.5">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500">Step 2</p>
+                            <p className="mt-0.5 text-sm font-semibold text-zinc-800">Auto-routed for approval</p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">Either way, the form is routed to Legal (Dealer) or Finance (others) based on customer type.</p>
+                          </div>
+                        </li>
+                      </ol>
+                    ) : (
+                      <ol className="space-y-0">
+                        {(fillMode === "direct" ? HOW_IT_WORKS_DIRECT : HOW_IT_WORKS_LINK).map((step, i, arr) => {
+                          const Icon = step.icon;
+                          const isLast = i === arr.length - 1;
+                          return (
+                            <li key={i} className="relative flex gap-3.5">
+                              {!isLast && (
+                                <div className="absolute left-[15px] top-8 bottom-0 w-px bg-zinc-100" />
+                              )}
+                              <div
+                                className={[
+                                  "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
+                                  step.color.bg,
+                                  step.color.text,
+                                  step.color.ring,
+                                ].join(" ")}
+                              >
+                                <Icon className="h-3.5 w-3.5" />
+                              </div>
+                              <div className={`min-w-0 ${isLast ? "pb-0" : "pb-5"} pt-0.5`}>
+                                <p className={`text-[10px] font-bold uppercase tracking-widest ${step.color.label}`}>
+                                  Step {i + 1}
+                                </p>
+                                <p className="mt-0.5 text-sm font-semibold text-zinc-800">{step.title}</p>
+                                <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{step.desc}</p>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
 
                     {/* Tip box */}
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3.5">
@@ -503,7 +624,11 @@ function NewCisContent() {
                         <span className="text-xs font-semibold text-amber-800">Tip</span>
                       </div>
                       <p className="mt-2 text-xs leading-relaxed text-amber-700">
-                        Each link is unique and single-use per customer. You can generate as many as you need — one per customer.
+                        {fillMode === "link"
+                          ? "Each link is unique and single-use per customer. You can generate as many as you need — one per customer."
+                          : fillMode === "direct"
+                          ? "Use this mode when you're meeting the customer in person and can fill the form on their behalf right away."
+                          : "Choose 'Generate Customer Link' to let your customer fill the form themselves, or 'Fill Up Directly' to complete it on their behalf."}
                       </p>
                     </div>
                   </CardContent>

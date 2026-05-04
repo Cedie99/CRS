@@ -37,8 +37,8 @@ export async function PATCH(
 
   await transitionCis({
     cisId: id,
-    toStatus: "denied",
-    action: "denied",
+    toStatus: "returned",
+    action: "returned",
     actorId: session.user.id,
     note: parsed.data.note,
   });

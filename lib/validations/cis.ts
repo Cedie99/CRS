@@ -49,9 +49,18 @@ const optionalPhoneLikeString = (label: string, min = 7) =>
 
 const CUSTOMER_TYPE_VALUES = ["dealer", "distributor", "private_label", "toll_blend", "end_user"] as const;
 
+export const SALES_CHANNEL_OPTIONS = [
+  { value: "end_user", label: "End User" },
+  { value: "dealer", label: "Dealer" },
+  { value: "distributor", label: "Distributor" },
+  { value: "private_label", label: "Private Label" },
+  { value: "toll_blend", label: "Toll Blend" },
+] as const;
+
 export const initiateSchema = z.object({
   tradeName: z.string().max(255).optional().or(z.literal("")),
   customerType: z.enum(CUSTOMER_TYPE_VALUES, { error: "Customer type is required" }),
+  directFill: z.boolean().optional().default(false),
 });
 
 export const LINE_OF_BUSINESS_OPTIONS = [
@@ -134,7 +143,7 @@ export const cisFormSchema = z.object({
   corporateName: z.string().min(2, "Corporate name is required").max(255),
   tradeName: z.string().min(2, "Trade name is required").max(255),
   dateOfBusinessReg: z.string().max(50).optional(),
-  numberOfEmployees: numericString("Number of employees").max(50).optional(),
+  numberOfEmployees: numericString("Number of employees").max(50).optional().or(z.literal("")),
 
   // Contact Details
   contactPerson: z.string().min(2, "Contact person is required").max(255),
@@ -186,11 +195,12 @@ export const cisFormSchema = z.object({
   owners: z.array(ownerRowSchema).optional(),
   officers: z.array(officerRowSchema).optional(),
   paymentTerms: z.string().max(50).optional(),
+  salesChannel: z.string().max(50).optional(),
 
   // Business Background
-  businessLife: numericDecimalString("Years in business").max(50).optional(),
-  howLongAtAddress: numericDecimalString("Years at current address").max(50).optional(),
-  numberOfBranches: numericString("Number of branches").max(50).optional(),
+  businessLife: numericDecimalString("Years in business").max(50).optional().or(z.literal("")),
+  howLongAtAddress: numericDecimalString("Years at current address").max(50).optional().or(z.literal("")),
+  numberOfBranches: numericString("Number of branches").max(50).optional().or(z.literal("")),
   govCertifications: z.string().max(2000).optional(),
   tradeReferences: z.array(tradeRefRowSchema).optional(),
   bankReferences: z.array(bankRefRowSchema).optional(),

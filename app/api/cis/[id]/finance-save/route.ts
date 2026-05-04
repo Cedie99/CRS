@@ -32,12 +32,29 @@ export async function PATCH(
   }
 
   const body = await req.json();
+
   const financeCreditLimit = typeof body.financeCreditLimit === "string" ? body.financeCreditLimit.trim() : undefined;
   const financeCreditTerms = typeof body.financeCreditTerms === "string" ? body.financeCreditTerms.trim() : undefined;
 
-  const updates: Record<string, string> = {};
-  if (financeCreditLimit !== undefined) updates.financeCreditLimit = financeCreditLimit;
-  if (financeCreditTerms !== undefined) updates.financeCreditTerms = financeCreditTerms;
+  // Direct metric points (each 0–5) — stored as JSONB
+  let financeMetricPoints: Record<string, number> | undefined;
+  if (body.metricPoints && typeof body.metricPoints === "object") {
+    const mp = body.metricPoints as Record<string, unknown>;
+    const parsed: Record<string, number> = {};
+    for (const key of ["annualSales", "netIncome", "bankBalance", "businessLife"]) {
+      const v = mp[key];
+      if (typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 5) {
+        parsed[key] = v;
+      }
+    }
+    if (Object.keys(parsed).length > 0) financeMetricPoints = parsed;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updates: Record<string, any> = {};
+  if (financeCreditLimit    !== undefined) updates.financeCreditLimit    = financeCreditLimit;
+  if (financeCreditTerms    !== undefined) updates.financeCreditTerms    = financeCreditTerms;
+  if (financeMetricPoints   !== undefined) updates.financeMetricPoints   = financeMetricPoints;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "Nothing to save" }, { status: 400 });

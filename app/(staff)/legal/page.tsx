@@ -57,7 +57,7 @@ export default async function LegalDashboard({
 
   const history = await getUserWorkflowHistory(session.user.id, ["forwarded_to_approver", "denied"]);
 
-  const actedCisIds = [...new Set(history.map((e) => e.cisId))];
+  const actedCisIds = [...new Set(history.map((e) => e.cisId))].filter((id) => id != null);
   const conditions = [
     isAllView
       ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
@@ -65,7 +65,7 @@ export default async function LegalDashboard({
         ? or(
             eq(cisSubmissions.status, "pending_legal_review"),
             inArray(cisSubmissions.id, actedCisIds)
-          )!
+          )
         : eq(cisSubmissions.status, "pending_legal_review"),
   ];
 
@@ -237,6 +237,7 @@ export default async function LegalDashboard({
           )}
         </div>
       )}
+
     </div>
   );
 }

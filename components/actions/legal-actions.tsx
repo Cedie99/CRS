@@ -24,12 +24,12 @@ interface LegalActionsProps {
 export function LegalActions({ cisId }: LegalActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"forward" | "deny" | null>(null);
+  const [action, setAction] = useState<"forward" | "return" | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  function openDialog(a: "forward" | "deny") {
+  function openDialog(a: "forward" | "return") {
     setAction(a);
     setNote("");
     setError("");
@@ -45,8 +45,8 @@ export function LegalActions({ cisId }: LegalActionsProps) {
     if (!action) return;
     setError("");
 
-    if (action === "deny" && note.trim().length < 10) {
-      setError("Please provide a denial reason of at least 10 characters.");
+    if (action === "return" && note.trim().length < 10) {
+      setError("Please provide a return reason of at least 10 characters.");
       return;
     }
 
@@ -65,11 +65,11 @@ export function LegalActions({ cisId }: LegalActionsProps) {
       }
       setOpen(false);
       toast.success({
-        title: action === "forward" ? "Forwarded to Finance." : "Submission denied.",
+        title: action === "forward" ? "Forwarded to Finance." : "Returned to agent.",
         description:
           action === "forward"
             ? "Finance can now review this submission."
-            : "The requester will see the denial status update.",
+            : "The form has been returned to the agent with your denial reason.",
       });
       router.push("/legal");
       router.refresh();
@@ -97,12 +97,11 @@ export function LegalActions({ cisId }: LegalActionsProps) {
             Forward to Finance
           </Button>
           <Button
-            variant="outline"
-            onClick={() => openDialog("deny")}
+            onClick={() => openDialog("return")}
             className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
-            Deny
+            Return
           </Button>
         </div>
       </CardContent>
@@ -111,19 +110,19 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         <DialogContent showCloseButton={!isLoading}>
           <DialogHeader>
             <DialogTitle>
-              {action === "forward" ? "Forward to Finance" : "Deny Submission"}
+              {action === "forward" ? "Forward to Finance" : "Return to Agent"}
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
               ? "You are forwarding this submission to the Finance team. You may add an optional note."
-              : "You are denying this submission. Please explain why it cannot be approved."}
+              : "You are returning this submission to the agent. Please explain why it needs corrections."}
           </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="dialog-note">
-              {action === "forward" ? "Note (optional)" : "Denial reason *"}
+              {action === "forward" ? "Note (optional)" : "Return reason *"}
             </Label>
             {action === "forward" ? (
               <DecisionNoteTemplates type="legal_forward_note" onSelect={setNote} disabled={isLoading} />
@@ -136,7 +135,7 @@ export function LegalActions({ cisId }: LegalActionsProps) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={
-                action === "forward" ? "Legal clearance notes…" : "Reason for denial…"
+                action === "forward" ? "Legal clearance notes…" : "Reason for return…"
               }
               disabled={isLoading}
             />
@@ -150,13 +149,13 @@ export function LegalActions({ cisId }: LegalActionsProps) {
             <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              variant={action === "deny" ? "destructive" : "default"}
+              variant={action === "return" ? "destructive" : "default"}
             >
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
                 ? "Yes, Forward"
-                : "Yes, Deny"}
+                : "Yes, Return"}
             </Button>
           </DialogFooter>
         </DialogContent>

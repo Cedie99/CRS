@@ -13,6 +13,7 @@ export async function GET() {
     .select({
       id: notifications.id,
       cisId: notifications.cisId,
+      cusId: notifications.cusId,
       message: notifications.message,
       isRead: notifications.isRead,
       sentAt: notifications.sentAt,

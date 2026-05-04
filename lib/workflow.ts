@@ -71,7 +71,7 @@ export async function transitionCis({
       note: note ?? null,
     });
 
-    return notifyParties({ cisId, action, managerId, isDealer, tx });
+    return notifyParties({ cisId, action, managerId, isDealer, actorId, tx });
   });
 
   await sendWorkflowEmails(emailJobs);
@@ -82,12 +82,14 @@ async function notifyParties({
   action,
   managerId,
   isDealer,
+  actorId,
   tx,
 }: {
   cisId: string;
   action: WorkflowAction;
   managerId?: string | null;
   isDealer?: boolean;
+  actorId?: string;
   tx: Tx;
 }) {
   const CUSTOMER_TYPE_LABELS: Record<string, string> = {
@@ -357,15 +359,33 @@ async function notifyParties({
   } else if (action === "returned") {
     if (agent) {
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
+
+      // Fetch actor's role to customize message
+      let actorRole: string | null = null;
+      if (actorId) {
+        const [actor] = await tx
+          .select({ role: users.role })
+          .from(users)
+          .where(eq(users.id, actorId))
+          .limit(1);
+        actorRole = actor?.role ?? null;
+      }
+
+      // Customize message based on who returned it
+      const isFinanceOrLegal = actorRole === "finance_reviewer" || actorRole === "legal_approver";
+      const reviewerType = isFinanceOrLegal
+        ? (actorRole === "finance_reviewer" ? "Finance" : "Legal")
+        : "Manager";
+
       addNotification(
         agent.id,
-        `Your CIS submission for "${label}" has been returned. Please review the note and resubmit.`,
+        `Your CIS submission for "${label}" has been returned by ${reviewerType}. Please review the note and resubmit.`,
         agent.email,
-        `[CRS] Action required – CIS returned: ${label}`,
+        `[CRS] Action required – CIS returned by ${reviewerType}: ${label}`,
         {
           name: agent.fullName,
-          title: "CIS Returned – Revisions Needed",
-          body: `Your CIS submission for <strong>${label}</strong> has been returned and requires your attention.<br><br>Please review the reviewer's note for details on what needs to be corrected, then resubmit the form once the changes have been made.`,
+          title: `CIS Returned by ${reviewerType} – Revisions Needed`,
+          body: `Your CIS submission for <strong>${label}</strong> has been returned by <strong>${reviewerType}</strong> and requires your attention.<br><br>${isFinanceOrLegal ? "This is likely due to document issues or incomplete information." : ""}Please review the reviewer's note for details on what needs to be corrected, then resubmit the form once the changes have been made.`,
           reviewUrl: viewUrl,
           ctaLabel: "Review & Resubmit",
           accentColor: "#c17a00",
@@ -373,6 +393,7 @@ async function notifyParties({
           details: [
             { label: "Business Name", value: label },
             { label: "Customer Type", value: custType },
+            { label: "Returned By", value: reviewerType },
           ],
         },
       );

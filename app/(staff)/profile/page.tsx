@@ -19,6 +19,7 @@ export default async function ProfilePage() {
       role: users.role,
       agentCode: users.agentCode,
       avatarUrl: users.avatarUrl,
+      managerId: users.managerId,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -26,5 +27,15 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login");
 
-  return <ProfileClient user={user} />;
+  let managerName: string | null = null;
+  if (user.managerId) {
+    const [manager] = await db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, user.managerId))
+      .limit(1);
+    managerName = manager?.fullName ?? null;
+  }
+
+  return <ProfileClient user={{ ...user, managerName }} />;
 }

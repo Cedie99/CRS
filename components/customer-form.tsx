@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS } from "@/lib/validations/cis";
-import { DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
+import { cisFormSchema, LINE_OF_BUSINESS_OPTIONS, BUSINESS_ACTIVITY_OPTIONS, SALES_CHANNEL_OPTIONS } from "@/lib/validations/cis";
+import { DOC_SLOTS, SCORING_DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
 import { SignaturePad, SignaturePadRef } from "@/components/signature-pad";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import { humanizeDisplayValue } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" | "docValidId", string>>;
+type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" | import("@/lib/doc-types").DocType, string>>;
 
 interface OwnerRow { name: string; nationality: string; percentage: string; contact: string }
 interface OfficerRow { name: string; position: string; contact: string }
@@ -194,6 +194,7 @@ interface CustomerFormProps {
   token: string;
   agentCode: string;
   customerType: string;
+  agentFillMode?: boolean;
 }
 
 const EMPTY_OWNER: OwnerRow   = { name: "", nationality: "", percentage: "", contact: "" };
@@ -224,7 +225,7 @@ function sanitizeAccountNumberInput(value: string) {
   return value.replace(/[^0-9\-\s]/g, "");
 }
 
-export function CustomerForm({ token, agentCode, customerType }: CustomerFormProps) {
+export function CustomerForm({ token, agentCode, customerType, agentFillMode = false }: CustomerFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -238,6 +239,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   const [lineOfBusiness, setLineOfBusiness]     = useState("");
   const [businessActivity, setBusinessActivity] = useState("");
   const [paymentTerms, setPaymentTerms]         = useState("");
+  const [salesChannel, setSalesChannel]         = useState(customerType ?? "");
 
   // Controlled phone/sanitized inputs — direct DOM mutation (e.currentTarget.value = …)
   // doesn't update @base-ui/react InputPrimitive's internal state, so values get
@@ -279,7 +281,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
   // COD end_user / dealer → ID only
   // COD distributor / private_label / toll_blend → ID + DTI/SEC + BIR
   // With Terms (any type) → ID + DTI/SEC + BIR + Bank Statement
-  const isCorporateType = ["distributor", "private_label", "toll_blend"].includes(customerType);
+  const isCorporateType = ["distributor", "private_label", "toll_blend"].includes(salesChannel);
   const requiredDocs: string[] = withTermsSelected
     ? ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement"]
     : isCorporateType
@@ -322,6 +324,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
     }
     if (step === 3) {
       if (!businessType) errs.businessType = "Required";
+
       if (lineOfBusiness === "other" && !String(fd.get("lineOfBusinessOther") ?? "").trim()) {
         errs.lineOfBusinessOther = "Please specify";
       }
@@ -329,10 +332,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         errs.businessActivityOther = "Please specify";
       }
     }
-    if (step === 5 && withTermsSelected) {
-      const validIdFiles = docs.docValidId ?? [];
-      if (validIdFiles.length === 0) {
-        errs.docValidId = "Valid Government ID is required for With Terms.";
+    if (step === 5) {
+      for (const key of requiredDocs) {
+        if ((docs[key] ?? []).length === 0) {
+          errs[key as keyof FieldErrors] = "This document is required.";
+        }
       }
     }
     if (Object.keys(errs).length > 0) {
@@ -410,6 +414,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       businessActivity:      businessActivity || undefined,
       businessActivityOther: (fd.get("businessActivityOther") as string) || undefined,
       businessType,
+      salesChannel:          salesChannel || undefined,
       tinNumber:             tinNumber || undefined,
 
       owners:       cleanOwners.length ? cleanOwners : undefined,
@@ -439,9 +444,9 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       // so the user can see which field is failing.
       const step1Fields = ["corporateName", "tradeName", "contactPerson", "emailAddress", "contactNumber", "telephoneNumber", "website"];
       const step2Fields = ["businessAddress", "cityMunicipality", "deliveryAddress", "deliveryMobile", "deliveryTelephone"];
-      const step3Fields = ["businessType", "lineOfBusiness", "lineOfBusinessOther", "businessActivity", "businessActivityOther", "tinNumber"];
+      const step3Fields = ["businessType", "salesChannel", "lineOfBusiness", "lineOfBusinessOther", "businessActivity", "businessActivityOther", "tinNumber"];
       const step4Fields = ["owners", "officers", "paymentTerms"];
-      const step5Fields = ["docValidId"];
+      const step5Fields = ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement", "docMayorsPermit"];
       const errorKeys = Object.keys(flatErrors);
       const firstErrStep =
         errorKeys.some((k) => step1Fields.includes(k)) ? 1 :
@@ -460,7 +465,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
       const res = await fetch(`/api/form/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({ ...parsed.data, ...docs }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -470,7 +475,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
         else setErrors({ _form: json.message ?? "Something went wrong. Please try again." });
         return;
       }
-      router.push(`/form/${token}/submitted`);
+      router.push(agentFillMode ? "/agent" : `/form/${token}/submitted`);
     } catch {
       setErrors({ _form: "Something went wrong. Please try again." });
     } finally {
@@ -495,6 +500,11 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
             )}
           </span>
         </CardDescription>
+        {agentFillMode && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span className="font-semibold">Agent fill mode —</span> you are completing this form on behalf of the customer.
+          </div>
+        )}
       </CardHeader>
 
       <form ref={formRef} noValidate>
@@ -740,6 +750,22 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                   {errors.businessType && <p className="text-xs text-red-600">{errors.businessType}</p>}
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Sales channel</Label>
+                  <Select value={salesChannel} onValueChange={(v) => setSalesChannel(v ?? "")} disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select channel…">
+                        {salesChannel ? getOptionLabel(SALES_CHANNEL_OPTIONS, salesChannel) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_CHANNEL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(errors as Record<string, string>).salesChannel && <p className="text-xs text-red-600">{(errors as Record<string, string>).salesChannel}</p>}
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="tinNumber">TIN number</Label>
                   <Input
                     id="tinNumber"
@@ -876,14 +902,10 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 </ul>
               </div>
 
-              {errors.docValidId && (
-                <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {errors.docValidId}
-                </p>
-              )}
               <div className="space-y-4">
-                {DOC_SLOTS.filter((s) => !["docAgentOtherRequirements", "docSirRestySigned", "docSalesSupportOther"].includes(s.key)).map((slot) => {
+                {SCORING_DOC_SLOTS.filter((s) => s.key !== "docIsoCertification" && s.key !== "docHalalCertificate").map((slot) => {
                   const isRequired = requiredDocs.includes(slot.key);
+                  const slotError = errors[slot.key as keyof FieldErrors];
                   return (
                     <div key={slot.key}>
                       {isRequired && (
@@ -900,9 +922,37 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                         disabled={isLoading}
                         allowDelete={slot.key !== "docMayorsPermit"}
                       />
+                      {slotError && (
+                        <p className="mt-1 text-xs text-red-600">{slotError}</p>
+                      )}
                     </div>
                   );
                 })}
+
+                {/* Certifications group */}
+                <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                  <div className="bg-zinc-50 border-b border-zinc-200 px-3 py-2">
+                    <p className="text-xs font-semibold text-zinc-700">Certifications</p>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">Upload any applicable certification documents</p>
+                  </div>
+                  <div className="divide-y divide-zinc-100">
+                    {(["docIsoCertification", "docHalalCertificate"] as const).map((key) => {
+                      const slot = SCORING_DOC_SLOTS.find((s) => s.key === key)!;
+                      return (
+                        <div key={key} className="p-3">
+                          <DocUploadSlot
+                            docType={slot.key}
+                            label={slot.label}
+                            endpoint={`/api/form/${token}/upload`}
+                            files={docs[slot.key]}
+                            onChange={(files) => setDocFiles(slot.key, files)}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -992,7 +1042,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                 />
               </div>
 
-              <div className="mt-5">
+              {withTermsSelected && <div className="mt-5">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Bank References</p>
                 <DynamicTable<BankRefRow>
                   rows={bankRefs}
@@ -1018,7 +1068,7 @@ export function CustomerForm({ token, agentCode, customerType }: CustomerFormPro
                     },
                   ]}
                 />
-              </div>
+              </div>}
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

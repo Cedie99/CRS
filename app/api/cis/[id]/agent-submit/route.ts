@@ -10,7 +10,6 @@ const agentSubmitSchema = z.object({
   agentAccountSpecialistFirst: z.string().min(1, "Account Specialist first name is required").max(255),
   agentAccountSpecialistLast: z.string().min(1, "Account Specialist last name is required").max(255),
   agentSalesSpecialist: z.string().min(1, "Sales Specialist is required").max(255),
-  agentSalesManager: z.string().min(1, "Sales Manager is required").max(255),
   agentTpcFirst: z.string().max(255).optional().or(z.literal("")),
   agentTpcLast: z.string().max(255).optional().or(z.literal("")),
   docAgentOtherRequirements: z.array(z.object({
@@ -64,7 +63,7 @@ export async function PATCH(
 
   const {
     agentAccountSpecialistFirst, agentAccountSpecialistLast,
-    agentSalesSpecialist, agentSalesManager, agentTpcFirst, agentTpcLast,
+    agentSalesSpecialist, agentTpcFirst, agentTpcLast,
     docAgentOtherRequirements,
   } = parsed.data;
 
@@ -108,8 +107,25 @@ export async function PATCH(
   if (existingColumns.has("agent_sales_specialist")) {
     updatePayload.agentSalesSpecialist = agentSalesSpecialist || null;
   }
+  // Use the admin-assigned manager instead of a user-provided value.
+  const [agent] = await db
+    .select({ managerId: users.managerId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  let managerName: string | null = null;
+  if (agent?.managerId) {
+    const [manager] = await db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, agent.managerId))
+      .limit(1);
+    managerName = manager?.fullName ?? null;
+  }
+
   if (existingColumns.has("agent_sales_manager")) {
-    updatePayload.agentSalesManager = agentSalesManager || null;
+    updatePayload.agentSalesManager = managerName;
   }
   if (existingColumns.has("agent_tpc_first")) {
     updatePayload.agentTpcFirst = agentTpcFirst || null;
@@ -131,12 +147,6 @@ export async function PATCH(
   const toStatus = isDealer ? "pending_legal_review" : "pending_finance_review";
 
   // Get manager ID for informational notification
-  const [agent] = await db
-    .select({ managerId: users.managerId })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
   await transitionCis({
     cisId: id,
     toStatus,
