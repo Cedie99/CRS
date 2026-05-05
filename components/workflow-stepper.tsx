@@ -55,12 +55,78 @@ const LEGAL_STATUS_INDEX: Partial<Record<CisStatus, number>> = {
   erp_encoded:            5,
 };
 
+// Which workflow actions signal ENTRY into each step (by step key)
+const STEP_ENTRY_ACTIONS: Record<string, string[]> = {
+  submitted:              ["submitted", "agent_submitted"],
+  pending_review:         ["submitted", "agent_submitted"],
+  pending_legal_review:   ["forwarded_to_legal"],
+  pending_finance_review: ["endorsed", "forwarded_to_finance"],
+  pending_approval:       ["forwarded_to_approver"],
+  approved:               ["approved"],
+  pending_erp_encoding:   ["sales_support_submitted"],
+  erp_encoded:            ["erp_encoded"],
+};
+
+// ── Duration helpers ───────────────────────────────────────────────────────────
+
+function toMs(d: Date | string): number {
+  return typeof d === "string" ? new Date(d).getTime() : d.getTime();
+}
+
+function formatDuration(ms: number): string {
+  const totalMins = Math.floor(ms / 60_000);
+  if (totalMins < 1) return "<1m";
+  if (totalMins < 60) return `${totalMins}m`;
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs < 24) return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  const remHrs = hrs % 24;
+  return remHrs > 0 ? `${days}d ${remHrs}h` : `${days}d`;
+}
+
+interface StepTiming {
+  enteredAt: number | null;
+  exitedAt: number | null;
+}
+
+function computeStepTimings(
+  steps: Step[],
+  events: Array<{ action: string; createdAt: Date | string }>,
+  cisCreatedAt: Date | string | null | undefined,
+  now: number,
+): StepTiming[] {
+  // Build a flat list of (timestamp, action) sorted ascending
+  const sorted = [...events].sort((a, b) => toMs(a.createdAt) - toMs(b.createdAt));
+
+  // For each step, find the earliest event whose action is in its entry set
+  const enteredAt: (number | null)[] = steps.map((step) => {
+    const entryActions = STEP_ENTRY_ACTIONS[step.key] ?? [];
+    if (step.key === "submitted" && cisCreatedAt) {
+      // First step: use form creation time
+      return toMs(cisCreatedAt);
+    }
+    const ev = sorted.find((e) => entryActions.includes(e.action));
+    return ev ? toMs(ev.createdAt) : null;
+  });
+
+  // Each step exits when the next step enters
+  return steps.map((_, i) => ({
+    enteredAt: enteredAt[i],
+    exitedAt: enteredAt[i + 1] ?? null,
+  }));
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────────
+
 interface WorkflowStepperProps {
   status: CisStatus;
   customerType?: string | null;
+  events?: Array<{ action: string; createdAt: Date | string }> | null;
+  cisCreatedAt?: Date | string | null;
 }
 
-export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) {
+export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: WorkflowStepperProps) {
   const isLegal = customerType === "dealer";
   const isUnknown = status === "submitted";
   const steps = isUnknown ? PENDING_STEPS : isLegal ? LEGAL_STEPS : STANDARD_STEPS;
@@ -70,6 +136,11 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
   const isDone = status === "erp_encoded";
   const currentIndex = indexMap[status] ?? -1;
   const currentStepLabel = currentIndex >= 0 ? steps[currentIndex]?.label : "Pending";
+
+  const now = Date.now();
+  const timings = (events && events.length > 0)
+    ? computeStepTimings(steps, events, cisCreatedAt, now)
+    : steps.map(() => ({ enteredAt: null, exitedAt: null }));
 
   if (isTerminal) {
     return (
@@ -141,7 +212,7 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
 
         <span
           className={cn(
-            "rounded-full px-3 py-1 text-xs font-semibold",
+            "shrink-0 rounded-full px-3 py-1 text-xs font-semibold",
             isDone
               ? "bg-emerald-100 text-emerald-700"
               : "bg-zinc-200/80 text-zinc-700"
@@ -151,11 +222,11 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
         </span>
       </div>
 
+      {/* Colour bar */}
       <div className="mb-3.5 flex gap-1 rounded-md bg-white/70 px-1 py-1">
         {Array.from({ length: totalSegments }).map((_, i) => {
           const isFilled = i < filledSegments;
           const hue = Math.round((120 * i) / Math.max(totalSegments - 1, 1));
-
           return (
             <span
               key={i}
@@ -163,112 +234,132 @@ export function WorkflowStepper({ status, customerType }: WorkflowStepperProps) 
                 "h-4 flex-1 rounded-xs transition-all duration-500",
                 isFilled ? "opacity-100" : "bg-zinc-200/80 opacity-70"
               )}
-              style={
-                isFilled
-                  ? { backgroundColor: `hsl(${hue} 90% 55%)` }
-                  : undefined
-              }
+              style={isFilled ? { backgroundColor: `hsl(${hue} 90% 55%)` } : undefined}
             />
           );
         })}
       </div>
 
-      <div className="rounded-xl bg-white/70 px-2.5 py-2.5">
-        <div className="overflow-x-auto">
-          <div className="min-w-140">
-            <div className="relative mt-4 pb-9">
-              <div className="absolute left-3 right-3 top-3.5 h-0.5 rounded-full bg-zinc-200" />
-              <div
-                className="absolute left-3 top-3.5 h-0.5 rounded-full bg-emerald-500/70 transition-all duration-500"
-                style={{ width: `calc(${horizontalFillPct}% * (100% - 24px) / 100)` }}
-              />
+      {/* Step nodes — no overflow-x-auto, fits in container */}
+      <div className="rounded-xl bg-white/70 px-1 py-2">
+        <div className="relative mt-2 pb-2">
+          {/* Connecting track */}
+          <div className="absolute left-[8.33%] right-[8.33%] top-3 h-0.5 rounded-full bg-zinc-200" />
+          <div
+            className="absolute left-[8.33%] top-3 h-0.5 rounded-full bg-emerald-500/70 transition-all duration-500"
+            style={{ width: `calc(${horizontalFillPct}% * (100% - 16.66%) / 100)` }}
+          />
 
-              <div className="relative grid grid-cols-6 gap-1">
-                {steps.map((step, i) => {
-                  const isCompleted = i < currentIndex;
-                  const isCurrent = i === currentIndex;
-                  const isFuture = i > currentIndex;
-                  const isDoneStep = step.key === "erp_encoded" && isDone && isCurrent;
+          <div className="relative grid grid-cols-6 gap-0">
+            {steps.map((step, i) => {
+              const isCompleted = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isFuture = i > currentIndex;
+              const isDoneStep = step.key === "erp_encoded" && isDone && isCurrent;
 
-                  return (
+              // Time label
+              const { enteredAt, exitedAt } = timings[i];
+              let timeLabel: string | null = null;
+              if (enteredAt !== null) {
+                const endMs = isCompleted ? (exitedAt ?? now) : isCurrent ? now : null;
+                if (endMs !== null) {
+                  const ms = endMs - enteredAt;
+                  const formatted = formatDuration(ms);
+                  timeLabel = isCurrent ? formatted : formatted;
+                }
+              }
+
+              return (
+                <div
+                  key={step.key}
+                  className="animate-in fade-in-0 flex flex-col items-center duration-500"
+                  style={{ animationDelay: `${i * 55}ms` }}
+                >
+                  {/* Node */}
+                  <div className="relative flex h-6 w-6 items-center justify-center">
+                    {isCurrent && !isDoneStep && (
+                      <>
+                        <span className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping" />
+                        <span className="absolute inset-0.5 rounded-full border border-emerald-600/40 animate-pulse" />
+                      </>
+                    )}
+                    {isDoneStep && (
+                      <>
+                        <span className="absolute -inset-1 rounded-full bg-yellow-400/30 animate-[glow-pulse_2s_ease-in-out_infinite]" />
+                        <span className="absolute -inset-0.5 rounded-full border-2 border-yellow-400/60" />
+                      </>
+                    )}
                     <div
-                      key={step.key}
-                      className="animate-in fade-in-0 flex flex-col items-center duration-500"
-                      style={{ animationDelay: `${i * 55}ms` }}
+                      className={cn(
+                        "relative z-10 flex h-5 w-5 items-center justify-center rounded-full transition-all duration-500 overflow-hidden",
+                        isCompleted && !isDoneStep && "bg-emerald-600 text-white",
+                        isCurrent && !isDoneStep && "bg-emerald-600 text-white ring-2 ring-emerald-200",
+                        isFuture && "bg-zinc-200 text-zinc-400",
+                        isDoneStep && "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-200 shadow-lg"
+                      )}
                     >
-                      <div className="relative flex h-7 w-7 items-center justify-center">
-                        {isCurrent && !isDoneStep && (
-                          <>
-                            <span className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping" />
-                            <span className="absolute inset-1 rounded-full border border-emerald-600/40 animate-pulse" />
-                          </>
-                        )}
-                        {isDoneStep && (
-                          <>
-                            <span className="absolute -inset-1 rounded-full bg-yellow-400/30 animate-[glow-pulse_2s_ease-in-out_infinite]" />
-                            <span className="absolute -inset-0.5 rounded-full border-2 border-yellow-400/60" />
-                          </>
-                        )}
-                        <div
-                          className={cn(
-                            "relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500 overflow-hidden",
-                            isCompleted && !isDoneStep && "bg-emerald-600 text-white",
-                            isCurrent && !isDoneStep && "bg-emerald-600 text-white ring-2 ring-emerald-200",
-                            isFuture && "bg-zinc-200 text-zinc-400",
-                            isDoneStep && "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-200 shadow-lg"
-                          )}
-                        >
-                          {isDoneStep && (
-                            <span
-                              className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent"
-                              style={{
-                                animation: "shine 2s linear infinite",
-                              }}
-                            />
-                          )}
-                          {isCompleted ? (
-                            isDoneStep ? (
-                              <Sparkles className="h-3.5 w-3.5 relative z-10" />
-                            ) : (
-                              <Check className="h-3 w-3" />
-                            )
-                          ) : isCurrent ? (
-                            isDoneStep ? (
-                              <CheckCircle2 className="h-4 w-4 relative z-10" />
-                            ) : (
-                              <Circle className="h-2.5 w-2.5 fill-current" />
-                            )
-                          ) : (
-                            <Circle className="h-2.5 w-2.5" />
-                          )}
-                        </div>
-                      </div>
-
-                      <p
-                        className={cn(
-                          "mt-2 text-center text-xs font-semibold leading-tight",
-                          isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500",
-                          isDoneStep && "text-amber-700"
-                        )}
-                      >
-                        {step.label}
-                      </p>
-                      <p
-                        className={cn(
-                          "mt-0.5 text-[10px] font-medium",
-                          isCompleted && !isDoneStep && "text-emerald-700",
-                          isCurrent && !isDoneStep && "text-emerald-700",
-                          isFuture && "text-zinc-400",
-                          isDoneStep && "text-amber-600 font-bold"
-                        )}
-                      >
-                        {isDoneStep ? "Complete!" : isCompleted ? "Done" : isCurrent ? "Current" : "Next"}
-                      </p>
+                      {isDoneStep && (
+                        <span
+                          className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent"
+                          style={{ animation: "shine 2s linear infinite" }}
+                        />
+                      )}
+                      {isCompleted ? (
+                        isDoneStep ? (
+                          <Sparkles className="h-3 w-3 relative z-10" />
+                        ) : (
+                          <Check className="h-2.5 w-2.5" />
+                        )
+                      ) : isCurrent ? (
+                        isDoneStep ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 relative z-10" />
+                        ) : (
+                          <Circle className="h-2 w-2 fill-current" />
+                        )
+                      ) : (
+                        <Circle className="h-2 w-2" />
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+
+                  {/* Label */}
+                  <p
+                    className={cn(
+                      "mt-1.5 text-center text-[10px] font-semibold leading-tight",
+                      isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-400",
+                      isDoneStep && "text-amber-700"
+                    )}
+                  >
+                    {step.label}
+                  </p>
+
+                  {/* Status sub-label */}
+                  <p
+                    className={cn(
+                      "mt-0.5 text-[9px] font-medium",
+                      isCompleted && !isDoneStep && "text-emerald-700",
+                      isCurrent && !isDoneStep && "text-emerald-700",
+                      isFuture && "text-zinc-400",
+                      isDoneStep && "text-amber-600 font-bold"
+                    )}
+                  >
+                    {isDoneStep ? "Done!" : isCompleted ? "Done" : isCurrent ? "Current" : "—"}
+                  </p>
+
+                  {/* Time-on-stage */}
+                  {timeLabel && (
+                    <p
+                      className={cn(
+                        "mt-0.5 text-[9px] tabular-nums leading-tight text-center",
+                        isCurrent ? "font-semibold text-amber-600" : "text-zinc-400"
+                      )}
+                    >
+                      {isCurrent ? `${timeLabel} here` : timeLabel}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

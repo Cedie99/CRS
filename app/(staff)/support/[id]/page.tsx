@@ -192,7 +192,7 @@ export default async function SupportCisDetailPage({
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
-          <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
+          <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
           <Card>
             <CardHeader className="pb-3">
