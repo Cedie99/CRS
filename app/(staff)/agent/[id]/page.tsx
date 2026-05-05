@@ -128,6 +128,7 @@ export default async function AgentCisDetailPage({
         salesSupportVatCode: cisSubmissions.salesSupportVatCode,
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
         docReviewStatuses: cisSubmissions.docReviewStatuses,
+        financeMetricPoints: cisSubmissions.financeMetricPoints,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.id, id))
@@ -262,6 +263,7 @@ export default async function AgentCisDetailPage({
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
+            pointsMode="summary"
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}
@@ -358,6 +360,7 @@ export default async function AgentCisDetailPage({
             salesSupportVatCode={cis.salesSupportVatCode}
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
             docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            metricPoints={(cis.financeMetricPoints as any) ?? undefined}
             agentUpload={canAgentUploadDocs ? { cisId: cis.id } : undefined}
           />
         </div>

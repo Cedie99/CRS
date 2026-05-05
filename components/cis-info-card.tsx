@@ -243,7 +243,7 @@ function DocReviewActions({
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          disabled={isPending || !!currentStatus}
+          disabled={isPending || currentStatus === "approved"}
           onClick={() => handleAction("approved")}
           className="inline-flex items-center gap-1.5 rounded-md border border-green-300 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
         >
@@ -252,7 +252,7 @@ function DocReviewActions({
         </button>
         <button
           type="button"
-          disabled={isPending || !!currentStatus}
+          disabled={isPending || currentStatus === "needs_review"}
           onClick={() => handleAction("needs_review")}
           className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"
         >
@@ -261,7 +261,7 @@ function DocReviewActions({
         </button>
         <button
           type="button"
-          disabled={isPending || !!currentStatus}
+          disabled={isPending || currentStatus === "rejected"}
           onClick={() => handleAction("rejected")}
           className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
         >
@@ -457,6 +457,8 @@ interface CisInfoCardProps {
   onMetricSave?: (metricPoints: Record<string, number>) => Promise<void>;
   /** Hide the PointsBreakdownPanel from the main form (it will still be shown in print mode) */
   hidePointsPanel?: boolean;
+  /** Controls how much of the scoring panel is visible. "summary" = agent view (total + terms only). "full" = finance/staff view (default). */
+  pointsMode?: "full" | "summary";
 }
 
 const METRIC_TIERS: Record<string, { label: string; hint: string; tiers: { range: string; pts: number }[] }> = {
@@ -686,11 +688,11 @@ function Field({
 }) {
   return (
     <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-3">
-      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-[12px] print:text-zinc-500">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-[13px] print:text-zinc-500">
         {Icon && <Icon className="h-3 w-3 print:hidden" />}
         {label}
       </p>
-      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-1 print:text-[16px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-1 print:text-[20px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
@@ -721,7 +723,7 @@ function SectionTitle({
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[12px] print:text-zinc-700">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[13px] print:text-zinc-700">
         {label}
       </p>
     </div>
@@ -891,6 +893,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     onMetricSave,
     metricPoints,
     hidePointsPanel = false,
+    pointsMode = "full",
   } = props;
 
   const hasSignatures = customerSignature || approverSignature;
@@ -1096,7 +1099,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[14px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[20px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1123,7 +1126,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div>
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[14px]">
+                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[20px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1179,7 +1182,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[14px]">
+                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[20px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Company</th>
@@ -1206,7 +1209,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[14px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[20px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Bank</th>
@@ -1338,13 +1341,6 @@ export function CisInfoCard(props: CisInfoCardProps) {
                                         Reason: <span className="font-medium text-zinc-700">{review.reason}</span>
                                       </p>
                                     )}
-                                    {onDocReview && (
-                                      <DocReviewActions
-                                        docType={entry.key as DocType}
-                                        currentStatus={review?.status}
-                                        onReview={onDocReview}
-                                      />
-                                    )}
                                     {onMetricSave && entry.key === "docFinancialStatement" && (
                                       <MetricPointPicker
                                         metricKeys={["annualSales", "netIncome"]}
@@ -1360,6 +1356,13 @@ export function CisInfoCard(props: CisInfoCardProps) {
                                         metricKeys={["bankBalance"]}
                                         initialPoints={{ bankBalance: metricPoints?.bankBalance }}
                                         onSave={onMetricSave}
+                                      />
+                                    )}
+                                    {onDocReview && (
+                                      <DocReviewActions
+                                        docType={entry.key as DocType}
+                                        currentStatus={review?.status}
+                                        onReview={onDocReview}
                                       />
                                     )}
                                   </div>
@@ -1444,7 +1447,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <FileText className="h-3.5 w-3.5 print:hidden" />
                 Additional Notes
               </p>
-              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-[16px] print:border-l-2 print:border-zinc-300 print:pl-3">
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-[20px] print:border-l-2 print:border-zinc-300 print:pl-3">
                 {additionalNotes}
               </p>
           </SectionCard>
@@ -1475,6 +1478,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   docReviewStatuses={docReviewStatuses as Record<string, { status: string; reason?: string | null }> | null}
                   agentType={agentType}
                   customerType={customerType}
+                  mode={pointsMode}
                 />
               </div>
           </SectionCard>

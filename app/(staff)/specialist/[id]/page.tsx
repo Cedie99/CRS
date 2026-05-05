@@ -184,6 +184,8 @@ export default async function SpecialistCisDetailPage({
             salesSupportSalesType={cis.salesSupportSalesType}
             salesSupportVatCode={cis.salesSupportVatCode}
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
+            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
         </div>
 

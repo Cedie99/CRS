@@ -7,6 +7,7 @@ import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { ArrowLeft } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { FinanceCisDetailClient } from "./finance-cis-detail-client";
+import { SCORING_DOC_KEYS } from "@/lib/doc-types";
 
 export default async function FinanceCisDetailPage({
   params,
@@ -47,21 +48,12 @@ export default async function FinanceCisDetailPage({
   if (!cis) notFound();
 
   const canAct = cis.status === "pending_finance_review" && !isReadOnlyContextView;
-  const hasFinanceAndLegalInfo =
-    Boolean(cis.financeCreditLimit?.trim()) &&
-    Boolean(cis.financeCreditTerms?.trim());
 
-  // Docs that carry points and must be reviewed before printing is allowed
-  const SCORED_DOC_FIELDS = [
-    "docMayorsPermit", "docSecDti", "docBirCertificate", "docValidId",
-    "docLocationMap", "docFinancialStatement", "docProofOfBilling",
-    "docLeaseContract", "docProofOfOwnership", "docStorePhoto",
-    "docSupplierInvoice", "docSocialMedia", "docCompanyWebsite",
-    "docIsoCertification", "docHalalCertificate",
-  ] as const;
+  // Initial printEnabled for SSR — client recomputes this live after doc reviews.
+  // Only gated on document reviews; credit limit/terms are filled physically by CFO.
   const REVIEWED_STATUSES = new Set(["approved", "rejected", "needs_review"]);
   const reviewStatuses = (cis.docReviewStatuses as Record<string, { status: string }> | null) ?? {};
-  const hasPendingDocReviews = SCORED_DOC_FIELDS.some((field) => {
+  const hasPendingDocReviews = SCORING_DOC_KEYS.some((field) => {
     const val = (cis as Record<string, unknown>)[field];
     const uploaded = Array.isArray(val) && val.length > 0;
     return uploaded && !REVIEWED_STATUSES.has(reviewStatuses[field]?.status);
@@ -95,7 +87,7 @@ export default async function FinanceCisDetailPage({
         cisId={cis.id}
         initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
         canAct={canAct}
-        printEnabled={hasFinanceAndLegalInfo && !hasPendingDocReviews}
+        printEnabled={!hasPendingDocReviews}
         isReadOnlyContextView={isReadOnlyContextView}
         dashboardPath="/finance"
         events={events as any}

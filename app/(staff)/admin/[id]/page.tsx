@@ -142,6 +142,8 @@ export default async function AdminCisDetailPage({
             docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
           {canEncode && <ErpEncodeActions cisId={id} backHref="/admin" />}
         </div>

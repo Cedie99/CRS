@@ -192,6 +192,11 @@ export type PointsBreakdownPanelProps = DocFields & {
   docReviewStatuses?: Record<string, { status: string; reason?: string | null }> | null;
   agentType?: string | null;
   customerType?: string | null;
+  /**
+   * "full"    — finance/legal/staff: document checklist + financial metrics + summary + terms (default)
+   * "summary" — agent: total score bar + recommended terms only, no per-document or per-metric breakdown
+   */
+  mode?: "full" | "summary";
 };
 
 export function PointsBreakdownPanel({
@@ -201,6 +206,7 @@ export function PointsBreakdownPanel({
   metricPoints,
   agentType,
   customerType,
+  mode = "full",
   ...docs
 }: PointsBreakdownPanelProps) {
   const d = docs as DocFields;
@@ -266,6 +272,9 @@ export function PointsBreakdownPanel({
     <div className="space-y-4 text-xs print:space-y-3">
 
       
+
+      {/* ── Document Checklist + Financial Metrics (full mode only) ── */}
+      {mode === "full" && <>
 
       {/* ── Document Checklist ── */}
       <div className="overflow-hidden rounded-xl border border-zinc-200">
@@ -368,6 +377,7 @@ export function PointsBreakdownPanel({
         </div>
       </div>
 
+      </>}
 
       {/* ── Score Summary Card ── */}
       <div className="rounded-xl border-2 border-zinc-200 bg-linear-to-br from-zinc-50 to-white p-4 shadow-sm">

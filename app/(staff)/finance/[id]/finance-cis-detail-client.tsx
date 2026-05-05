@@ -10,6 +10,7 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { PointsBreakdownPanel } from "@/components/points-breakdown-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { History } from "lucide-react";
+import { SCORING_DOC_KEYS } from "@/lib/doc-types";
 import type { DocReviewStatuses } from "@/lib/doc-types";
 
 interface FinanceCisDetailClientProps {
@@ -135,11 +136,13 @@ interface FinanceCisDetailClientProps {
   salesSupportOtherRemarks?: string | null;
 }
 
+const REVIEWED_STATUSES = new Set(["approved", "rejected", "needs_review"]);
+
 export function FinanceCisDetailClient({
   cisId,
   initialDocReviewStatuses,
   canAct,
-  printEnabled,
+  printEnabled: _initialPrintEnabled,
   isReadOnlyContextView,
   dashboardPath = "/finance",
   events,
@@ -154,6 +157,15 @@ export function FinanceCisDetailClient({
 }: FinanceCisDetailClientProps) {
   const [docReviewStatuses, setDocReviewStatuses] = useState<DocReviewStatuses>(initialDocReviewStatuses);
   const [metricPoints, setMetricPoints] = useState(initialMetricPoints ?? {});
+
+  // Recompute printEnabled from live docReviewStatuses so it updates without a page refresh.
+  // Only gated on document reviews — credit limit/terms are filled physically by CFO.
+  const hasPendingDocReviews = SCORING_DOC_KEYS.some((field) => {
+    const val = (cisData as Record<string, unknown>)[field];
+    const uploaded = Array.isArray(val) && val.length > 0;
+    return uploaded && !REVIEWED_STATUSES.has(docReviewStatuses[field]?.status as string);
+  });
+  const printEnabled = !hasPendingDocReviews;
 
   function handleStatusesChange(statuses: DocReviewStatuses) {
     setDocReviewStatuses(statuses);

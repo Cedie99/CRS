@@ -21,7 +21,7 @@ export async function PATCH(
   const { id } = await params;
 
   const [cis] = await db
-    .select({ id: cisSubmissions.id, status: cisSubmissions.status })
+    .select({ id: cisSubmissions.id, status: cisSubmissions.status, financeMetricPoints: cisSubmissions.financeMetricPoints })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
     .limit(1);
@@ -47,7 +47,11 @@ export async function PATCH(
         parsed[key] = v;
       }
     }
-    if (Object.keys(parsed).length > 0) financeMetricPoints = parsed;
+    if (Object.keys(parsed).length > 0) {
+      // Merge with existing metric points so saving one field doesn't wipe the others
+      const existing = (cis.financeMetricPoints as Record<string, number> | null) ?? {};
+      financeMetricPoints = { ...existing, ...parsed };
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

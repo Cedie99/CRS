@@ -4,15 +4,10 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
-import { DocReviewPanel } from "@/components/doc-review-panel";
-import { AuditTimeline } from "@/components/audit-timeline";
-import { FinanceActions } from "@/components/actions/finance-actions";
-import { WorkflowStepper } from "@/components/workflow-stepper";
-import { WorkflowHandoff } from "@/components/workflow-handoff";
-import { PointsBreakdownPanel } from "@/components/points-breakdown-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, History } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
+import { SCORING_DOC_KEYS } from "@/lib/doc-types";
+import { LegalCisDetailClient } from "./legal-cis-detail-client";
 
 export default async function LegalCisDetailPage({
   params,
@@ -151,26 +146,16 @@ export default async function LegalCisDetailPage({
   if (!cis) notFound();
 
   const canAct = cis.status === "pending_legal_review" && !isReadOnlyContextView;
-  const hasFinanceAndLegalInfo =
-    Boolean(cis.financeCreditLimit?.trim()) &&
-    Boolean(cis.financeCreditTerms?.trim());
 
-  // Docs that carry points and must be reviewed before printing is allowed
-  const SCORED_DOC_FIELDS = [
-    "docMayorsPermit", "docSecDti", "docBirCertificate", "docValidId",
-    "docLocationMap", "docFinancialStatement", "docProofOfBilling",
-    "docLeaseContract", "docProofOfOwnership", "docStorePhoto",
-    "docSupplierInvoice", "docSocialMedia", "docCompanyWebsite",
-    "docIsoCertification", "docHalalCertificate",
-  ] as const;
+  // Initial printEnabled for SSR — client recomputes this live after doc reviews.
   const REVIEWED_STATUSES = new Set(["approved", "rejected", "needs_review"]);
   const reviewStatuses = (cis.docReviewStatuses as Record<string, { status: string }> | null) ?? {};
-  const hasPendingDocReviews = SCORED_DOC_FIELDS.some((field) => {
+  const hasPendingDocReviews = SCORING_DOC_KEYS.some((field) => {
     const val = (cis as Record<string, unknown>)[field];
     const uploaded = Array.isArray(val) && val.length > 0;
     return uploaded && !REVIEWED_STATUSES.has(reviewStatuses[field]?.status);
   });
-  const canPrint = hasFinanceAndLegalInfo && !hasPendingDocReviews;
+  const initialPrintEnabled = !hasPendingDocReviews;
 
   return (
     <div className="space-y-5">
@@ -196,165 +181,112 @@ export default async function LegalCisDetailPage({
         hrefPrefix="legal"
       />
 
-      {cis.status === "pending_legal_review" && !isReadOnlyContextView && (
-        <FinanceActions
-          cisId={id}
-          initialSirRestyFiles={(cis.docSirRestySigned as any) ?? []}
-          forwardEndpoint={`/api/cis/${id}/legal-forward`}
-          denyEndpoint={`/api/cis/${id}/legal-deny`}
-          dashboardPath="/legal"
-          printEnabled={canPrint}
-        />
-      )}
-
-      <div className="grid gap-5 xl:grid-cols-5">
-        <div className="space-y-5 xl:col-span-3 print:col-span-full">
-          <DocReviewPanel
-            initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
-            canAct={canAct}
-            printEnabled={canPrint}
-            hidePrintButton
-            hidePointsPanel
-            cisId={cis.id}
-            tradeName={cis.tradeName}
-            contactPerson={cis.contactPerson}
-            contactNumber={cis.contactNumber}
-            emailAddress={cis.emailAddress}
-            businessAddress={cis.businessAddress}
-            cityMunicipality={cis.cityMunicipality}
-            businessType={cis.businessType}
-            tinNumber={cis.tinNumber}
-            additionalNotes={cis.additionalNotes}
-            customerType={cis.customerType}
-            salesChannel={cis.salesChannel}
-            agentCode={cis.agentCode}
-            agentType={cis.agentType}
-            status={cis.status as any}
-            createdAt={cis.createdAt}
-            updatedAt={cis.updatedAt}
-            customerSignature={cis.customerSignature}
-            customerSignedAt={cis.customerSignedAt}
-            customerSignatureSeal={cis.customerSignatureSeal}
-            approverSignature={cis.approverSignature}
-            approverSignedAt={cis.approverSignedAt}
-            approverSignatureSeal={cis.approverSignatureSeal}
-            petroleumLicenseNo={cis.petroleumLicenseNo}
-            depotStationType={cis.depotStationType}
-            tankCapacity={cis.tankCapacity}
-            doeAccreditationNo={cis.doeAccreditationNo}
-            specialAccountType={cis.specialAccountType}
-            specialAccountRemarks={cis.specialAccountRemarks}
-            paymentTerms={cis.paymentTerms}
-            docGovCertifications={cis.docGovCertifications}
-            corporateName={cis.corporateName}
-            dateOfBusinessReg={cis.dateOfBusinessReg}
-            numberOfEmployees={cis.numberOfEmployees}
-            website={cis.website}
-            telephoneNumber={cis.telephoneNumber}
-            landmarks={cis.landmarks}
-            deliverySameAsOffice={cis.deliverySameAsOffice}
-            deliveryAddress={cis.deliveryAddress}
-            deliveryLandmarks={cis.deliveryLandmarks}
-            deliveryMobile={cis.deliveryMobile}
-            deliveryTelephone={cis.deliveryTelephone}
-            lineOfBusiness={cis.lineOfBusiness}
-            lineOfBusinessOther={cis.lineOfBusinessOther}
-            businessActivity={cis.businessActivity}
-            businessActivityOther={cis.businessActivityOther}
-            owners={cis.owners}
-            officers={cis.officers}
-            businessLife={cis.businessLife}
-            howLongAtAddress={cis.howLongAtAddress}
-            numberOfBranches={cis.numberOfBranches}
-            govCertifications={cis.govCertifications}
-            tradeReferences={cis.tradeReferences}
-            bankReferences={cis.bankReferences}
-            achievements={cis.achievements}
-            otherMerits={cis.otherMerits}
-            docValidId={cis.docValidId}
-            docMayorsPermit={cis.docMayorsPermit}
-            docSecDti={cis.docSecDti}
-            docBirCertificate={cis.docBirCertificate}
-            docLocationMap={cis.docLocationMap}
-            docFinancialStatement={cis.docFinancialStatement}
-            docBankStatement={cis.docBankStatement}
-            docProofOfBilling={cis.docProofOfBilling}
-            docLeaseContract={cis.docLeaseContract}
-            docProofOfOwnership={cis.docProofOfOwnership}
-            docStorePhoto={cis.docStorePhoto}
-            docSupplierInvoice={cis.docSupplierInvoice}
-            docSocialMedia={cis.docSocialMedia}
-            docIsoCertification={cis.docIsoCertification}
-            docHalalCertificate={cis.docHalalCertificate}
-            docCertifications={cis.docCertifications}
-            docOther={cis.docOther}
-            docAgentOtherRequirements={cis.docAgentOtherRequirements}
-            docSalesSupportOther={cis.docSalesSupportOther}
-            financeEu={cis.financeEu}
-            financeDl={cis.financeDl}
-            financeDr={cis.financeDr}
-            financePlTs={cis.financePlTs}
-            financePossiblePoints={cis.financePossiblePoints}
-            financeApprovedPoints={cis.financeApprovedPoints}
-            financeCreditLimit={cis.financeCreditLimit}
-            financeCreditTerms={cis.financeCreditTerms}
-            docSirRestySigned={cis.docSirRestySigned}
-            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
-            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
-            agentSalesSpecialist={cis.agentSalesSpecialist}
-            agentSalesManager={cis.agentSalesManager}
-            agentTpcFirst={cis.agentTpcFirst}
-            agentTpcLast={cis.agentTpcLast}
-            salesSupportAccountType={cis.salesSupportAccountType}
-            salesSupportPriceList1={cis.salesSupportPriceList1}
-            salesSupportPriceList2={cis.salesSupportPriceList2}
-            salesSupportSalesType={cis.salesSupportSalesType}
-            salesSupportVatCode={cis.salesSupportVatCode}
-            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
-          />
-        </div>
-
-        <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
-          <WorkflowStepper status={cis.status as any} customerType={cis.customerType} />
-          <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
-          <PointsBreakdownPanel
-            docValidId={cis.docValidId}
-            docMayorsPermit={cis.docMayorsPermit}
-            docSecDti={cis.docSecDti}
-            docBirCertificate={cis.docBirCertificate}
-            docLocationMap={cis.docLocationMap}
-            docFinancialStatement={cis.docFinancialStatement}
-            docBankStatement={cis.docBankStatement}
-            docProofOfBilling={cis.docProofOfBilling}
-            docLeaseContract={cis.docLeaseContract}
-            docProofOfOwnership={cis.docProofOfOwnership}
-            docStorePhoto={cis.docStorePhoto}
-            docSupplierInvoice={cis.docSupplierInvoice}
-            docSocialMedia={cis.docSocialMedia}
-            docIsoCertification={cis.docIsoCertification}
-            docHalalCertificate={cis.docHalalCertificate}
-            docCertifications={cis.docCertifications}
-            docGovCertifications={cis.docGovCertifications}
-            docOther={cis.docOther}
-            financePossiblePoints={cis.financePossiblePoints}
-            financeApprovedPoints={cis.financeApprovedPoints}
-            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
-            agentType={cis.agentType}
-            customerType={cis.customerType}
-          />
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">
-                <History className="h-4 w-4 text-zinc-400" />
-                Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AuditTimeline events={events as any} />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <LegalCisDetailClient
+        cisId={cis.id}
+        initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+        canAct={canAct}
+        initialPrintEnabled={initialPrintEnabled}
+        isReadOnlyContextView={isReadOnlyContextView}
+        forwardEndpoint={`/api/cis/${id}/legal-forward`}
+        denyEndpoint={`/api/cis/${id}/legal-deny`}
+        initialSirRestyFiles={(cis.docSirRestySigned as any) ?? []}
+        events={events as any}
+        status={cis.status}
+        customerType={cis.customerType}
+        agentCode={cis.agentCode}
+        agentType={cis.agentType}
+        tradeName={cis.tradeName}
+        contactPerson={cis.contactPerson}
+        contactNumber={cis.contactNumber}
+        emailAddress={cis.emailAddress}
+        businessAddress={cis.businessAddress}
+        cityMunicipality={cis.cityMunicipality}
+        businessType={cis.businessType}
+        tinNumber={cis.tinNumber}
+        additionalNotes={cis.additionalNotes}
+        salesChannel={cis.salesChannel}
+        createdAt={cis.createdAt}
+        updatedAt={cis.updatedAt}
+        customerSignature={cis.customerSignature}
+        customerSignedAt={cis.customerSignedAt}
+        customerSignatureSeal={cis.customerSignatureSeal}
+        approverSignature={cis.approverSignature}
+        approverSignedAt={cis.approverSignedAt}
+        approverSignatureSeal={cis.approverSignatureSeal}
+        petroleumLicenseNo={cis.petroleumLicenseNo}
+        depotStationType={cis.depotStationType}
+        tankCapacity={cis.tankCapacity}
+        doeAccreditationNo={cis.doeAccreditationNo}
+        specialAccountType={cis.specialAccountType}
+        specialAccountRemarks={cis.specialAccountRemarks}
+        paymentTerms={cis.paymentTerms}
+        docGovCertifications={cis.docGovCertifications}
+        corporateName={cis.corporateName}
+        dateOfBusinessReg={cis.dateOfBusinessReg}
+        numberOfEmployees={cis.numberOfEmployees}
+        website={cis.website}
+        telephoneNumber={cis.telephoneNumber}
+        landmarks={cis.landmarks}
+        deliverySameAsOffice={cis.deliverySameAsOffice}
+        deliveryAddress={cis.deliveryAddress}
+        deliveryLandmarks={cis.deliveryLandmarks}
+        deliveryMobile={cis.deliveryMobile}
+        deliveryTelephone={cis.deliveryTelephone}
+        lineOfBusiness={cis.lineOfBusiness}
+        lineOfBusinessOther={cis.lineOfBusinessOther}
+        businessActivity={cis.businessActivity}
+        businessActivityOther={cis.businessActivityOther}
+        owners={cis.owners}
+        officers={cis.officers}
+        businessLife={cis.businessLife}
+        howLongAtAddress={cis.howLongAtAddress}
+        numberOfBranches={cis.numberOfBranches}
+        govCertifications={cis.govCertifications}
+        tradeReferences={cis.tradeReferences}
+        bankReferences={cis.bankReferences}
+        achievements={cis.achievements}
+        otherMerits={cis.otherMerits}
+        docValidId={cis.docValidId}
+        docMayorsPermit={cis.docMayorsPermit}
+        docSecDti={cis.docSecDti}
+        docBirCertificate={cis.docBirCertificate}
+        docLocationMap={cis.docLocationMap}
+        docFinancialStatement={cis.docFinancialStatement}
+        docBankStatement={cis.docBankStatement}
+        docProofOfBilling={cis.docProofOfBilling}
+        docLeaseContract={cis.docLeaseContract}
+        docProofOfOwnership={cis.docProofOfOwnership}
+        docStorePhoto={cis.docStorePhoto}
+        docSupplierInvoice={cis.docSupplierInvoice}
+        docSocialMedia={cis.docSocialMedia}
+        docIsoCertification={cis.docIsoCertification}
+        docHalalCertificate={cis.docHalalCertificate}
+        docCertifications={cis.docCertifications}
+        docOther={cis.docOther}
+        docAgentOtherRequirements={cis.docAgentOtherRequirements}
+        docSalesSupportOther={cis.docSalesSupportOther}
+        financeEu={cis.financeEu}
+        financeDl={cis.financeDl}
+        financeDr={cis.financeDr}
+        financePlTs={cis.financePlTs}
+        financePossiblePoints={cis.financePossiblePoints}
+        financeApprovedPoints={cis.financeApprovedPoints}
+        financeCreditLimit={cis.financeCreditLimit}
+        financeCreditTerms={cis.financeCreditTerms}
+        docSirRestySigned={cis.docSirRestySigned}
+        agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+        agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+        agentSalesSpecialist={cis.agentSalesSpecialist}
+        agentSalesManager={cis.agentSalesManager}
+        agentTpcFirst={cis.agentTpcFirst}
+        agentTpcLast={cis.agentTpcLast}
+        salesSupportAccountType={cis.salesSupportAccountType}
+        salesSupportPriceList1={cis.salesSupportPriceList1}
+        salesSupportPriceList2={cis.salesSupportPriceList2}
+        salesSupportSalesType={cis.salesSupportSalesType}
+        salesSupportVatCode={cis.salesSupportVatCode}
+        salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
+      />
     </div>
   );
 }

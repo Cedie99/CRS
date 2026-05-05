@@ -119,6 +119,8 @@ export default async function ManagerCisDetailPage({
       salesSupportSalesType: cisSubmissions.salesSupportSalesType,
       salesSupportVatCode: cisSubmissions.salesSupportVatCode,
       salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
+      docReviewStatuses: cisSubmissions.docReviewStatuses,
+      financeMetricPoints: cisSubmissions.financeMetricPoints,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -265,6 +267,8 @@ export default async function ManagerCisDetailPage({
             salesSupportSalesType={cis.salesSupportSalesType}
             salesSupportVatCode={cis.salesSupportVatCode}
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
+            docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
+            metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
         </div>
 
