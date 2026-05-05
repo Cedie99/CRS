@@ -95,6 +95,7 @@ export default async function ApproverCisDetailPage({
           <CisInfoCard
             printEnabled={canPrint}
             cisId={cis.id}
+            pointsMode="summary"
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}

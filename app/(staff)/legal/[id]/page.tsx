@@ -95,6 +95,7 @@ export default async function LegalCisDetailPage({
         docStorePhoto: cisSubmissions.docStorePhoto,
         docSupplierInvoice: cisSubmissions.docSupplierInvoice,
         docSocialMedia: cisSubmissions.docSocialMedia,
+        docCompanyWebsite: cisSubmissions.docCompanyWebsite,
       docIsoCertification: cisSubmissions.docIsoCertification,
       docHalalCertificate: cisSubmissions.docHalalCertificate,
         docCertifications: cisSubmissions.docCertifications,
@@ -107,6 +108,7 @@ export default async function LegalCisDetailPage({
         financePlTs: cisSubmissions.financePlTs,
         financePossiblePoints: cisSubmissions.financePossiblePoints,
         financeApprovedPoints: cisSubmissions.financeApprovedPoints,
+        financeMetricPoints: cisSubmissions.financeMetricPoints,
         financeCreditTerms: cisSubmissions.financeCreditTerms,
         docSirRestySigned: cisSubmissions.docSirRestySigned,
         agentAccountSpecialistFirst: cisSubmissions.agentAccountSpecialistFirst,
@@ -259,6 +261,7 @@ export default async function LegalCisDetailPage({
         docStorePhoto={cis.docStorePhoto}
         docSupplierInvoice={cis.docSupplierInvoice}
         docSocialMedia={cis.docSocialMedia}
+        docCompanyWebsite={cis.docCompanyWebsite}
         docIsoCertification={cis.docIsoCertification}
         docHalalCertificate={cis.docHalalCertificate}
         docCertifications={cis.docCertifications}
@@ -271,6 +274,7 @@ export default async function LegalCisDetailPage({
         financePlTs={cis.financePlTs}
         financePossiblePoints={cis.financePossiblePoints}
         financeApprovedPoints={cis.financeApprovedPoints}
+        metricPoints={cis.financeMetricPoints as any}
         financeCreditLimit={cis.financeCreditLimit}
         financeCreditTerms={cis.financeCreditTerms}
         docSirRestySigned={cis.docSirRestySigned}

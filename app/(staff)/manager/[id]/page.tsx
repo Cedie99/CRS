@@ -174,6 +174,7 @@ export default async function ManagerCisDetailPage({
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             cisId={cis.id}
+            pointsMode="summary"
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}

@@ -92,6 +92,7 @@ export default async function SupportCisDetailPage({
           <CisInfoCard
             printEnabled={canPrint}
             cisId={cis.id}
+            pointsMode="summary"
             tradeName={cis.tradeName}
             contactPerson={cis.contactPerson}
             contactNumber={cis.contactNumber}

@@ -108,11 +108,13 @@ export function LegalCisDetailClient({
             docStorePhoto={cisData.docStorePhoto}
             docSupplierInvoice={cisData.docSupplierInvoice}
             docSocialMedia={cisData.docSocialMedia}
+            docCompanyWebsite={cisData.docCompanyWebsite}
             docIsoCertification={cisData.docIsoCertification}
             docHalalCertificate={cisData.docHalalCertificate}
             docCertifications={cisData.docCertifications}
             docGovCertifications={cisData.docGovCertifications}
             docOther={cisData.docOther}
+            metricPoints={cisData.metricPoints as any}
             financePossiblePoints={cisData.financePossiblePoints as number | null}
             financeApprovedPoints={cisData.financeApprovedPoints as number | null}
             docReviewStatuses={docReviewStatuses}
