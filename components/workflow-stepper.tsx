@@ -347,7 +347,7 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                   </p>
 
                   {/* Time-on-stage */}
-                  {timeLabel && (
+                  {timeLabel && !isDoneStep && (
                     <p
                       className={cn(
                         "mt-0.5 text-[9px] tabular-nums leading-tight text-center",
