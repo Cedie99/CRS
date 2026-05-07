@@ -22,8 +22,8 @@ Nine roles exist in `roleEnum` (`lib/db/schema.ts`):
 | `rsr` | `/agent` | Regional Sales Rep — same capabilities as sales_agent |
 | `sales_manager` | `/manager` | Supervises agents; **read-only** on form details |
 | `rsr_manager` | `/manager` | Supervises RSR agents; **read-only** on form details |
-| `finance_reviewer` | `/finance` | Reviews documents, sets credit evaluation, forwards to approver or returns to agent |
-| `legal_approver` | `/legal` | Reviews dealer accounts for legal compliance, forwards to finance or returns to agent |
+| `finance_reviewer` | `/finance` | Reviews documents, sets credit evaluation, forwards to senior approver or returns to agent. Receives non-dealer customer types. |
+| `legal_approver` | `/legal` | Identical workflow and features to finance_reviewer. Receives dealer customer types only. |
 | `senior_approver` | `/approver` | Final decision — approve or deny |
 | `sales_support` | `/support` | Fills out account/price/VAT details after approval |
 | `project_development_specialist` | `/specialist` | Marks customer as encoded in ERP |
@@ -62,38 +62,46 @@ Note: `pending_endorsement` exists in the enum but is **not actively used** in t
 
 ## Workflow
 
+### Review Stage — Finance vs Legal
+
+Finance and Legal have **identical workflow, features, and UI**. The only difference is which customer types they receive:
+
+- `legal_approver` receives: `dealer`
+- `finance_reviewer` receives: all other types (`standard`, `fs_petroleum`, `special`, `distributor`, `private_label`, `toll_blend`, `end_user`)
+
+Both roles can: review and approve/reject individual documents, forward to Senior Approver, or return to agent.
+
 ### Standard Flow (non-dealer)
 
 ```
 draft
-  → submitted          (customer signs form)
+  → submitted               (customer signs form)
   → pending_finance_review  (agent fills out agent section)
-  → pending_approval   (finance forwards)
-  → approved           (senior approver approves)
-  → pending_erp_encoding  (sales support fills out)
-  → erp_encoded        (specialist/admin encodes)
+  → pending_approval        (finance_reviewer forwards)
+  → approved                (senior approver approves)
+  → pending_erp_encoding    (sales support fills out)
+  → erp_encoded             (specialist/admin encodes)
 ```
 
 ### Dealer Flow
 
 ```
 draft
-  → submitted
+  → submitted              (customer signs form)
   → pending_legal_review   (agent fills out agent section, customer type = dealer)
-  → pending_finance_review (legal forwards)
-  → pending_approval
-  → approved
-  → pending_erp_encoding
-  → erp_encoded
+  → pending_approval       (legal_approver forwards)
+  → approved               (senior approver approves)
+  → pending_erp_encoding   (sales support fills out)
+  → erp_encoded            (specialist/admin encodes)
 ```
 
 ### Return / Resubmit
 
-Any reviewer (finance or legal) can return a form to the agent:
+Either reviewer can return a form to the agent:
 
 ```
-pending_finance_review → returned  (finance returns)
-pending_legal_review   → returned  (legal returns)
+pending_finance_review → returned  (finance_reviewer returns)
+pending_legal_review   → returned  (legal_approver returns)
 ```
 
 Agent resubmits after uploading replacement docs for any rejected documents:
@@ -135,21 +143,26 @@ No resubmission after denial. Agent is notified. Sales Support is notified that 
 - **Workflow action:** `agent_submitted`
 - **Notifications:** Manager (informational), Finance or Legal (action needed)
 
-### 3. Legal review (dealer only)
+### 3. Reviewer stage (Finance or Legal — identical flow)
+
+Finance and Legal are the same stage, split only by which customer types they handle. Everything below applies equally to both roles.
+
+**Legal Approver (dealer):**
 - **Route:** `PATCH /api/cis/[id]/legal-forward` or `PATCH /api/cis/[id]/legal-deny`
 - **Role:** `legal_approver`
-- **Actions:**
-  - Forward → `pending_finance_review`, workflow action `forwarded_to_finance`
-  - Return → `returned`, workflow action `returned`
-- **Notifications:** Finance (if forwarded), Agent (if returned)
+- **Active when status:** `pending_legal_review`
 
-### 4. Finance review
+**Finance Reviewer (all non-dealer types):**
 - **Route:** `PATCH /api/cis/[id]/finance-forward` or `PATCH /api/cis/[id]/finance-deny`
 - **Role:** `finance_reviewer`
-- **Prerequisite:** `docSirRestySigned` (CFO-signed CIS) must be uploaded before forwarding
+- **Active when status:** `pending_finance_review`
+
+**Both roles share:**
 - **Actions:**
   - Forward → `pending_approval`, workflow action `forwarded_to_approver`
   - Return → `returned`, workflow action `returned`
+- **Features:** Document review (approve/reject per document with reason), credit evaluation fields, CFO-signed CIS upload
+- **Prerequisite to forward:** `docSirRestySigned` (CFO-signed CIS) must be uploaded
 - **Fields set:** `financeEu`, `financeDl`, `financeDr`, `financePlTs`, `financePossiblePoints`, `financeApprovedPoints`, `financeCreditTerms`, `financeCreditLimit`, `financeMetricPoints`
 - **Notifications:** Senior Approver (if forwarded), Agent (if returned)
 
@@ -243,15 +256,19 @@ No resubmission after denial. Agent is notified. Sales Support is notified that 
 - `/manager/team` — Team management
 - `/manager/customer-type/[customerType]` — Filtered list
 
-### Finance (`finance_reviewer`)
-- `/finance` — Dashboard
-- `/finance/[id]` — CIS detail + forward/return actions + doc review + finance fields
-- `/finance/customer-type/[customerType]` — Filtered list
+### Finance (`finance_reviewer`) and Legal (`legal_approver`)
 
-### Legal (`legal_approver`)
-- `/legal` — Dashboard (dealer submissions in `pending_legal_review`)
-- `/legal/[id]` — CIS detail + forward/return actions + doc review
-- `/legal/customer-type/[customerType]` — Filtered list
+These two roles have **identical pages and features**. The only difference is the customer types they receive and the URL prefix.
+
+| | Finance | Legal |
+|--|---------|-------|
+| Dashboard | `/finance` | `/legal` |
+| Detail | `/finance/[id]` | `/legal/[id]` |
+| Filtered list | `/finance/customer-type/[customerType]` | `/legal/customer-type/[customerType]` |
+| Customer types | all non-dealer types | `dealer` only |
+| Active status | `pending_finance_review` | `pending_legal_review` |
+
+Both detail pages include: doc review (approve/reject per document), credit evaluation fields, CFO-signed CIS upload, forward to Senior Approver, and return to agent.
 
 ### Senior Approver (`senior_approver`)
 - `/approver` — Dashboard
@@ -281,8 +298,8 @@ Located in `components/actions/`. Each component is only rendered when the CIS i
 |-----------|-----------------|-------------------|---------|
 | `agent-fill-out-form.tsx` | agent/rsr | `submitted` | Fill agent section → submit |
 | `agent-resubmit-form.tsx` | agent/rsr | `returned` | Upload replacements → resubmit |
-| `finance-actions.tsx` | finance_reviewer | `pending_finance_review` | Forward to approver / Return to agent |
-| `legal-actions.tsx` | legal_approver | `pending_legal_review` | Forward to finance / Return to agent |
+| `finance-actions.tsx` | finance_reviewer | `pending_finance_review` | Forward to approver / Return to agent (identical to legal-actions) |
+| `legal-actions.tsx` | legal_approver | `pending_legal_review` | Forward to approver / Return to agent (identical to finance-actions) |
 | `approver-actions.tsx` | senior_approver | `pending_approval` | Approve / Deny |
 | `sales-support-actions.tsx` | sales_support | `approved` | Fill out and submit sales support section |
 | `erp-encode-actions.tsx` | specialist / admin | `pending_erp_encoding` | Mark as ERP encoded |
@@ -412,7 +429,7 @@ toll_blend
 end_user
 ```
 
-`dealer` is the only type routed through legal review first. All others go directly to finance.
+`dealer` is the only type routed to `legal_approver`. All other types go to `finance_reviewer`. Both roles have identical capabilities — the split is purely based on customer type.
 
 ---
 

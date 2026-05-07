@@ -27,8 +27,8 @@ Internal customer onboarding platform for **Oracle Petroleum**. Replaces the man
 |------|-----------|-------------|
 | `sales_agent` / `rsr` | `/agent` | Submits CIS forms; fills agent section after customer completes the form |
 | `sales_manager` / `rsr_manager` | `/manager` | Views team submissions — **read-only, no workflow actions** |
-| `finance_reviewer` | `/finance` | Reviews documents, sets credit evaluation, forwards to approver or returns to agent |
-| `legal_approver` | `/legal` | Reviews dealer accounts for legal compliance; forwards to finance or returns to agent |
+| `finance_reviewer` | `/finance` | Reviews documents and credit evaluation; forwards to senior approver or returns to agent. Handles all non-dealer customer types. |
+| `legal_approver` | `/legal` | Identical workflow and features to finance_reviewer. Handles dealer customer type only. |
 | `senior_approver` | `/approver` | Final decision — approve or deny |
 | `sales_support` | `/support` | Fills account type, price lists, VAT details after approval |
 | `project_development_specialist` | `/specialist` | Marks customer as encoded in ERP |
@@ -61,9 +61,7 @@ Customer fills form
        ↓
 Agent fills agent section
        ↓
-Legal Approver (forward / return)
-       ↓
-Finance Reviewer (forward / return)
+Legal Approver (forward / return)    ← same flow as Finance, dealer types only
        ↓
 Senior Approver (approve / deny)
        ↓
