@@ -69,10 +69,10 @@ function getOptionLabel(
 
 function StepIndicator({ current, total, labels }: { current: number; total: number; labels: string[] }) {
   return (
-    <div className="mb-6">
-      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-xs text-zinc-400">Step {current} of {total}</span>
-        <span className="text-sm font-semibold text-zinc-800">{labels[current - 1]}</span>
+    <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/80 p-3 sm:p-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Step {current} of {total}</span>
+        <span className="text-sm font-semibold text-zinc-900">{labels[current - 1]}</span>
       </div>
       <div className="relative h-1.5 w-full rounded-full bg-zinc-100">
         <div
@@ -80,14 +80,20 @@ function StepIndicator({ current, total, labels }: { current: number; total: num
           style={{ width: `${(current / total) * 100}%` }}
         />
       </div>
-      <div className="mt-2 flex justify-between">
+      <div className="hidden grid-cols-2 gap-2 sm:grid lg:grid-cols-3">
         {labels.map((label, i) => (
           <div
             key={i}
-            className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              i + 1 <= current ? "bg-zinc-900" : "bg-zinc-200"
+            className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+              i + 1 === current
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : i + 1 < current
+                  ? "border-zinc-300 bg-white text-zinc-700"
+                  : "border-zinc-200 bg-zinc-100 text-zinc-500"
             }`}
-          />
+          >
+            {label}
+          </div>
         ))}
       </div>
     </div>
@@ -98,8 +104,10 @@ function StepIndicator({ current, total, labels }: { current: number; total: num
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">{title}</p>
+    <div className="mb-4 flex items-center gap-3">
+      <div className="h-px flex-1 bg-zinc-200" />
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{title}</p>
+      <div className="h-px flex-1 bg-zinc-200" />
     </div>
   );
 }
@@ -141,7 +149,7 @@ function DynamicTable<T extends { [K in keyof T]: string }>({
   return (
     <div className="space-y-3">
       {rows.map((row, i) => (
-        <div key={i} className="relative rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+        <div key={i} className="relative rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
           <div className="grid gap-3 sm:grid-cols-2">
             {columns.map((col) => (
               <div key={String(col.key)} className="space-y-1">
@@ -486,15 +494,22 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
   const submitDisabled = isLoading || !businessType || signatureEmpty || !declarationChecked;
 
   return (
-    <Card ref={cardRef} className="overflow-hidden">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl sm:text-2xl">Customer Registration Sheet</CardTitle>
+    <Card ref={cardRef} className="overflow-hidden border-zinc-200/80 bg-white/95 py-0 shadow-lg shadow-zinc-200/40 backdrop-blur">
+      <CardHeader className="border-b border-zinc-200/80 bg-zinc-50/70 pb-5">
+        <CardTitle className="text-xl leading-tight sm:text-2xl pt-6">Customer Registration Sheet</CardTitle>
         <CardDescription>
-          Fields marked with <span className="font-bold text-red-600 text-base leading-none">*</span> are required.
-          <span className="mt-1 block text-xs text-zinc-400">
-            Agent: <span className="font-mono">{agentCode}</span>
+          <span className="block text-sm text-zinc-600">
+            Complete all required details to submit your customer profile for review.
+          </span>
+          <span className="mt-1 block text-xs text-zinc-500">
+            Fields marked with <span className="font-bold text-red-600 text-base leading-none">*</span> are required.
+          </span>
+          <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+            <span className="rounded-full border border-zinc-300 bg-white px-2.5 py-1">
+              Agent: <span className="font-mono text-zinc-700">{agentCode}</span>
+            </span>
             {customerType !== "standard" && (
-              <span className="ml-2 rounded-full bg-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
+              <span className="rounded-full border border-zinc-300 bg-white px-2.5 py-1 capitalize text-zinc-700">
                 {humanizeDisplayValue(customerType)}
               </span>
             )}
@@ -508,7 +523,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
       </CardHeader>
 
       <form ref={formRef} noValidate>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-7 px-4 pb-4 pt-5 sm:space-y-8 sm:px-6 sm:pb-6">
 
           <StepIndicator current={currentStep} total={TOTAL_STEPS} labels={STEP_LABELS} />
 
@@ -1127,7 +1142,10 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
           </div>
 
           {/* ── Navigation ── */}
-          <div className="sticky bottom-0 -mx-4 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-2 sm:backdrop-blur-none">
+          <div className="sticky bottom-0 z-20 -mx-4 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+            <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 sm:hidden">
+              Step {currentStep} of {TOTAL_STEPS}
+            </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
             {currentStep > 1 && (
               <Button
@@ -1141,7 +1159,9 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                 Back
               </Button>
             )}
-            <div className="hidden flex-1 sm:block" />
+            <div className="hidden flex-1 sm:block">
+              <span className="text-xs font-medium text-zinc-500">Step {currentStep} of {TOTAL_STEPS}</span>
+            </div>
             {currentStep < TOTAL_STEPS ? (
               <Button type="button" onClick={handleNext} disabled={isLoading} className="w-full gap-1.5 sm:w-auto">
                 Continue

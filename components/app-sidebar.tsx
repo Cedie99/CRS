@@ -17,6 +17,7 @@ import {
   LogOut,
   X,
   Database,
+  Network,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, humanizeDisplayValue } from "@/lib/utils";
@@ -66,7 +67,8 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   ],
   admin: [
     { label: "All Submissions", href: "/admin", icon: FileText, exact: true },
-    { label: "Manage Users", href: "/admin/users", icon: Users },
+    { label: "Manage Users", href: "/admin/users", icon: Users, exact: true },
+    { label: "Create User", href: "/admin/users/new", icon: Plus },
   ],
 };
 
@@ -87,13 +89,20 @@ interface SidebarContentProps {
   role: string;
   userName?: string;
   avatarUrl?: string | null;
+  isTopManager?: boolean;
   onClose?: () => void;
 }
 
-function SidebarContent({ role, userName, avatarUrl, onClose }: SidebarContentProps) {
+function SidebarContent({ role, userName, avatarUrl, isTopManager = false, onClose }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = NAV_ITEMS[role] ?? [];
+  const baseItems = NAV_ITEMS[role] ?? [];
+
+  // Inject "Team Overview" for top-level managers
+  const items: NavItem[] =
+    isTopManager && (role === "sales_manager" || role === "rsr_manager")
+      ? [...baseItems, { label: "Team Overview", href: "/manager/team", icon: Network }]
+      : baseItems;
 
   const initials = userName
     ? userName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
@@ -198,17 +207,18 @@ interface AppSidebarProps {
   role: string;
   userName?: string;
   avatarUrl?: string | null;
+  isTopManager?: boolean;
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
-export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClose }: AppSidebarProps) {
+export function AppSidebar({ role, userName, avatarUrl, isTopManager = false, mobileOpen, onMobileClose }: AppSidebarProps) {
   return (
     <>
       {/* Desktop */}
       <div className="hidden w-56 shrink-0 lg:block">
         <aside className="fixed left-0 top-0 h-screen w-56 border-r border-emerald-900/40 shadow-[0_14px_36px_-24px_rgba(0,0,0,0.8)]">
-          <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} />
+          <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} isTopManager={isTopManager} />
         </aside>
       </div>
 
@@ -220,7 +230,7 @@ export function AppSidebar({ role, userName, avatarUrl, mobileOpen, onMobileClos
             onClick={onMobileClose}
           />
           <div className="absolute left-0 top-0 z-50 h-full w-64 max-w-[80vw] border-r border-emerald-900/40 shadow-2xl">
-            <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} onClose={onMobileClose} />
+            <SidebarContent role={role} userName={userName} avatarUrl={avatarUrl} isTopManager={isTopManager} onClose={onMobileClose} />
           </div>
         </div>
       )}

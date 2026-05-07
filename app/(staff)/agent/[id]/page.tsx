@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,8 +11,11 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { AgentFillOutForm } from "@/components/actions/agent-fill-out-form";
 import { AgentResubmitForm } from "@/components/actions/agent-resubmit-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle, History } from "lucide-react";
+import { AlertTriangle, History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { RejectedDocsSummary } from "@/components/rejected-docs-summary";
+import type { DocReviewStatuses, DocType, FileEntry } from "@/lib/doc-types";
 
 export default async function AgentCisDetailPage({
   params,
@@ -24,6 +26,22 @@ export default async function AgentCisDetailPage({
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
+
+  const agentUser = await db
+    .select({ managerId: users.managerId })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+    .then((r) => r[0]);
+
+  const managerName = agentUser?.managerId
+    ? await db
+        .select({ fullName: users.fullName })
+        .from(users)
+        .where(eq(users.id, agentUser.managerId))
+        .limit(1)
+        .then((r) => r[0]?.fullName ?? null)
+    : null;
 
   const [cisRows, events] = await Promise.all([
     db
@@ -176,15 +194,61 @@ export default async function AgentCisDetailPage({
     }
   }
 
+  const rejectedDocsForSummary = cis.status === "returned"
+    ? (() => {
+        const statuses = (cis.docReviewStatuses as DocReviewStatuses | null) ?? {};
+        const globalCutoff = returnedEvent?.createdAt ? new Date(returnedEvent.createdAt).getTime() : null;
+
+        return (Object.entries(statuses) as [DocType, { status: string; reason?: string | null; rejectedAt?: string | null }][])
+          .filter(([, value]) => value?.status === "rejected")
+          .filter(([key, value]) => {
+            // Use per-doc rejectedAt as cutoff (same logic as agent-doc-section).
+            // This prevents a doc rejected in a previous round — and already replaced —
+            // from re-appearing in the summary when a different doc gets rejected later.
+            const cutoff = value?.rejectedAt
+              ? Date.parse(value.rejectedAt)
+              : globalCutoff;
+            if (cutoff === null || Number.isNaN(cutoff)) return true;
+            const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
+            return !files.some((file) => {
+              if (!file.uploadedAt) return false;
+              const uploadedAt = Date.parse(file.uploadedAt);
+              return !Number.isNaN(uploadedAt) && uploadedAt > cutoff;
+            });
+          })
+          .map(([key, value]) => ({ key, reason: value?.reason }));
+      })()
+    : [];
+
+  const canResubmitReturnedForm = cis.status === "returned"
+    ? (() => {
+        const statuses = (cis.docReviewStatuses as DocReviewStatuses | null) ?? {};
+        const rejectedKeys = (Object.entries(statuses) as [DocType, { status: string; reason?: string | null }][])
+          .filter(([, value]) => value?.status === "rejected")
+          .map(([key]) => key);
+
+        if (rejectedKeys.length === 0) return true;
+
+        const cutoff = returnedEvent?.createdAt ? new Date(returnedEvent.createdAt).getTime() : null;
+        if (cutoff === null || Number.isNaN(cutoff)) return false;
+
+        return rejectedKeys.some((key) => {
+          const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
+          return files.some((file) => {
+            if (!file.uploadedAt) return false;
+            const uploadedAt = Date.parse(file.uploadedAt);
+            return !Number.isNaN(uploadedAt) && uploadedAt > cutoff;
+          });
+        });
+      })()
+    : false;
+
   return (
     <div className="space-y-5">
-      <Link
-        href="/agent"
-        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to my submissions
-      </Link>
+      <Breadcrumbs
+        items={[{ label: "My Submissions", href: "/agent" }, { label: cis.tradeName?.trim() || "Form Details" }]}
+        className="print:hidden"
+      />
 
       {/* Status banners */}
       {(cis.status === "returned" || cis.status === "denied") && (
@@ -236,20 +300,19 @@ export default async function AgentCisDetailPage({
         </div>
       )}
 
+      {/* Rejected documents summary — shown when form is returned and docs have been rejected */}
+      {cis.status === "returned" && <RejectedDocsSummary rejectedDocs={rejectedDocsForSummary} />}
+
       {/* Agent fill-out prompt — shown when customer has submitted but agent hasn't filled out */}
       {cis.status === "submitted" && (
         <AgentFillOutForm
           cisId={cis.id}
           initialCustomerType={cis.customerType ?? ""}
           initialOtherRequirements={(cis.docAgentOtherRequirements as any) ?? []}
+          tradeName={cis.tradeName}
+          managerName={managerName}
         />
       )}
-
-      {/* Agent resubmit prompt — shown when form is returned by finance/legal */}
-      {cis.status === "returned" && (
-        <AgentResubmitForm cisId={cis.id} returnedBy={returnedBy} />
-      )}
-
 
       <CusApprovedBanner
         cisId={cis.id}
@@ -361,7 +424,7 @@ export default async function AgentCisDetailPage({
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
             docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
             metricPoints={(cis.financeMetricPoints as any) ?? undefined}
-            agentUpload={canAgentUploadDocs ? { cisId: cis.id } : undefined}
+            agentUpload={canAgentUploadDocs ? { cisId: cis.id, rejectionTimestamp: returnedEvent?.createdAt ?? null } : undefined}
           />
         </div>
 
@@ -382,6 +445,15 @@ export default async function AgentCisDetailPage({
           </Card>
         </div>
       </div>
+
+      {/* Agent resubmit — at the bottom after the form content */}
+      {cis.status === "returned" && (
+        <AgentResubmitForm
+          cisId={cis.id}
+          returnedBy={returnedBy}
+          canResubmit={canResubmitReturnedForm}
+        />
+      )}
     </div>
   );
 }

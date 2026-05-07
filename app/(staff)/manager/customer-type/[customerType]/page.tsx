@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -8,9 +8,9 @@ import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagin
 import { CisCardGrid } from "@/components/cis-card-grid";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { CUSTOMER_TYPE_DESCRIPTIONS, CUSTOMER_TYPE_LABELS, isDashboardCustomerType } from "@/lib/customer-types";
-import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 const SUBMISSION_COLS = {
   id: cisSubmissions.id,
@@ -43,10 +43,15 @@ export default async function ManagerCustomerTypePage({
   const pageSize = 12;
   const offset = (currentPage - 1) * pageSize;
 
+  const isTopManager = (session.user as any).isTopManager === true;
   const myAgents = await db
     .select({ id: users.id })
     .from(users)
-    .where(eq(users.managerId, session.user.id));
+    .where(
+      isTopManager
+        ? and(eq(users.isActive, true), sql`${users.role} IN ('sales_agent', 'rsr')`)
+        : eq(users.managerId, session.user.id)
+    );
   const agentIds = myAgents.map((a) => a.id);
 
   if (agentIds.length === 0) {
@@ -96,10 +101,13 @@ export default async function ManagerCustomerTypePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/manager" className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
-          <ArrowLeft className="h-4 w-4" />
-          Back to customer types
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Team Submissions", href: "/manager" },
+            { label: `${CUSTOMER_TYPE_LABELS[customerType]} Submissions` },
+          ]}
+          className="mb-2"
+        />
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType]} Submissions</h1>
         <p className="mt-1 text-sm text-zinc-500">{CUSTOMER_TYPE_DESCRIPTIONS[customerType]}</p>
       </div>

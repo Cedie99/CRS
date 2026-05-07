@@ -96,6 +96,8 @@ export const users = pgTable("users", {
   agentType: agentTypeEnum("agent_type"),
   managerId: uuid("manager_id"), // FK to self — set after table creation via relation
   isActive: boolean("is_active").notNull().default(false), // Admin activates
+  mustChangePassword: boolean("must_change_password").notNull().default(false), // Set when admin creates account
+  isTopManager: boolean("is_top_manager").notNull().default(false), // Top-level manager sees all agents
   avatarUrl: varchar("avatar_url", { length: 500 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [

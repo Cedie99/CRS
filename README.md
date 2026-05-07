@@ -1,70 +1,95 @@
-# CRS — Customer Registration System
+# CIS — Customer Information Sheet System
 
-Internal customer onboarding platform for the **Oracle Petroleum Toll Blend Division**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit customer registration forms on behalf of prospective customers, and internal stakeholders review, endorse, and approve or deny those submissions through a traceable approval chain.
+Internal customer onboarding platform for **Oracle Petroleum**. Replaces the manual Jotform-based workflow with a structured, role-based web system where sales agents submit customer information sheets on behalf of prospective customers, and internal stakeholders review and approve those submissions through a traceable approval chain.
 
 ---
 
 ## Tech Stack
 
-| Layer         | Technology                                    |
-| ------------- | --------------------------------------------- |
-| Framework     | Next.js 16.2.1 (App Router)                   |
-| Language      | TypeScript                                    |
-| Styling       | Tailwind CSS v4 + shadcn/ui (@base-ui/react)  |
-| Auth          | NextAuth v5 (JWT sessions)                    |
-| ORM           | Drizzle ORM                                   |
-| Database      | PostgreSQL (Neon, via `postgres` npm package) |
-| File Storage  | Vercel Blob                                   |
-| Validation    | Zod v4                                        |
-| Notifications | Sonner (toast)                                |
-| Font          | DM Sans                                       |
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16.2.1 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 + shadcn/ui (@base-ui/react) |
+| Auth | NextAuth v5 (JWT sessions) |
+| ORM | Drizzle ORM |
+| Database | PostgreSQL (Neon, via `postgres` npm package) |
+| File Storage | Vercel Blob |
+| Validation | Zod v4 |
+| Email | Nodemailer + Gmail |
+| Animations | Framer Motion |
 
 ---
 
 ## Roles
 
-| Role                            | Dashboard   | Description                                            |
-| ------------------------------- | ----------- | ------------------------------------------------------ |
-| `sales_agent` / `rsr`           | `/agent`    | Initiates CRS forms and shares the customer link       |
-| `sales_manager` / `rsr_manager` | `/manager`  | Endorses or returns submissions from their agents      |
-| `finance_reviewer`              | `/finance`  | Reviews customer credit and business standing          |
-| `legal_approver`                | `/legal`    | Handles FS Petroleum and special customer types        |
-| `senior_approver`               | `/approver` | Final approval authority                               |
-| `sales_support`                 | `/support`  | Notified on denial; assists agents                     |
-| `admin`                         | `/admin`    | Full visibility; manages users, roles, and assignments |
+| Role | Dashboard | Description |
+|------|-----------|-------------|
+| `sales_agent` / `rsr` | `/agent` | Submits CIS forms; fills agent section after customer completes the form |
+| `sales_manager` / `rsr_manager` | `/manager` | Views team submissions — **read-only, no workflow actions** |
+| `finance_reviewer` | `/finance` | Reviews documents, sets credit evaluation, forwards to approver or returns to agent |
+| `legal_approver` | `/legal` | Reviews dealer accounts for legal compliance; forwards to finance or returns to agent |
+| `senior_approver` | `/approver` | Final decision — approve or deny |
+| `sales_support` | `/support` | Fills account type, price lists, VAT details after approval |
+| `project_development_specialist` | `/specialist` | Marks customer as encoded in ERP |
+| `admin` | `/admin` | Full visibility; user management; can ERP-encode |
 
 ---
 
 ## Workflow
 
+### Standard (non-dealer)
+
 ```
-Agent initiates CRS → customer receives shareable link
-         ↓
-Customer fills out and submits the form
-         ↓
-    customer_type?
-   /              \
-Standard        FS Petroleum / Special
-   ↓                    ↓
-Manager             Legal Approver
-(endorse/return)   (forward/deny)
-   ↓                    ↓
-        Finance Reviewer
-        (forward/deny)
-              ↓
-        Senior Approver
-        (approve/deny)
-        ↙           ↘
-  ERP Encode      Sales Support
-  (notify all)    (notifies agent)
+Customer fills form
+       ↓
+Agent fills agent section
+       ↓
+Finance Reviewer (forward / return)
+       ↓
+Senior Approver (approve / deny)
+       ↓
+Sales Support fills out account details
+       ↓
+Specialist encodes in ERP
 ```
+
+### Dealer
+
+```
+Customer fills form
+       ↓
+Agent fills agent section
+       ↓
+Legal Approver (forward / return)
+       ↓
+Finance Reviewer (forward / return)
+       ↓
+Senior Approver (approve / deny)
+       ↓
+Sales Support fills out account details
+       ↓
+Specialist encodes in ERP
+```
+
+### Return / Resubmit
+
+Finance or Legal can return a form to the agent. The agent uploads replacement documents for rejected items and resubmits. The form routes back to the same reviewer.
+
+### Denial
+
+Only the Senior Approver can deny. Denial is terminal — no resubmission allowed.
 
 ### Status Lifecycle
 
 ```
-draft → submitted → pending_endorsement → pending_finance_review → pending_approval → approved → erp_encoded
-                 → pending_legal_review ↗                                          ↘ denied
-                                                                                   ↘ returned
+draft
+  → submitted
+  → pending_legal_review (dealer)  ─┐
+  → pending_finance_review          ├→ pending_approval → approved → pending_erp_encoding → erp_encoded
+                                   ─┘
+                                        ↘ denied (terminal)
+  → returned (agent resubmits)
 ```
 
 ---
@@ -73,61 +98,53 @@ draft → submitted → pending_endorsement → pending_finance_review → pendi
 
 ```
 app/
-├── (auth)/              # Login and register pages
+├── (auth)/              # Login, register, change-password pages
 ├── (customer)/          # Public customer-facing form (no auth required)
 ├── (staff)/             # Role-based dashboards
 │   ├── agent/
-│   ├── manager/
+│   ├── manager/         # Read-only view of team submissions
 │   ├── finance/
 │   ├── legal/
 │   ├── approver/
 │   ├── support/
-│   ├── admin/
-│   └── profile/         # Avatar upload and account info page
+│   ├── specialist/
+│   └── admin/
 └── api/
-    ├── auth/            # NextAuth + register
-    ├── cis/             # CRS CRUD, workflow actions, export, per-submission docs
-    ├── form/            # Public token-based form submission + document upload
-    ├── notifications/   # In-app notification system
-    └── profile/         # Avatar upload/removal, profile edit, password change
+    ├── auth/            # NextAuth + register + change-password
+    ├── cis/[id]/        # Workflow actions, doc review, finance save, archive
+    └── admin/           # User management, CIS delete
 
 components/
-├── actions/             # Per-role action buttons (endorse, approve, deny, etc.)
-├── admin/               # User management table
-├── ui/                  # shadcn/base-ui components
-├── navbar.tsx           # Sticky nav with notification bell and avatar
+├── actions/             # Per-role action forms (fill-out, forward, return, approve, deny, encode)
+├── admin/               # User management table, create user form
+├── ui/                  # shadcn/base-ui primitives
 ├── app-sidebar.tsx      # Collapsible sidebar with role info and navigation
 ├── staff-shell.tsx      # Shared layout shell for all staff dashboards
-├── cis-card.tsx         # Submission list card
-├── cis-card-skeleton.tsx # Animated skeleton placeholder for loading states
-├── cis-info-card.tsx    # Full CRS detail view
+├── cis-card.tsx         # Submission list card with status badge
+├── cis-info-card.tsx    # Full CIS detail view
 ├── audit-timeline.tsx   # Workflow event history with actor avatars
-├── dashboard-filters.tsx # URL-param search + status filter bar
-├── dashboard-pagination.tsx # Pagination controls for list views
-├── status-badge.tsx     # Status pill with animated dot indicator
-├── workflow-stepper.tsx  # Horizontal approval-chain progress indicator
-├── workflow-handoff.tsx  # "Currently with / Will forward to" role pills
-├── signature-pad.tsx    # Canvas-based signature capture component
-├── doc-upload-slot.tsx  # Per-document upload slot with drag-and-drop
-├── agent-doc-section.tsx # Document section for agent-side submissions
+├── workflow-stepper.tsx # Approval-chain progress indicator
+├── workflow-handoff.tsx # "Currently with / Will forward to" role pills
+├── doc-upload-slot.tsx  # Per-document upload slot
+├── agent-doc-section.tsx # Document section with review/rejection interface
+├── points-breakdown-panel.tsx # Finance credit scoring breakdown
+├── rejected-docs-summary.tsx  # Shows rejected documents on returned forms
 └── customer-form.tsx    # Multi-section customer-facing form
 
 lib/
-├── auth.ts              # NextAuth config
-├── db/                  # Drizzle client + schema
-├── validations/         # Zod schemas (cis, profile)
+├── auth.ts              # NextAuth config, role routing, middleware
+├── db/schema.ts         # Drizzle schema — all tables and enums
 ├── workflow.ts          # transitionCis() — status transitions + notifications
-├── doc-types.ts         # Document type definitions, column map, expiration rules
-├── document-expiration.ts # Expiration date helpers
-├── scoring.ts           # Finance credit scoring logic
-├── signature-integrity.ts # Signature hash/verification utilities
-├── button-variants.ts   # buttonVariants helper for server components
-└── utils.ts             # cn(), formatDistanceToNow()
+├── cached-queries.ts    # Dashboard stat queries (10–30s cache)
+├── doc-types.ts         # Document slot definitions and scoring doc list
+├── email.ts             # HTML email builder and Gmail sender
+└── agent-codes.ts       # Agent code utilities
 
+drizzle/                 # SQL migration files
 scripts/
-├── seed-admin.ts        # Seeds the first admin account
-├── migrate-cis-form-fields.ts
-└── migrate-customer-type-fields.ts
+├── seed-demo.ts         # Seeds demo users and submissions
+├── migrate-account-management.ts
+└── reset-data.ts
 ```
 
 ---
@@ -136,127 +153,109 @@ scripts/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL database (Neon recommended)
 - Vercel Blob store (for file uploads)
+- Gmail account with an App Password (for email notifications)
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Cedie99/CRS.git
-cd CRS
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 Create a `.env.local` file in the root:
 
 ```env
+# Database (Neon PostgreSQL)
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# NextAuth
 AUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=http://localhost:3001
+AUTH_URL=http://localhost:3000
+AUTH_TRUST_HOST=true
+
+# Signature verification
 SIGNATURE_HMAC_SECRET=your-hmac-secret
+
+# File storage (Vercel Blob)
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
-RESEND_API_KEY=re_...
-EMAIL_FROM=CRS Notifications <notifications@yourdomain.com>
+
+# Email (Gmail + App Password)
+GMAIL_USER=your-gmail@gmail.com
+GMAIL_APP_PASSWORD=your-app-password
 ```
 
-- `DATABASE_URL` — Neon (or any PostgreSQL) connection string
-- `AUTH_SECRET` — random string for NextAuth session signing
-- `NEXTAUTH_URL` — base URL of the app (use port 3001 locally)
-- `SIGNATURE_HMAC_SECRET` — secret for signature integrity hashing
-- `BLOB_READ_WRITE_TOKEN` — from Vercel dashboard → Storage → your Blob store → `.env.local` tab
-- `RESEND_API_KEY` — Resend API key for transactional workflow email
-- `EMAIL_FROM` — verified sender identity in Resend (single email or domain sender)
-
-### 4. Push the database schema
+### 3. Run database migrations
 
 ```bash
-npx drizzle-kit push
+npx drizzle-kit migrate
 ```
 
-### 5. Seed the admin account
+### 4. Seed demo data
 
 ```bash
-npx tsx scripts/seed-admin.ts
+npm run seed:demo           # seed demo users and submissions
+npm run seed:demo:reset     # reset and re-seed
 ```
 
-### 6. Run the development server
+### 5. Run the development server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001).
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
 ## Key Design Decisions
 
-- **Self-registration with admin activation** — new users register but start inactive; an admin must assign their role, agent code, and manager before they can log in
-- **Agent code auto-stamping** — when an agent creates a CRS, their agent code is pulled from their profile and permanently stamped on the record
-- **Customer type drives routing** — `standard` goes to the manager first; `fs_petroleum` and `special` go to the legal approver first
-- **Returned forms are archived** — agents cannot edit a returned form; they must create a new submission
-- **Audit trail is non-negotiable** — every action (submit, endorse, return, forward, approve, deny, encode) is logged with actor and timestamp
-- **Vercel Blob for file storage** — all document and avatar uploads go to Vercel Blob; the DB stores full `https://...blob.vercel-storage.com` URLs, not local paths
-- **Avatar in JWT** — user avatars are stored in the JWT token after login so no extra DB query is made on every page load; the token is refreshed client-side after upload via NextAuth's `update()` trigger
-- **URL-param filtering** — dashboard search and status filters use URL search params (server-side, RSC-compatible, shareable links)
-- **Skeleton loading** — every dashboard has a `loading.tsx` that renders animated skeleton placeholders while data loads
-- **Confirmation dialogs** — approve/deny/forward actions open a modal dialog before submitting to prevent accidental submissions
-- **In-app profile editing** — users can update their name, email, and password directly from the profile page without admin intervention
-- **SQL-level role filtering** — role-based status filtering is pushed to the DB via `WHERE status IN (...)` instead of post-query JS filtering
+- **Customer type drives routing** — `dealer` routes through Legal first; all others go directly to Finance
+- **Manager role is read-only** — managers can view their team's submissions but have no workflow actions
+- **Agent code auto-stamping** — the agent's code is pulled from their profile and permanently stamped on each CIS record at creation
+- **Finance requires CFO-signed upload** — `docSirRestySigned` must be uploaded before finance can forward to the Senior Approver
+- **Returned forms allow resubmission** — agents must upload replacement docs for any rejected documents before resubmitting; the form routes back to the same reviewer
+- **Denial is terminal** — only the Senior Approver can deny; no resubmission path exists after denial
+- **Audit trail on every action** — every status transition is logged in `workflowEvents` with actor, action, note, and timestamp
+- **Both email and in-app notifications** — every workflow event triggers notifications to relevant parties via Gmail (Nodemailer) and the in-app notification system
+- **Vercel Blob for file storage** — all document uploads go to Vercel Blob; the DB stores the full blob URLs as JSONB arrays
+- **`isTopManager` flag** — managers with this flag can see all agents' submissions, not just their assigned agents
+- **`mustChangePassword` gate** — admin-created accounts require a password change on first login before accessing any page
 
 ---
 
-## Database Schema
+## Database Tables
 
-| Table             | Description                                                                  |
-| ----------------- | ---------------------------------------------------------------------------- |
-| `users`           | All platform users with role, agent code, manager assignment, and avatar URL |
-| `cis_submissions` | CRS form data, status, document URLs (JSONB), and routing metadata           |
-| `workflow_events` | Full audit log of every action on every form                                 |
-| `notifications`   | In-app notification records per recipient                                    |
-
-### Indexes
-
-| Index                                    | Columns                             |
-| ---------------------------------------- | ----------------------------------- |
-| `cis_agent_id_created_at_idx`            | `agent_id, created_at DESC`         |
-| `cis_agent_id_status_created_at_idx`     | `agent_id, status, created_at DESC` |
-| `cis_status_updated_at_idx`              | `status, updated_at DESC`           |
-| `users_manager_id_idx`                   | `manager_id`                        |
-| `notifications_recipient_id_sent_at_idx` | `recipient_id, sent_at DESC`        |
-| `workflow_events_cis_id_created_at_idx`  | `cis_id, created_at`                |
+| Table | Description |
+|-------|-------------|
+| `users` | All platform users — role, agent code, manager assignment, active status |
+| `cisSubmissions` | CIS form data, status, all document URLs (JSONB), finance evaluation, sales support fields |
+| `workflowEvents` | Full audit log of every action on every form |
+| `notifications` | In-app and email notification records per recipient |
 
 ---
 
 ## Deployment
 
-Deployed on Vercel. Required environment variables in Vercel dashboard (Settings → Environment Variables):
+Deployed on Vercel. Required environment variables (Settings → Environment Variables):
 
 - `DATABASE_URL`
 - `AUTH_SECRET`
-- `NEXTAUTH_URL` (set to your production URL)
+- `AUTH_URL` (set to your production URL)
+- `AUTH_TRUST_HOST=true`
 - `SIGNATURE_HMAC_SECRET`
 - `BLOB_READ_WRITE_TOKEN`
-- `RESEND_API_KEY`
-- `EMAIL_FROM`
+- `GMAIL_USER`
+- `GMAIL_APP_PASSWORD`
 
 ---
 
-## Out of Scope (v1)
+## Further Documentation
 
-- Customer portal (customers have no accounts)
-- ERP system integration (encoding is manual, notified via app)
-- Email notifications
-- Mobile app
-- Advanced reporting and analytics
+See [`AGENTS.md`](./AGENTS.md) for the full technical reference including complete workflow steps, all API routes, database schema details, action components per role, and auth/notification details.
 
 ---
 

@@ -69,6 +69,8 @@ export default async function AgentDashboard({
   let archivedCount = 0;
   let agentCompletionRows: Submission[] = [];
   let agentCompletionTotal = 0;
+  let returnedRows: Submission[] = [];
+  let returnedTotal = 0;
 
   try {
     const conditions = [
@@ -91,7 +93,7 @@ export default async function AgentDashboard({
     }
 
     // Run all queries in parallel — cached stats (10s) + fresh list data
-    const [filteredCountRow, submissionRows, cachedStats, archivedRows, acRows, acCountRow] = await Promise.all([
+    const [filteredCountRow, submissionRows, cachedStats, archivedRows, acRows, acCountRow, returnedRowsResult, returnedCountRow] = await Promise.all([
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -122,6 +124,20 @@ export default async function AgentDashboard({
             .select({ total: count() })
             .from(cisSubmissions)
             .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "submitted"))),
+      showArchived
+        ? Promise.resolve([])
+        : db
+            .select(cardSelect)
+            .from(cisSubmissions)
+            .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "returned"), ne(cisSubmissions.isArchived, true)))
+            .orderBy(desc(cisSubmissions.updatedAt))
+            .limit(6),
+      showArchived
+        ? Promise.resolve([{ total: 0 }])
+        : db
+            .select({ total: count() })
+            .from(cisSubmissions)
+            .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "returned"), ne(cisSubmissions.isArchived, true))),
     ]);
 
     filteredCount = Number(filteredCountRow[0]?.total ?? 0);
@@ -130,6 +146,8 @@ export default async function AgentDashboard({
     archivedCount = Number(archivedRows[0]?.total ?? 0);
     agentCompletionRows = acRows as Submission[];
     agentCompletionTotal = Number((acCountRow as { total: number | string }[])[0]?.total ?? 0);
+    returnedRows = returnedRowsResult as Submission[];
+    returnedTotal = Number((returnedCountRow as { total: number | string }[])[0]?.total ?? 0);
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
       throw error;
@@ -269,6 +287,19 @@ export default async function AgentDashboard({
             ))}
           </div>
         </div>
+      )}
+
+      {!effectiveShowArchived && (
+        <ActionRequiredSection
+          submissions={returnedRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+          totalCount={returnedTotal}
+          hrefPrefix="agent"
+          label="Returned — Needs Your Attention"
+          sublabel="These forms were sent back to you. Replace the rejected documents and resubmit."
+          accentClass="border-rose-300 bg-rose-50/70"
+          badgeClass="bg-rose-100 text-rose-800"
+          icon="return"
+        />
       )}
 
       {!effectiveShowArchived && (

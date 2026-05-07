@@ -197,6 +197,8 @@ export type PointsBreakdownPanelProps = DocFields & {
    * "summary" — agent: total score bar + recommended terms only, no per-document or per-metric breakdown
    */
   mode?: "full" | "summary";
+  /** When true, always show the Approved points counter even before any reviews have been done. */
+  showApprovedAlways?: boolean;
 };
 
 export function PointsBreakdownPanel({
@@ -207,6 +209,7 @@ export function PointsBreakdownPanel({
   agentType,
   customerType,
   mode = "full",
+  showApprovedAlways = false,
   ...docs
 }: PointsBreakdownPanelProps) {
   const d = docs as DocFields;
@@ -240,13 +243,20 @@ export function PointsBreakdownPanel({
     }
   }
 
-  // Fall back to the stored value only if no review statuses exist at all
+  // Fall back to the stored value only if no review statuses exist at all.
+  // When showApprovedAlways is true (active finance/legal reviewer), always show approved pts
+  // starting from 0 so it updates in real time as documents are marked approved.
   const totalApproved = hasAnyReview
     ? approvedDocPts + tieredEarned
-    : (financeApprovedPoints ?? null);
+    : showApprovedAlways
+      ? approvedDocPts + tieredEarned
+      : (financeApprovedPoints ?? null);
 
-  // Use approved points for terms recommendation if available, else possible
-  const ptsForTerms = totalApproved ?? totalPossible;
+  // In summary/agent mode, hide estimated points (show 0) until finance has set
+  // approved points — once approved points exist, show them to everyone.
+  const ptsForTerms = mode === "summary" && totalApproved == null
+    ? 0
+    : (totalApproved ?? totalPossible);
 
   const { isRsr, primaryTiers, cleanApply, scopeNote } = resolveTermsContext(agentType, customerType);
   const activeTier = matchTier(ptsForTerms, primaryTiers);
@@ -380,7 +390,7 @@ export function PointsBreakdownPanel({
       </>}
 
       {/* ── Score Summary Card ── */}
-      <div className="rounded-xl border-2 border-zinc-200 bg-linear-to-br from-zinc-50 to-white p-4 shadow-sm">
+      <div className="rounded-xl border-2 border-zinc-200 bg-linear-to-br from-zinc-50 to-white p-4 shadow-sm mt-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-xs font-bold text-zinc-900">Credit Score Summary</h3>
           <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-600">
@@ -428,7 +438,7 @@ export function PointsBreakdownPanel({
         <div className="mt-3 rounded-lg border-2 border-zinc-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold text-zinc-500">Total Score</p>
+              <p className="text-[10px] font-semibold text-zinc-500">Possible Points</p>
               <div className="mt-0.5 flex items-baseline gap-1.5">
                 <span className="text-2xl font-black tabular-nums text-zinc-900">{totalPossible}</span>
                 <span className="text-xs text-zinc-400">/ {MAX_TOTAL} pts</span>
@@ -444,11 +454,6 @@ export function PointsBreakdownPanel({
               </div>
             )}
           </div>
-          {totalApproved != null && totalApproved < totalPossible && (
-            <p className="mt-1.5 text-[10px] text-amber-600">
-              {totalPossible - totalApproved} point{totalPossible - totalApproved === 1 ? "" : "s"} deducted from possible score
-            </p>
-          )}
         </div>
       </div>
 
@@ -489,7 +494,7 @@ export function PointsBreakdownPanel({
                 "text-[10px] font-bold uppercase tracking-wider",
                 cleanApply ? "text-emerald-600" : "text-amber-600",
               )}>
-                {cleanApply ? "Recommended" : "Indicative"}
+                {cleanApply ? "Recommended" : "Estimated"}
               </p>
               <p className={cn(
                 "mt-0.5 text-lg font-black",

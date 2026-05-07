@@ -4,10 +4,11 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
-import { ArrowLeft, LinkIcon, FileText, Plus } from "lucide-react";
+import { LinkIcon, Plus } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
 import { formatDistanceToNow } from "@/lib/utils";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Drafts — CRS" };
 
@@ -50,13 +51,7 @@ export default async function AgentDraftsPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/agent"
-          className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to my submissions
-        </Link>
+        <Breadcrumbs items={[{ label: "My Submissions", href: "/agent" }, { label: "Drafts" }]} className="mb-2" />
         <h1 className="mt-2 text-2xl font-bold text-zinc-900">Awaiting Customer Submission</h1>
         <p className="mt-1 text-sm text-zinc-500">
           These links have been sent to customers but they haven&apos;t submitted their form yet.

@@ -53,6 +53,7 @@ export async function PATCH(
     [docType as DocType]: {
       status: status as DocReviewStatus,
       reason: typeof reason === "string" && reason.trim() ? reason.trim() : null,
+      rejectedAt: status === "rejected" ? new Date().toISOString() : null,
     },
   };
 
@@ -61,9 +62,10 @@ export async function PATCH(
     .set({ docReviewStatuses: merged })
     .where(eq(cisSubmissions.id, id));
 
-  // Revalidate the finance/legal detail page to update the sidebar scoring in real-time
   revalidatePath(`/finance/${id}`);
   revalidatePath(`/legal/${id}`);
+  revalidatePath(`/agent/${id}`);
+  revalidatePath(`/admin/${id}`);
 
   return NextResponse.json({ docReviewStatuses: merged });
 }

@@ -17,6 +17,8 @@ declare module "next-auth" {
         | "admin";
       agentCode: string | null;
       agentType: "sales_agent" | "rsr" | null;
+      mustChangePassword: boolean;
+      isTopManager: boolean;
     } & DefaultSession["user"];
   }
 }

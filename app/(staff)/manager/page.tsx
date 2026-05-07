@@ -50,14 +50,20 @@ export default async function ManagerDashboard({
   const pageSize = 12;
   const queueOffset = (queueCurrentPage - 1) * pageSize;
 
+  const isTopManager = (session.user as any).isTopManager === true;
+
   // Cached agent list (30s) + agent filter name in parallel
   const [myAgents, agentFilterRows] = await Promise.all([
-    getManagerAgents(session.user.id),
+    getManagerAgents(session.user.id, isTopManager),
     agentId
       ? db
           .select({ fullName: users.fullName })
           .from(users)
-          .where(and(eq(users.id, agentId), eq(users.managerId, session.user.id)))
+          .where(
+            isTopManager
+              ? eq(users.id, agentId)
+              : and(eq(users.id, agentId), eq(users.managerId, session.user.id))
+          )
           .limit(1)
       : Promise.resolve([]),
   ]);
@@ -133,7 +139,7 @@ export default async function ManagerDashboard({
       .from(cisSubmissions)
       .innerJoin(users, eq(cisSubmissions.agentId, users.id))
       .where(and(...pendingEndorsementConditions))
-      .orderBy(desc(cisSubmissions.createdAt))
+      .orderBy(desc(cisSubmissions.updatedAt))
       .limit(6),
     db
       .select({ total: count() })

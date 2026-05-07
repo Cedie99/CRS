@@ -25,7 +25,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { sileo as toast } from "sileo";
-import type { FileEntry } from "@/lib/doc-types";
+import type { FileEntry, DocReviewStatuses } from "@/lib/doc-types";
 
 interface FinanceActionsProps {
   cisId: string;
@@ -38,6 +38,16 @@ interface FinanceActionsProps {
   dashboardPath?: string;
   /** Whether printing is allowed. Blocked when there are unreviewed documents. */
   printEnabled?: boolean;
+  /** Current document review statuses. If any doc is rejected, forward is disabled. */
+  docReviewStatuses?: DocReviewStatuses;
+  /**
+   * When provided, overrides the internal hasRejectedDocs computation.
+   * Pass `true` only when there are rejections that have NOT been resolved
+   * by a new replacement file upload.
+   */
+  hasUnresolvedRejections?: boolean;
+  /** Pass `true` when any uploaded document has not yet been reviewed. Blocks forwarding. */
+  hasUnreviewedDocs?: boolean;
 }
 
 interface FieldErrors {
@@ -51,6 +61,9 @@ export function FinanceActions({
   denyEndpoint,
   dashboardPath = "/finance",
   printEnabled = true,
+  docReviewStatuses = {},
+  hasUnresolvedRejections,
+  hasUnreviewedDocs = false,
 }: FinanceActionsProps) {
   const router = useRouter();
 
@@ -65,7 +78,9 @@ export function FinanceActions({
   const [isLoading, setIsLoading] = useState(false);
 
   const uploadComplete = sirRestyFiles.length > 0;
-  const canForward = uploadComplete;
+  const hasRejectedDocs = hasUnresolvedRejections ?? Object.values(docReviewStatuses).some((s) => s?.status === "rejected");
+  const canForward = uploadComplete && !hasRejectedDocs && !hasUnreviewedDocs;
+  const canReturn = hasRejectedDocs;
 
   function validateFields(): boolean {
     const errors: FieldErrors = {};
@@ -164,11 +179,11 @@ export function FinanceActions({
 
   return (
     <>
-      <Card className="print:hidden overflow-hidden border border-indigo-200/70 bg-linear-to-b from-indigo-50/60 via-white to-white shadow-sm">
-        <CardHeader className="border-b border-indigo-100/80 pb-4">
+      <Card className="print:hidden overflow-hidden border border-blue-200/70 bg-linear-to-b from-blue-50/60 via-white to-white shadow-sm">
+        <CardHeader className="border-b border-blue-100/80 pb-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-indigo-900">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-blue-900">
                 Finance and Legal Information
               </CardTitle>
               <p className="mt-1 text-xs text-zinc-600">
@@ -176,13 +191,13 @@ export function FinanceActions({
                 details and sign, then upload the signed copy before forwarding.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-700">
               {canForward ? (
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
               ) : (
-                <AlertCircle className="h-3.5 w-3.5 text-indigo-600" />
+                <AlertCircle className={`h-3.5 w-3.5 ${hasRejectedDocs ? "text-red-600" : "text-blue-600"}`} />
               )}
-              {uploadComplete ? "Ready to forward" : "Upload required"}
+              {hasRejectedDocs ? "Rejected docs pending" : hasUnreviewedDocs ? "Documents not reviewed" : uploadComplete ? "Ready to forward" : "Upload required"}
             </span>
           </div>
         </CardHeader>
@@ -203,7 +218,7 @@ export function FinanceActions({
               </span>
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="mt-3 grid gap-2 grid-cols-3">
               <div className="rounded-lg border border-blue-200/70 bg-white/80 p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
                   Step 1
@@ -285,8 +300,12 @@ export function FinanceActions({
           </section>
 
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <p className="text-xs text-zinc-500">
-              Upload the signed copy before forwarding.
+            <p className={`text-xs ${hasRejectedDocs ? "text-red-600 font-medium" : hasUnreviewedDocs ? "text-amber-700 font-medium" : "text-zinc-500"}`}>
+              {hasRejectedDocs
+                ? "Some documents are rejected. Return this form to the agent to upload replacements."
+                : hasUnreviewedDocs
+                  ? "All uploaded documents must be reviewed before forwarding. Reject any problematic documents to enable Return."
+                  : "Upload the signed copy before forwarding."}
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button
@@ -300,8 +319,9 @@ export function FinanceActions({
               <Button
                 variant="outline"
                 onClick={() => openDialog("return")}
-                disabled={isLoading}
-                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                disabled={isLoading || !canReturn}
+                title={!canReturn ? "Reject at least one document before returning the form" : undefined}
+                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 Return

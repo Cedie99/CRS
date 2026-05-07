@@ -85,9 +85,21 @@ export const getUserWorkflowHistory = unstable_cache(
 
 /**
  * Cached agent list for a manager — revalidates every 30 seconds.
+ * If isTopManager is true, returns all active agents across the entire team.
  */
 export const getManagerAgents = unstable_cache(
-  async (managerId: string) => {
+  async (managerId: string, isTopManager = false) => {
+    if (isTopManager) {
+      return db
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            eq(users.isActive, true),
+            sql`${users.role} IN ('sales_agent', 'rsr')`
+          )
+        );
+    }
     return db
       .select({ id: users.id })
       .from(users)

@@ -10,9 +10,10 @@ import { sileo as toast } from "sileo";
 interface AgentResubmitFormProps {
   cisId: string;
   returnedBy: string | null;
+  canResubmit: boolean;
 }
 
-export function AgentResubmitForm({ cisId, returnedBy }: AgentResubmitFormProps) {
+export function AgentResubmitForm({ cisId, returnedBy, canResubmit }: AgentResubmitFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,13 +69,15 @@ export function AgentResubmitForm({ cisId, returnedBy }: AgentResubmitFormProps)
       <CardContent className="pt-5">
         <div className="flex flex-col gap-2 border-t border-rose-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-rose-600">
-            {returnedBy
-              ? `This will route the form back to ${returnedBy} for review.`
-              : "This will route the form back for review."}
+            {!canResubmit
+              ? "Upload at least one replacement file for a rejected document to enable resubmission."
+              : returnedBy
+                ? `This will route the form back to ${returnedBy} for review.`
+                : "This will route the form back for review."}
           </p>
           <Button
             onClick={handleResubmit}
-            disabled={isLoading}
+            disabled={isLoading || !canResubmit}
             className="w-full gap-2 sm:w-auto"
           >
             <ArrowRight className="h-4 w-4" />

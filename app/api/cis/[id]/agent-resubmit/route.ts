@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users, workflowEvents } from "@/lib/db/schema";
 import { transitionCis } from "@/lib/workflow";
+import { DOC_TYPES, type DocReviewStatuses, type DocType, type FileEntry } from "@/lib/doc-types";
 
 export async function PATCH(
   req: Request,
@@ -19,12 +20,18 @@ export async function PATCH(
 
   const { id } = await params;
 
+  const docSelect = Object.fromEntries(
+    DOC_TYPES.map((key) => [key, cisSubmissions[key]])
+  ) as Record<DocType, (typeof cisSubmissions)[DocType]>;
+
   const [cis] = await db
     .select({
       id: cisSubmissions.id,
       status: cisSubmissions.status,
       agentId: cisSubmissions.agentId,
       customerType: cisSubmissions.customerType,
+      docReviewStatuses: cisSubmissions.docReviewStatuses,
+      ...docSelect,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -40,6 +47,7 @@ export async function PATCH(
   const [returnedEvent] = await db
     .select({
       actorId: workflowEvents.actorId,
+      createdAt: workflowEvents.createdAt,
     })
     .from(workflowEvents)
     .where(and(eq(workflowEvents.cisId, id), eq(workflowEvents.action, "returned")))
@@ -48,6 +56,37 @@ export async function PATCH(
 
   if (!returnedEvent) {
     return NextResponse.json({ error: "No returned event found" }, { status: 409 });
+  }
+
+  const statuses = (cis.docReviewStatuses as DocReviewStatuses | null) ?? {};
+  const rejectedKeys = (Object.entries(statuses) as [DocType, { status: string; reason?: string | null }][])
+    .filter(([, value]) => value?.status === "rejected")
+    .map(([key]) => key);
+
+  if (rejectedKeys.length > 0) {
+    const cutoff = new Date(returnedEvent.createdAt).getTime();
+    if (Number.isNaN(cutoff)) {
+      return NextResponse.json(
+        { error: "Unable to validate replacement uploads for rejected documents." },
+        { status: 409 }
+      );
+    }
+
+    const hasReplacementUpload = rejectedKeys.some((key) => {
+      const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
+      return files.some((file) => {
+        if (!file.uploadedAt) return false;
+        const uploadedAt = Date.parse(file.uploadedAt);
+        return !Number.isNaN(uploadedAt) && uploadedAt > cutoff;
+      });
+    });
+
+    if (!hasReplacementUpload) {
+      return NextResponse.json(
+        { error: "Upload at least one replacement file for the rejected documents before resubmitting." },
+        { status: 409 }
+      );
+    }
   }
 
   // Get the actor's role to determine where to route

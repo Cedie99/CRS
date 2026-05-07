@@ -131,7 +131,7 @@ export function CisCard({
             <div className="min-w-0">
               <p className="font-mono text-[11px] font-semibold tracking-wide text-zinc-400">#{shortId}</p>
               <p className="mt-0.5 truncate text-xs text-zinc-500">
-                <span className="font-semibold text-zinc-600">Agent:</span> {assignedAgent}
+                <span className="font-semibold text-zinc-600">Agent Code:</span> {assignedAgent}
               </p>
             </div>
             <StatusBadge status={status} className="shrink-0" />

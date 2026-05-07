@@ -153,7 +153,7 @@ export const SCORING_DOC_SLOTS = DOC_SLOTS.filter((s) =>
 );
 
 export type DocReviewStatus = "approved" | "needs_review" | "rejected";
-export type DocReviewStatuses = Partial<Record<DocType, { status: DocReviewStatus; reason?: string | null }>>;
+export type DocReviewStatuses = Partial<Record<DocType, { status: DocReviewStatus; reason?: string | null; rejectedAt?: string | null }>>;
 
 export const DENIAL_REASON_CODES = [
   "Poor photo quality",

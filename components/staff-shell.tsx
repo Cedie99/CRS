@@ -11,6 +11,7 @@ interface StaffShellProps {
   userRole: string;
   agentCode?: string | null;
   avatarUrl?: string | null;
+  isTopManager?: boolean;
   children: React.ReactNode;
 }
 
@@ -19,6 +20,7 @@ export function StaffShell({
   userRole,
   agentCode,
   avatarUrl,
+  isTopManager = false,
   children,
 }: StaffShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -41,6 +43,7 @@ export function StaffShell({
             role={userRole}
             userName={userName}
             avatarUrl={avatarUrl}
+            isTopManager={isTopManager}
             mobileOpen={sidebarOpen}
             onMobileClose={() => setSidebarOpen(false)}
           />

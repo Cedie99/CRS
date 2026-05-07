@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/status-badge";
-import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
@@ -110,9 +109,6 @@ export default async function AdminDashboard({
           <p className="mt-0.5 text-sm text-zinc-500">
             Overview of all customer submissions across the entire system.
           </p>
-        </div>
-        <div className="mt-7 flex w-full items-center gap-2 sm:mt-8 sm:w-auto">
-          <DashboardRefreshButton className="border-blue-200 bg-linear-to-r from-blue-50 to-blue-100/80 font-medium text-blue-700 shadow-sm hover:border-blue-300 hover:text-blue-800" />
         </div>
       </div>
 

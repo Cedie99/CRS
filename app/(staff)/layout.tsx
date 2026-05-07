@@ -31,6 +31,7 @@ export default async function StaffLayout({
       userRole={session.user.role}
       agentCode={session.user.agentCode}
       avatarUrl={(session.user as any).avatarUrl ?? null}
+      isTopManager={(session.user as any).isTopManager === true}
     >
       {children}
     </StaffShell>

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import { CustomerForm } from "@/components/customer-form";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export default async function AgentFillPage({
   params,
@@ -37,6 +38,14 @@ export default async function AgentFillPage({
 
   return (
     <div className="mx-auto max-w-2xl py-6 px-4">
+      <Breadcrumbs
+        items={[
+          { label: "My Submissions", href: "/agent" },
+          { label: "Drafts", href: "/agent/drafts" },
+          { label: "Agent Fill" },
+        ]}
+        className="mb-4"
+      />
       <CustomerForm
         token={cis.publicToken}
         agentCode={cis.agentCode ?? ""}

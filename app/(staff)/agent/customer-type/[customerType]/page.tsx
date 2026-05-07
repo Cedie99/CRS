@@ -9,7 +9,8 @@ import { CisCardGrid } from "@/components/cis-card-grid";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { CUSTOMER_TYPE_DESCRIPTIONS, CUSTOMER_TYPE_LABELS, isDashboardCustomerType } from "@/lib/customer-types";
 import { buttonVariants } from "@/lib/button-variants";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -161,11 +162,13 @@ export default async function AgentCustomerTypePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/agent" className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
-          <ArrowLeft className="h-4 w-4" />
-          Back to customer types
-        </Link>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType]} Submissions</h1>
+        <Breadcrumbs
+          items={[
+            { label: "My Submissions", href: "/agent" },
+            { label: CUSTOMER_TYPE_LABELS[customerType] },
+          ]}
+        />
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-zinc-900">{CUSTOMER_TYPE_LABELS[customerType]} Submissions</h1>
         <p className="mt-1 text-sm text-zinc-500">{CUSTOMER_TYPE_DESCRIPTIONS[customerType]}</p>
       </div>
 

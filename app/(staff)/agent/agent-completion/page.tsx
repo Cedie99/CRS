@@ -4,9 +4,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
-import { ArrowLeft, FileText, ClipboardCheck } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { formatDistanceToNow } from "@/lib/utils";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Awaiting Agent Completion — CRS" };
 
@@ -49,13 +50,7 @@ export default async function AgentCompletionQueuePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/agent"
-          className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to my submissions
-        </Link>
+        <Breadcrumbs items={[{ label: "My Submissions", href: "/agent" }, { label: "Agent Completion" }]} className="mb-2" />
         <h1 className="mt-2 text-2xl font-bold text-zinc-900">Awaiting Agent Completion</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Customer has submitted these forms. Complete the agent section to continue routing.

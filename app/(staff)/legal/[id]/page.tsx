@@ -1,10 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
-import { ArrowLeft } from "lucide-react";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { SCORING_DOC_KEYS } from "@/lib/doc-types";
 import { LegalCisDetailClient } from "./legal-cis-detail-client";
@@ -161,13 +160,13 @@ export default async function LegalCisDetailPage({
 
   return (
     <div className="space-y-5">
-      <Link
-        href={isReadOnlyContextView ? "/legal?view=all" : "/legal"}
-        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to queue
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: "Legal Review Queue", href: isReadOnlyContextView ? "/legal?view=all" : "/legal" },
+          { label: cis.tradeName?.trim() || "Form Details" },
+        ]}
+        className="print:hidden"
+      />
 
       {isReadOnlyContextView && (
         <div className="print:hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">

@@ -30,6 +30,7 @@ function FileRow({
   allowDelete,
   onRemove,
   onRename,
+  isRejected = false,
 }: {
   file: FileEntry;
   docType: DocType;
@@ -39,6 +40,7 @@ function FileRow({
   allowDelete: boolean;
   onRemove: () => void;
   onRename: (newName: string) => void;
+  isRejected?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(file.name);
@@ -82,8 +84,8 @@ function FileRow({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-zinc-100 bg-zinc-50 px-3 py-1.5">
-      <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+    <div className={`flex items-center gap-2 rounded-md border px-3 py-1.5 ${isRejected ? "border-red-200 bg-red-50" : "border-zinc-100 bg-zinc-50"}`}>
+      <FileText className={`h-3.5 w-3.5 shrink-0 ${isRejected ? "text-red-400" : "text-zinc-400"}`} />
       {editing ? (
         <input
           ref={inputRef}
@@ -95,7 +97,7 @@ function FileRow({
           className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-xs text-zinc-700 outline-none focus:border-zinc-500"
         />
       ) : (
-        <span className="min-w-0 flex-1 truncate text-xs text-zinc-700">{file.name}</span>
+        <span className={`min-w-0 flex-1 truncate text-xs ${isRejected ? "font-medium text-red-600" : "text-zinc-700"}`}>{file.name}</span>
       )}
       <span className="shrink-0 text-[10px] text-zinc-400">{(file.size / 1024).toFixed(0)} KB</span>
       {allowRename && (
@@ -143,6 +145,8 @@ export function DocUploadSlot({
   disabled,
   allowRename = true,
   allowDelete = true,
+  reviewStatus,
+  hideUploadButtons = false,
 }: {
   docType: DocType;
   label: string;
@@ -152,6 +156,10 @@ export function DocUploadSlot({
   disabled: boolean;
   allowRename?: boolean;
   allowDelete?: boolean;
+  /** When provided, controls label colour and badge. "rejected" = red, "approved" = green. */
+  reviewStatus?: "approved" | "rejected" | "needs_review";
+  /** Hide the Upload / Take Photo buttons (used when showing read-only rejected files). */
+  hideUploadButtons?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -333,20 +341,28 @@ export function DocUploadSlot({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <p
-            className={hasAcceptedFiles
-              ? "text-sm font-medium text-green-700 line-through decoration-2 decoration-green-600"
-              : "text-sm font-medium text-zinc-900"}
+            className={
+              reviewStatus === "rejected"
+                ? "text-sm font-medium text-red-600"
+                : hasAcceptedFiles && reviewStatus !== "rejected"
+                  ? "text-sm font-medium text-green-700 line-through decoration-2 decoration-green-600"
+                  : "text-sm font-medium text-zinc-900"
+            }
           >
             {label}
           </p>
-          {hasAcceptedFiles && (
+          {reviewStatus === "rejected" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600">
+              Rejected
+            </span>
+          ) : hasAcceptedFiles ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
               <Check className="h-3 w-3" />
               Finished
             </span>
-          )}
+          ) : null}
         </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        {!hideUploadButtons && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -367,7 +383,8 @@ export function DocUploadSlot({
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
             Take Photo
           </button>
-        </div>
+        </div>}
+        {!hideUploadButtons && <>
         <input
           ref={inputRef}
           type="file"
@@ -395,6 +412,7 @@ export function DocUploadSlot({
             (e.target as HTMLInputElement).value = "";
           }}
         />
+        </>}
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -457,6 +475,7 @@ export function DocUploadSlot({
                 allowDelete={allowDelete}
                 onRemove={() => { void handleRemove(f); }}
                 onRename={(newName) => handleRename(f, newName)}
+                isRejected={reviewStatus === "rejected"}
               />
                 <div className="pl-1 text-[10px] text-zinc-400">
                   <p>{formatUploadedAt(f.uploadedAt)}</p>

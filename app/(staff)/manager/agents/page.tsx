@@ -1,4 +1,4 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Users, ArrowRight, Mail, Calendar, Clock } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "My Agents — CRS" };
 
@@ -40,6 +41,8 @@ export default async function ManagerAgentsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const isTopManager = (session.user as any).isTopManager === true;
+
   const agents = await db
     .select({
       id: users.id,
@@ -51,7 +54,11 @@ export default async function ManagerAgentsPage() {
       createdAt: users.createdAt,
     })
     .from(users)
-    .where(and(eq(users.managerId, session.user.id), eq(users.isActive, true)));
+    .where(
+      isTopManager
+        ? and(eq(users.isActive, true), sql`${users.role} IN ('sales_agent', 'rsr')`)
+        : and(eq(users.managerId, session.user.id), eq(users.isActive, true))
+    );
 
   const agentIds = agents.map((a) => a.id);
 
@@ -136,6 +143,7 @@ export default async function ManagerAgentsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: "Team Submissions", href: "/manager" }, { label: "My Agents" }]} className="mb-1" />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-blue-50 p-2.5">

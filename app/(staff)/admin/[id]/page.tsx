@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { eq } from "drizzle-orm";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
@@ -10,8 +10,9 @@ import { ErpEncodeActions } from "@/components/actions/erp-encode-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, History } from "lucide-react";
+import { History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
+import { DeleteCisZone } from "@/components/admin/delete-cis-button";
 
 export default async function AdminCisDetailPage({
   params,
@@ -50,13 +51,10 @@ export default async function AdminCisDetailPage({
 
   return (
     <div className="space-y-5">
-      <Link
-        href="/admin"
-        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to all submissions
-      </Link>
+      <Breadcrumbs
+        items={[{ label: "All Submissions", href: "/admin" }, { label: cis.tradeName?.trim() || "Form Details" }]}
+        className="print:hidden"
+      />
 
 
       <CusApprovedBanner
@@ -147,6 +145,7 @@ export default async function AdminCisDetailPage({
             metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
           {canEncode && <ErpEncodeActions cisId={id} backHref="/admin" />}
+          <DeleteCisZone cisId={cis.id} tradeName={cis.tradeName} />
         </div>
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">

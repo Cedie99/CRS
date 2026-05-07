@@ -1,10 +1,12 @@
-import { desc, count, eq, and, or } from "drizzle-orm";
+import { desc, count, eq, and, or, isNotNull } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users, cisSubmissions } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 import { UserManagementTable } from "@/components/admin/user-management-table";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
+import { PREDEFINED_AGENT_CODES } from "@/lib/agent-codes";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "User Management — CRS" };
 
@@ -30,6 +32,7 @@ export default async function AdminUsersPage({
     agentType: users.agentType,
     managerId: users.managerId,
     isActive: users.isActive,
+    isTopManager: users.isTopManager,
     createdAt: users.createdAt,
   };
 
@@ -44,12 +47,16 @@ export default async function AdminUsersPage({
       )
     );
 
-  // Paginated users
-  const [allUsers, countRow] = await Promise.all([
+  // Paginated users + assigned agent codes
+  const [allUsers, countRow, assignedCodeRows] = await Promise.all([
     db.select(USER_COLS).from(users).orderBy(desc(users.createdAt)).limit(pageSize).offset(offset),
     db.select({ total: count() }).from(users),
+    db.select({ agentCode: users.agentCode }).from(users).where(isNotNull(users.agentCode)),
   ]);
   const totalUsers = Number(countRow[0]?.total ?? 0);
+
+  const assignedCodes = new Set(assignedCodeRows.map((r) => r.agentCode as string));
+  const availableCodes = PREDEFINED_AGENT_CODES.filter((c) => !assignedCodes.has(c));
 
   // Submission counts per agent (indexed aggregate, no pagination needed)
   const countRows = await db
@@ -64,11 +71,13 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-4">
+      <Breadcrumbs items={[{ label: "All Submissions", href: "/admin" }, { label: "User Management" }]} className="mb-1" />
       <UserManagementTable
         users={allUsers}
         managers={managers}
         currentUserId={session.user.id}
         submissionCounts={submissionCounts}
+        availableCodes={availableCodes}
       />
       <DashboardPagination
         basePath="/admin/users"

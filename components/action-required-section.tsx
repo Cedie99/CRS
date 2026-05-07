@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { CisCard } from "@/components/cis-card";
 import type { CisStatus } from "@/components/status-badge";
 
@@ -25,6 +25,7 @@ interface ActionRequiredSectionProps {
   sublabel?: string;
   accentClass?: string;
   badgeClass?: string;
+  icon?: "alert" | "return";
 }
 
 function getPerPage(): number {
@@ -44,7 +45,9 @@ export function ActionRequiredSection({
   sublabel,
   accentClass = "border-red-200 bg-red-50/50",
   badgeClass = "bg-red-100 text-red-800",
+  icon = "alert",
 }: ActionRequiredSectionProps) {
+  const Icon = icon === "return" ? RotateCcw : AlertCircle;
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(3);
 
@@ -80,7 +83,7 @@ export function ActionRequiredSection({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <AlertCircle className="h-4 w-4 shrink-0 opacity-60" />
+          <Icon className="h-4 w-4 shrink-0 opacity-60" />
           <div>
             <h2 className="text-sm font-bold text-zinc-900">{label}</h2>
             {sublabel && (

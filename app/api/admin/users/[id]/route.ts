@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { PREDEFINED_AGENT_CODES } from "@/lib/agent-codes";
 
 const updateUserSchema = z.object({
   role: z.enum([
@@ -14,17 +16,10 @@ const updateUserSchema = z.object({
   agentType: z.enum(["sales_agent", "rsr"]).nullable().optional(),
   managerId: z.string().uuid().nullable().optional(),
   isActive: z.boolean().optional(),
+  isTopManager: z.boolean().optional(),
+  agentCode: z.string().nullable().optional(),
+  password: z.string().min(8).optional(),
 });
-
-async function generateAgentCode(prefix: string): Promise<string> {
-  const allCodes = await db.select({ agentCode: users.agentCode }).from(users);
-  const max = allCodes.reduce((acc, u) => {
-    if (!u.agentCode?.startsWith(`${prefix}-`)) return acc;
-    const num = parseInt(u.agentCode.slice(prefix.length + 1), 10);
-    return isNaN(num) ? acc : Math.max(acc, num);
-  }, 0);
-  return `${prefix}-${String(max + 1).padStart(3, "0")}`;
-}
 
 // PATCH /api/admin/users/[id] — activate + assign role/manager/agent code
 export async function PATCH(
@@ -51,23 +46,42 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const updateData: Record<string, unknown> = { ...parsed.data };
+  const { password, ...rest } = parsed.data;
+  const updateData: Record<string, unknown> = { ...rest };
 
-  // Auto-generate agent code when assigning an agent role to a user who has none
+  if (password) {
+    updateData.passwordHash = await bcrypt.hash(password, 12);
+    updateData.mustChangePassword = true;
+    delete updateData.password;
+  }
+
   const finalRole = parsed.data.role ?? existing.role;
-  const finalAgentType = parsed.data.agentType ?? existing.agentType;
   const isAgentRole = finalRole === "sales_agent" || finalRole === "rsr";
 
-  let agentCode = existing.agentCode;
-  if (isAgentRole && !existing.agentCode) {
-    const prefix = (finalAgentType === "rsr" || finalRole === "rsr") ? "RSR" : "SA";
-    agentCode = await generateAgentCode(prefix);
-    updateData.agentCode = agentCode;
+  // Validate predefined agent code if provided
+  if (parsed.data.agentCode) {
+    const code = parsed.data.agentCode;
+    if (!(PREDEFINED_AGENT_CODES as readonly string[]).includes(code)) {
+      return NextResponse.json({ error: "Invalid agent code" }, { status: 400 });
+    }
+    // Check not already assigned to a different user
+    const [taken] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.agentCode, code), ne(users.id, id)))
+      .limit(1);
+    if (taken) {
+      return NextResponse.json({ error: "This agent code is already assigned to another user" }, { status: 409 });
+    }
+    updateData.agentCode = code;
+  } else if (!isAgentRole) {
+    // Clear agent code if role is no longer an agent role
+    updateData.agentCode = null;
   }
 
   await db.update(users).set(updateData).where(eq(users.id, id));
 
-  return NextResponse.json({ success: true, agentCode });
+  return NextResponse.json({ success: true, agentCode: (updateData.agentCode ?? existing.agentCode) ?? null });
 }
 
 // DELETE /api/admin/users/[id] — deactivate a user

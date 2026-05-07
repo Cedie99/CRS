@@ -36,12 +36,15 @@ export const authConfig: NextAuthConfig = {
         token.agentCode = user.agentCode ?? null;
         token.agentType = user.agentType ?? null;
         token.avatarUrl = user.avatarUrl ?? null;
+        token.mustChangePassword = user.mustChangePassword ?? false;
+        token.isTopManager = user.isTopManager ?? false;
       }
       // Called from client via useSession().update({ ... })
       if (trigger === "update") {
         if (session?.name !== undefined) token.name = session.name;
         if (session?.email !== undefined) token.email = session.email;
         if (session?.avatarUrl !== undefined) token.avatarUrl = session.avatarUrl;
+        if (session?.mustChangePassword !== undefined) token.mustChangePassword = session.mustChangePassword;
       }
       return token;
     },
@@ -54,20 +57,25 @@ export const authConfig: NextAuthConfig = {
         session.user.agentCode = token.agentCode ?? null;
         session.user.agentType = token.agentType ?? null;
         session.user.avatarUrl = token.avatarUrl ?? null;
+        session.user.mustChangePassword = token.mustChangePassword ?? false;
+        session.user.isTopManager = token.isTopManager ?? false;
       }
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const pathname = nextUrl.pathname;
+
       const isAuthPage =
-        nextUrl.pathname.startsWith("/login") ||
-        nextUrl.pathname.startsWith("/register");
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register");
+
+      const isChangePasswordPage =
+        pathname.startsWith("/change-password") ||
+        pathname.startsWith("/api/auth/change-password");
 
       // Customer-facing form pages are public — no login required
-      if (
-        nextUrl.pathname.startsWith("/form") ||
-        nextUrl.pathname.startsWith("/api/form")
-      ) {
+      if (pathname.startsWith("/form") || pathname.startsWith("/api/form")) {
         return true;
       }
 
@@ -81,6 +89,12 @@ export const authConfig: NextAuthConfig = {
       }
 
       if (!isLoggedIn) return false;
+
+      // Force password change — redirect to /change-password for all non-change-password pages
+      if ((auth.user as any).mustChangePassword && !isChangePasswordPage) {
+        return Response.redirect(new URL("/change-password", nextUrl));
+      }
+
       return true;
     },
   },
@@ -112,6 +126,8 @@ export const authConfig: NextAuthConfig = {
           agentCode: user.agentCode,
           agentType: user.agentType,
           avatarUrl: user.avatarUrl ?? null,
+          mustChangePassword: user.mustChangePassword,
+          isTopManager: user.isTopManager,
         };
       },
     }),

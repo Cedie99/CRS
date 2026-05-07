@@ -157,13 +157,42 @@ export function FinanceCisDetailClient({
 }: FinanceCisDetailClientProps) {
   const [docReviewStatuses, setDocReviewStatuses] = useState<DocReviewStatuses>(initialDocReviewStatuses);
   const [metricPoints, setMetricPoints] = useState(initialMetricPoints ?? {});
+  const latestReturnedAt = events.findLast((e) => e.action === "returned")?.createdAt ?? null;
+  const rejectionCutoff = latestReturnedAt ? new Date(latestReturnedAt).getTime() : null;
+  const hasUnresolvedRejections = Object.entries(docReviewStatuses).some(([docType, review]) => {
+    if (review?.status !== "rejected") return false;
+    // Use per-doc rejectedAt if available; fall back to global rejectionCutoff.
+    const cutoff = review.rejectedAt ? Date.parse(review.rejectedAt) : rejectionCutoff;
+    if (cutoff === null || Number.isNaN(cutoff)) return true;
+    const files = (cisData as Record<string, unknown>)[docType];
+    if (!Array.isArray(files) || files.length === 0) return true;
+    return !files.some((f: { uploadedAt?: string }) => {
+      const t = f.uploadedAt ? Date.parse(f.uploadedAt) : NaN;
+      return !Number.isNaN(t) && t > cutoff;
+    });
+  });
 
   // Recompute printEnabled from live docReviewStatuses so it updates without a page refresh.
   // Only gated on document reviews — credit limit/terms are filled physically by CFO.
   const hasPendingDocReviews = SCORING_DOC_KEYS.some((field) => {
     const val = (cisData as Record<string, unknown>)[field];
-    const uploaded = Array.isArray(val) && val.length > 0;
-    return uploaded && !REVIEWED_STATUSES.has(docReviewStatuses[field]?.status as string);
+    if (!Array.isArray(val) || val.length === 0) return false;
+    const status = docReviewStatuses[field]?.status;
+    if (!REVIEWED_STATUSES.has(status as string)) return true;
+    // A rejected doc with a new replacement uploaded after its own rejection timestamp
+    // is effectively unreviewed — the replacement needs a fresh decision.
+    if (status === "rejected") {
+      const review = docReviewStatuses[field];
+      const cutoff = review?.rejectedAt ? Date.parse(review.rejectedAt) : rejectionCutoff;
+      if (cutoff !== null && !Number.isNaN(cutoff)) {
+        const hasNewFile = (val as { uploadedAt?: string }[]).some((f) => {
+          const t = f.uploadedAt ? Date.parse(f.uploadedAt) : NaN;
+          return !Number.isNaN(t) && t > cutoff;
+        });
+        if (hasNewFile) return true;
+      }
+    }
+    return false;
   });
   const printEnabled = !hasPendingDocReviews;
 
@@ -196,9 +225,11 @@ export function FinanceCisDetailClient({
           denyEndpoint={denyEndpoint}
           dashboardPath={dashboardPath}
           printEnabled={printEnabled}
+          docReviewStatuses={docReviewStatuses}
+          hasUnresolvedRejections={hasUnresolvedRejections}
+          hasUnreviewedDocs={hasPendingDocReviews}
         />
       )}
-
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <DocReviewPanel
@@ -209,6 +240,7 @@ export function FinanceCisDetailClient({
             hidePointsPanel
             onStatusesChange={handleStatusesChange}
             onMetricSave={canAct ? handleMetricSave : undefined}
+            reviewRejectionTimestamp={latestReturnedAt}
             cisId={cisId}
             status={status as any}
             customerType={customerType}
@@ -246,6 +278,7 @@ export function FinanceCisDetailClient({
             docReviewStatuses={docReviewStatuses}
             agentType={cisData.agentType}
             customerType={customerType}
+            showApprovedAlways={canAct}
           />
           <Card>
             <CardHeader className="pb-3">

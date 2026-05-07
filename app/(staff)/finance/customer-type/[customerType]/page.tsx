@@ -1,5 +1,4 @@
 import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents } from "@/lib/db/schema";
@@ -8,9 +7,9 @@ import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagin
 import { CisCardGrid } from "@/components/cis-card-grid";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { CUSTOMER_TYPE_DESCRIPTIONS, CUSTOMER_TYPE_LABELS, isDashboardCustomerType } from "@/lib/customer-types";
-import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 const ALL_VISIBLE_STATUSES: CisStatus[] = [
   "draft",
@@ -111,10 +110,13 @@ export default async function FinanceCustomerTypePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={isAllView ? "/finance?view=all" : "/finance"} className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
-          <ArrowLeft className="h-4 w-4" />
-          Back to customer types
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Finance Review Queue", href: isAllView ? "/finance?view=all" : "/finance" },
+            { label: `${CUSTOMER_TYPE_LABELS[customerType]} Submissions` },
+          ]}
+          className="mb-2"
+        />
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
           {CUSTOMER_TYPE_LABELS[customerType]} Submissions
           {isAllView ? " (All Statuses)" : ""}

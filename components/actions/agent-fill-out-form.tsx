@@ -23,6 +23,8 @@ interface AgentFillOutFormProps {
   cisId: string;
   initialCustomerType?: string;
   initialOtherRequirements?: FileEntry[];
+  tradeName?: string | null;
+  managerName?: string | null;
 }
 
 interface FormFields {
@@ -39,7 +41,7 @@ interface FormErrors {
   agentSalesSpecialist?: string;
 }
 
-export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [] }: AgentFillOutFormProps) {
+export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [], tradeName, managerName }: AgentFillOutFormProps) {
   const router = useRouter();
   const [fields, setFields] = useState<FormFields>({
     agentAccountSpecialistFirst: "",
@@ -60,6 +62,9 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
   ].filter(Boolean).length;
 
   const isDealer = initialCustomerType === "dealer";
+  const missingRequiredCount = 3 - requiredFilledCount;
+  const isReadyToSubmit = missingRequiredCount === 0;
+  const routeTargetLabel = isDealer ? "Legal Review (Maam Cha)" : "Finance Review (Maam Nida)";
 
   function setField<K extends keyof FormFields>(key: K, value: string | null) {
     setFields((f) => ({ ...f, [key]: value ?? "" }));
@@ -90,6 +95,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
           agentSalesSpecialist: fields.agentSalesSpecialist,
           agentTpcFirst: fields.agentTpcFirst || undefined,
           agentTpcLast: fields.agentTpcLast || undefined,
+          docAgentOtherRequirements: otherRequirements,
         }),
       });
 
@@ -101,9 +107,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
 
       toast.success({
         title: "Form submitted.",
-        description: isDealer
-          ? "Routed to Legal Review (Maam Cha)."
-          : "Routed to Finance Review (Maam Nida).",
+        description: `Routed to ${routeTargetLabel}.`,
       });
       router.refresh();
     } catch {
@@ -114,8 +118,8 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
   }
 
   return (
-    <Card className="overflow-hidden border border-sky-200/80 bg-linear-to-b from-sky-50/70 via-white to-white shadow-sm">
-      <CardHeader className="border-b border-sky-100/80 pb-4">
+    <Card className="border border-sky-200/80 bg-linear-to-b from-sky-50/70 via-white to-white shadow-sm">
+      <CardHeader className="overflow-hidden rounded-t-xl border-b border-sky-100/80 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-sky-900">
@@ -123,8 +127,13 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
               Sales Agent Information
             </CardTitle>
             <p className="mt-1 text-sm text-sky-700">
-              Your customer has submitted the form. Complete this section to route it for review.
+              Customer already submitted. Complete Step 1 below, then submit to route for review.
             </p>
+            {tradeName?.trim() ? (
+              <p className="mt-1 text-xs font-medium text-sky-700/90">
+                Working on: <span className="text-sky-900">{tradeName.trim()}</span>
+              </p>
+            ) : null}
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-800">
             {requiredFilledCount === 3 ? (
@@ -137,8 +146,9 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
         </div>
       </CardHeader>
       <CardContent className="space-y-5 pt-5">
-        <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Assignment Details</h3>
+        <section className={`relative rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5${!isReadyToSubmit ? " agent-step-shine" : ""}`}>
+          <h3 className="mb-1 text-sm font-semibold text-zinc-900">Step 1 — Assignment Details <span className="text-red-600">(Required)</span></h3>
+          <p className="mb-3 text-xs text-zinc-500">These 3 fields must be completed before submit is enabled.</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="acc-spec-first">Account Specialist - First Name *</Label>
@@ -150,6 +160,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
               placeholder="First name"
               maxLength={255}
               disabled={isLoading}
+              autoFocus
             />
             {errors.agentAccountSpecialistFirst && (
               <p className="text-xs text-red-600">{errors.agentAccountSpecialistFirst}</p>
@@ -187,6 +198,13 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
               <p className="text-xs text-red-600">{errors.agentSalesSpecialist}</p>
             )}
             </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Sales Manager</Label>
+              <div className="flex h-9 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700">
+                {managerName ?? <span className="italic text-zinc-400">No manager assigned</span>}
+              </div>
+            </div>
           </div>
 
           {initialCustomerType && (
@@ -205,7 +223,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
         </section>
 
         <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">TPC Contact (Optional)</h3>
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Step 2 — TPC Contact <span className="font-normal text-zinc-500">(Optional)</span></h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="tpc-first">TPC - First Name</Label>
@@ -237,7 +255,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
         <section className="rounded-xl border border-zinc-200 bg-white/80 p-4 sm:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
             <Paperclip className="h-4 w-4 text-zinc-500" />
-            Other Requirements <span className="text-zinc-400 font-normal">(Optional)</span>
+            Step 2 — Other Requirements <span className="text-zinc-400 font-normal">(Optional)</span>
           </h3>
           <DocUploadSlot
             docType="docAgentOtherRequirements"
@@ -255,15 +273,17 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
 
         <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-zinc-500">
-            Review required fields before submitting.
+            {isReadyToSubmit
+              ? `Step 3 ready: submit now to route to ${routeTargetLabel}.`
+              : `${missingRequiredCount} required field${missingRequiredCount === 1 ? "" : "s"} remaining in Step 1.`}
           </p>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || !isReadyToSubmit}
             className="w-full gap-2 sm:w-auto"
           >
             <ArrowRight className="h-4 w-4" />
-            {isLoading ? "Submitting..." : "Submit & Route for Review"}
+            {isLoading ? "Submitting..." : isReadyToSubmit ? `Submit & Route to ${isDealer ? "Legal" : "Finance"}` : "Complete Step 1 to Continue"}
           </Button>
         </div>
       </CardContent>

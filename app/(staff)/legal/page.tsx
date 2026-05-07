@@ -100,7 +100,7 @@ export default async function LegalDashboard({
           .select(cardSelect)
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_legal_review"))
-          .orderBy(desc(cisSubmissions.createdAt))
+          .orderBy(desc(cisSubmissions.updatedAt))
           .limit(6),
     isAllView
       ? Promise.resolve([{ total: 0 }])

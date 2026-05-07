@@ -100,7 +100,7 @@ export default async function FinanceDashboard({
           .select(cardSelect)
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_finance_review"))
-          .orderBy(desc(cisSubmissions.createdAt))
+          .orderBy(desc(cisSubmissions.updatedAt))
           .limit(6),
     isAllView
       ? Promise.resolve([{ total: 0 }])

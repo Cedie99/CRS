@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { sileo as toast } from "sileo";
 import { DocReviewPanel } from "@/components/doc-review-panel";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { FinanceActions } from "@/components/actions/finance-actions";
@@ -52,15 +53,60 @@ export function LegalCisDetailClient({
   ...cisData
 }: LegalCisDetailClientProps) {
   const [docReviewStatuses, setDocReviewStatuses] = useState<DocReviewStatuses>(initialDocReviewStatuses);
+  const [metricPoints, setMetricPoints] = useState<Record<string, number | null | undefined>>((cisData.metricPoints as any) ?? {});
+  const latestReturnedAt = events.findLast((e) => e.action === "returned")?.createdAt ?? null;
+  const rejectionCutoff = latestReturnedAt ? new Date(latestReturnedAt).getTime() : null;
+  const hasUnresolvedRejections = Object.entries(docReviewStatuses).some(([docType, review]) => {
+    if (review?.status !== "rejected") return false;
+    // Use per-doc rejectedAt if available; fall back to global rejectionCutoff.
+    const cutoff = review.rejectedAt ? Date.parse(review.rejectedAt) : rejectionCutoff;
+    if (cutoff === null || Number.isNaN(cutoff)) return true;
+    const files = cisData[docType];
+    if (!Array.isArray(files) || files.length === 0) return true;
+    return !files.some((f: { uploadedAt?: string }) => {
+      const t = f.uploadedAt ? Date.parse(f.uploadedAt) : NaN;
+      return !Number.isNaN(t) && t > cutoff;
+    });
+  });
 
   // Recompute printEnabled from live docReviewStatuses so it updates without a page refresh.
   // Only gated on document reviews — credit limit/terms are filled physically by CFO.
   const hasPendingDocReviews = SCORING_DOC_KEYS.some((field) => {
     const val = cisData[field];
-    const uploaded = Array.isArray(val) && val.length > 0;
-    return uploaded && !REVIEWED_STATUSES.has(docReviewStatuses[field]?.status as string);
+    if (!Array.isArray(val) || val.length === 0) return false;
+    const status = docReviewStatuses[field]?.status;
+    if (!REVIEWED_STATUSES.has(status as string)) return true;
+    // A rejected doc with a new replacement uploaded after its own rejection timestamp
+    // is effectively unreviewed — the replacement needs a fresh decision.
+    if (status === "rejected") {
+      const review = docReviewStatuses[field];
+      const cutoff = review?.rejectedAt ? Date.parse(review.rejectedAt) : rejectionCutoff;
+      if (cutoff !== null && !Number.isNaN(cutoff)) {
+        const hasNewFile = (val as { uploadedAt?: string }[]).some((f) => {
+          const t = f.uploadedAt ? Date.parse(f.uploadedAt) : NaN;
+          return !Number.isNaN(t) && t > cutoff;
+        });
+        if (hasNewFile) return true;
+      }
+    }
+    return false;
   });
   const printEnabled = !hasPendingDocReviews;
+
+  const handleMetricSave = useCallback(async (pts: Record<string, number>) => {
+    const res = await fetch(`/api/cis/${cisId}/finance-save`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ metricPoints: pts }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error({ title: data?.error ?? "Failed to save points" });
+      return;
+    }
+    toast.success({ title: "Points saved successfully" });
+    setMetricPoints((prev) => ({ ...prev, ...pts }));
+  }, [cisId]);
 
   return (
     <>
@@ -72,9 +118,11 @@ export function LegalCisDetailClient({
           denyEndpoint={denyEndpoint}
           dashboardPath="/legal"
           printEnabled={printEnabled}
+          docReviewStatuses={docReviewStatuses}
+          hasUnresolvedRejections={hasUnresolvedRejections}
+          hasUnreviewedDocs={hasPendingDocReviews}
         />
       )}
-
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <DocReviewPanel
@@ -87,7 +135,10 @@ export function LegalCisDetailClient({
             status={status as any}
             customerType={customerType}
             onStatusesChange={setDocReviewStatuses}
+            onMetricSave={canAct ? handleMetricSave : undefined}
+            reviewRejectionTimestamp={latestReturnedAt}
             {...(cisData as any)}
+            metricPoints={metricPoints as any}
           />
         </div>
 
@@ -114,12 +165,13 @@ export function LegalCisDetailClient({
             docCertifications={cisData.docCertifications}
             docGovCertifications={cisData.docGovCertifications}
             docOther={cisData.docOther}
-            metricPoints={cisData.metricPoints as any}
+            metricPoints={metricPoints as any}
             financePossiblePoints={cisData.financePossiblePoints as number | null}
             financeApprovedPoints={cisData.financeApprovedPoints as number | null}
             docReviewStatuses={docReviewStatuses}
             agentType={cisData.agentType as string | null}
             customerType={customerType}
+            showApprovedAlways={canAct}
           />
           <Card>
             <CardHeader className="pb-3">

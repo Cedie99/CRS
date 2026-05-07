@@ -133,7 +133,7 @@ export async function PATCH(
   if (existingColumns.has("agent_tpc_last")) {
     updatePayload.agentTpcLast = agentTpcLast || null;
   }
-  if (existingColumns.has("doc_agent_other_requirements")) {
+  if (existingColumns.has("doc_agent_other_requirements") && docAgentOtherRequirements !== undefined) {
     updatePayload.docAgentOtherRequirements = docAgentOtherRequirements ?? null;
   }
 

@@ -211,11 +211,11 @@ function DocReviewActions({
   const [isPending, setIsPending] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<DocReviewStatus | null>(null);
   const [reason, setReason] = useState<string>("");
-  const [showReasonFor, setShowReasonFor] = useState<"needs_review" | "rejected" | null>(null);
+  const [showReasonFor, setShowReasonFor] = useState<"rejected" | null>(null);
   const actionLabel = currentStatus ? "Update decision" : "Set decision";
 
   async function handleAction(status: DocReviewStatus) {
-    if (status === "rejected" || status === "needs_review") {
+    if (status === "rejected") {
       setShowReasonFor(status);
       setPendingStatus(status);
       return;
@@ -249,15 +249,6 @@ function DocReviewActions({
         >
           <Check className="h-3 w-3" />
           Mark Approved
-        </button>
-        <button
-          type="button"
-          disabled={isPending || currentStatus === "needs_review"}
-          onClick={() => handleAction("needs_review")}
-          className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"
-        >
-          <AlertCircle className="h-3 w-3" />
-          Request Update
         </button>
         <button
           type="button"
@@ -424,7 +415,14 @@ interface CisInfoCardProps {
   hidePrintButton?: boolean;
   agentUpload?: {
     cisId: string;
+    /** Timestamp of when the form was last returned. Files older than this in a rejected slot are the rejected files. */
+    rejectionTimestamp?: Date | null;
   };
+  /**
+   * Timestamp of the latest returned event used to apply review statuses per file.
+   * Files uploaded after this timestamp in a rejected doc type are treated as new uploads (not rejected yet).
+   */
+  reviewRejectionTimestamp?: Date | null;
   // Agent fill-out
   agentAccountSpecialistFirst?: string | null;
   agentAccountSpecialistLast?: string | null;
@@ -868,6 +866,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     printEnabled = false,
     hidePrintButton = false,
     agentUpload,
+    reviewRejectionTimestamp,
     financePlTs,
     financePossiblePoints,
     financeApprovedPoints,
@@ -922,17 +921,77 @@ export function CisInfoCard(props: CisInfoCardProps) {
     label: DOC_LABELS[slot.key],
     files: (props[slot.key as keyof CisInfoCardProps] as FileEntry[] | null) ?? [],
   }));
-  const docEntries = allDocEntries.filter((e) => e.files.length > 0);
+  const docEntries = allDocEntries.filter((e) => e.files.length > 0 && e.key !== "docAgentOtherRequirements");
   const allDocsByType = Object.fromEntries(
     allDocEntries.map((entry) => [entry.key, entry.files])
   ) as Record<DocType, FileEntry[]>;
+  const rejectionTimestamp = reviewRejectionTimestamp ?? agentUpload?.rejectionTimestamp;
+  const rejectionCutoff = rejectionTimestamp
+    ? new Date(rejectionTimestamp).getTime()
+    : null;
+
+  function getFileReview(entryKey: DocType, file: FileEntry, allFiles: FileEntry[]) {
+    const review = docReviewStatuses?.[entryKey];
+    if (!review) return undefined;
+
+    // Use per-doc rejectedAt if available; fall back to global rejectionCutoff.
+    const cutoff = (review.rejectedAt ? Date.parse(review.rejectedAt) : rejectionCutoff);
+
+    if (cutoff !== null && !Number.isNaN(cutoff) && file.uploadedAt) {
+      const uploadedAt = Date.parse(file.uploadedAt);
+      if (!Number.isNaN(uploadedAt) && uploadedAt <= cutoff) {
+        // This file predates the rejection cutoff. If a newer replacement exists,
+        // always show it as rejected — even if the reviewer has since approved
+        // the replacement. The old file's status must never flip to "approved".
+        const hasNewerReplacement = allFiles.some((f) => {
+          if (!f.uploadedAt) return false;
+          const t = Date.parse(f.uploadedAt);
+          return !Number.isNaN(t) && t > cutoff;
+        });
+        if (hasNewerReplacement) {
+          return { status: "rejected" as const, reason: review.status === "rejected" ? review.reason : null, rejectedAt: review.rejectedAt ?? null };
+        }
+        // No replacement yet — show whatever the current review status is.
+        return review;
+      }
+    }
+
+    // File is newer than the cutoff (it is the replacement) or no cutoff exists.
+    if (review.status === "rejected") return undefined; // replacement not yet reviewed
+    return review;
+  }
+
+  function isNewReplacementFile(entryKey: DocType, file: FileEntry, allFiles: FileEntry[]) {
+    const review = docReviewStatuses?.[entryKey];
+    const cutoff = review?.rejectedAt
+      ? Date.parse(review.rejectedAt)
+      : rejectionCutoff;
+    if (cutoff === null || cutoff === undefined || Number.isNaN(cutoff)) return false;
+    if (!file.uploadedAt) return false;
+
+    const uploadedAt = Date.parse(file.uploadedAt);
+    if (Number.isNaN(uploadedAt)) return false;
+
+    if (uploadedAt <= cutoff) return false;
+
+    // Only classify as a replacement if there is at least one older file on the
+    // other side of the cutoff — confirming this is a genuine before/after pair
+    // and not just a file that happens to be uploaded after a return event on a
+    // doc that was never rejected.
+    return allFiles.some((f) => {
+      if (!f.uploadedAt) return true; // no timestamp = treated as old
+      const t = Date.parse(f.uploadedAt);
+      return !Number.isNaN(t) && t <= cutoff;
+    });
+  }
 
   const hasCfoSigned = (allDocsByType.docSirRestySigned ?? []).length > 0;
   const canPrint = printEnabled || status === "erp_encoded";
   const printDisabledReason = "Printing is not available for your role, it will be available once the approval process is complete";
   const showCfoSignatureBox = !hasCfoSigned && canPrint;
 
-  const hasAgentInfo = agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast;
+  const agentOtherDocs = sortFilesByUploadedAtDesc(allDocsByType.docAgentOtherRequirements ?? []);
+  const hasAgentInfo = agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast || agentOtherDocs.length > 0;
   const hasFinanceData = financeEu || financeDl || financeDr || financePlTs || financePossiblePoints != null || financeApprovedPoints != null || financeCreditLimit || financeCreditTerms;
   const hasSalesSupportData = salesSupportAccountType || salesSupportPriceList1 || salesSupportPriceList2 || salesSupportSalesType || salesSupportVatCode || salesSupportOtherRemarks;
 
@@ -943,7 +1002,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     || tradeRefRows.length > 0 || bankRefRows.length > 0 || achievements || otherMerits;
 
   return (
-    <Card className="overflow-hidden print:border-0 print:shadow-none" data-print-root>
+    <Card className="overflow-hidden py-0 print:border-0 print:shadow-none" data-print-root>
       <PrintLayoutOptimizer />
 
       {/* ── PRINT HEADER ── */}
@@ -1242,7 +1301,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {agentUpload && (
           <SectionCard className="print:hidden">
               <SectionTitle icon={Paperclip} label="Agent Document Upload" />
-              <AgentDocSection cisId={agentUpload.cisId} initialDocs={allDocsByType} />
+              <AgentDocSection cisId={agentUpload.cisId} initialDocs={allDocsByType} docReviewStatuses={docReviewStatuses} rejectionTimestamp={agentUpload.rejectionTimestamp} />
           </SectionCard>
         )}
 
@@ -1250,16 +1309,64 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasAgentInfo && (
           <SectionCard>
             <SectionTitle icon={User} label="Agent Information" />
-            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-              {(agentAccountSpecialistFirst || agentAccountSpecialistLast) && (
-                <Field label="Account Specialist" value={[agentAccountSpecialistFirst, agentAccountSpecialistLast].filter(Boolean).join(" ")} icon={User} />
-              )}
-              {agentSalesSpecialist && <Field label="Sales Specialist" value={agentSalesSpecialist} icon={User} />}
-              {agentSalesManager && <Field label="Sales Manager" value={agentSalesManager} icon={User} />}
-              {(agentTpcFirst || agentTpcLast) && (
-                <Field label="TPC" value={[agentTpcFirst, agentTpcLast].filter(Boolean).join(" ")} icon={User} />
-              )}
-            </div>
+            {(agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast) && (
+              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+                {(agentAccountSpecialistFirst || agentAccountSpecialistLast) && (
+                  <Field label="Account Specialist" value={[agentAccountSpecialistFirst, agentAccountSpecialistLast].filter(Boolean).join(" ")} icon={User} />
+                )}
+                {agentSalesSpecialist && <Field label="Sales Specialist" value={agentSalesSpecialist} icon={User} />}
+                {agentSalesManager && <Field label="Sales Manager" value={agentSalesManager} icon={User} />}
+                {(agentTpcFirst || agentTpcLast) && (
+                  <Field label="TPC" value={[agentTpcFirst, agentTpcLast].filter(Boolean).join(" ")} icon={User} />
+                )}
+              </div>
+            )}
+            {agentOtherDocs.length > 0 && (
+              <div className={agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast ? "mt-4" : ""}>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Other Requirements (Agent)</p>
+                <div className="space-y-2">
+                  {agentOtherDocs.map((f) => {
+                    const isImage = isImageFile(f);
+                    const isPdf = isPdfFile(f);
+                    const isDocx = isDocxFile(f);
+                    return (
+                      <div key={f.url} className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                        {isImage && (
+                          <a href={f.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
+                            <img
+                              src={f.url}
+                              alt={f.name}
+                              className="max-h-56 w-auto max-w-full rounded border border-zinc-200 object-contain"
+                            />
+                          </a>
+                        )}
+                        {isPdf && (
+                          <div className="mb-2">
+                            <PdfPrintRenderer url={f.url} name={f.name} />
+                          </div>
+                        )}
+                        {isDocx && (
+                          <div className="mb-2">
+                            <DocxRenderer url={f.url} name={f.name} />
+                          </div>
+                        )}
+                        <a
+                          href={f.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                        >
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                          <span className="flex-1 truncate">{f.name}</span>
+                          <span className="shrink-0 text-[10px] text-zinc-400">{(f.size / 1024).toFixed(0)} KB</span>
+                        </a>
+                        <p className="mt-1 text-[10px] text-zinc-400">{formatUploadedAt(f.uploadedAt)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </SectionCard>
         )}
 
@@ -1278,10 +1385,12 @@ export function CisInfoCard(props: CisInfoCardProps) {
                         const isDocx = isDocxFile(f);
                         const needsExpiration = docTypeRequiresExpiration(entry.key);
                         const expirationStatus = needsExpiration ? getFileExpirationStatus(f) : null;
+                        const isReplacement = isNewReplacementFile(entry.key as DocType, f, entry.files);
+                        const isOldRejectedFile = !isReplacement && entry.files.some((file) => isNewReplacementFile(entry.key as DocType, file, entry.files));
                         return (
                           <div
                             key={f.url}
-                            className={`rounded-md border border-zinc-200 bg-zinc-50 p-3 print:border-zinc-200 print:bg-white print:p-2 ${index === 0 ? "" : "print:break-before-page print:pt-4"}`}
+                            className={`rounded-md border border-zinc-200 bg-zinc-50 p-3 print:border-zinc-200 print:bg-white print:p-2 ${index === 0 ? "" : "print:break-before-page print:pt-4"}${isOldRejectedFile ? " opacity-35 grayscale transition-opacity" : ""}`}
                           >
                             {isImage && (
                               <a href={f.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
@@ -1313,6 +1422,13 @@ export function CisInfoCard(props: CisInfoCardProps) {
                               <span className="shrink-0 text-[10px] text-zinc-400">{(f.size / 1024).toFixed(0)} KB</span>
                             </a>
                             <p className="mt-1 text-[10px] text-zinc-400">{formatUploadedAt(f.uploadedAt)}</p>
+                            {isReplacement && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                  New document from returned form
+                                </span>
+                              </div>
+                            )}
                             <p className="mt-0.5 text-[10px] text-zinc-400">{formatExpirationDate(f.expirationDate)}</p>
                             {needsExpiration && expirationStatus && (
                               <div className="mt-1">
@@ -1320,7 +1436,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                               </div>
                             )}
                             {(() => {
-                              const review = docReviewStatuses?.[entry.key as DocType];
+                              const review = getFileReview(entry.key as DocType, f, entry.files);
+                              const isOldRejected = isOldRejectedFile;
                               return (
                                 <>
                                   <div className="mt-2 rounded-md border border-zinc-200 bg-white px-2.5 py-2">
@@ -1358,12 +1475,17 @@ export function CisInfoCard(props: CisInfoCardProps) {
                                         onSave={onMetricSave}
                                       />
                                     )}
-                                    {onDocReview && (
+                                    {onDocReview && !isOldRejected && (
                                       <DocReviewActions
                                         docType={entry.key as DocType}
                                         currentStatus={review?.status}
                                         onReview={onDocReview}
                                       />
+                                    )}
+                                    {isOldRejected && (
+                                      <p className="mt-2 text-[11px] text-zinc-400 italic">
+                                        A new document has been uploaded. Review actions are available on the new file.
+                                      </p>
                                     )}
                                   </div>
                                 </>

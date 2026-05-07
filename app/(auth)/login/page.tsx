@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
@@ -202,13 +201,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-zinc-500">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-[#2d6e1e] hover:underline"
-            >
-              Register
-            </Link>
+            Contact your administrator to get access.
           </p>
         </div>
       </motion.div>

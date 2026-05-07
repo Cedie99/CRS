@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { eq } from "drizzle-orm";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
@@ -9,7 +9,7 @@ import { AuditTimeline } from "@/components/audit-timeline";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, History } from "lucide-react";
+import { History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 
 export default async function ManagerCisDetailPage({
@@ -128,13 +128,17 @@ export default async function ManagerCisDetailPage({
 
   if (!cis) notFound();
 
-  const [agent] = await db
-    .select({ managerId: users.managerId })
-    .from(users)
-    .where(eq(users.id, cis.agentId))
-    .limit(1);
+  const isTopManager = (session.user as any).isTopManager === true;
 
-  if (!agent || agent.managerId !== session.user.id) notFound();
+  if (!isTopManager) {
+    const [agent] = await db
+      .select({ managerId: users.managerId })
+      .from(users)
+      .where(eq(users.id, cis.agentId))
+      .limit(1);
+
+    if (!agent || agent.managerId !== session.user.id) notFound();
+  }
 
   const events = await db
     .select({
@@ -153,13 +157,10 @@ export default async function ManagerCisDetailPage({
 
   return (
     <div className="space-y-5">
-      <Link
-        href="/manager"
-        className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to queue
-      </Link>
+      <Breadcrumbs
+        items={[{ label: "Team Submissions", href: "/manager" }, { label: cis.tradeName?.trim() || "Form Details" }]}
+        className="print:hidden"
+      />
 
 
       <CusApprovedBanner
