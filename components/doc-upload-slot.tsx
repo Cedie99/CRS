@@ -344,7 +344,7 @@ export function DocUploadSlot({
             className={
               reviewStatus === "rejected"
                 ? "text-sm font-medium text-red-600"
-                : hasAcceptedFiles && reviewStatus !== "rejected"
+                : hasAcceptedFiles
                   ? "text-sm font-medium text-green-700 line-through decoration-2 decoration-green-600"
                   : "text-sm font-medium text-zinc-900"
             }
