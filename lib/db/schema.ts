@@ -31,9 +31,6 @@ export const roleEnum = pgEnum("role", [
 export const agentTypeEnum = pgEnum("agent_type", ["sales_agent", "rsr"]);
 
 export const customerTypeEnum = pgEnum("customer_type", [
-  "standard",
-  "fs_petroleum",
-  "special",
   "dealer",
   "distributor",
   "private_label",
@@ -289,6 +286,7 @@ export const notifications = pgTable("notifications", {
     .notNull()
     .references(() => cisSubmissions.id),
   cusId: uuid("cus_id"),
+  ctrId: uuid("ctr_id"),
   recipientId: uuid("recipient_id")
     .notNull()
     .references(() => users.id),
@@ -332,10 +330,29 @@ export const cusSubmissions = pgTable("cus_submissions", {
   docHalalCertificate: jsonb("doc_halal_certificate"),
   docOther: jsonb("doc_other"),
 
+  // Agent-requested changes (set at creation, reviewer can override customerType)
+  newTradeName: varchar("new_trade_name", { length: 255 }),
+  newContactPerson: varchar("new_contact_person", { length: 255 }),
+  newContactNumber: varchar("new_contact_number", { length: 50 }),
+  newTelephoneNumber: varchar("new_telephone_number", { length: 50 }),
+  newEmailAddress: varchar("new_email_address", { length: 255 }),
+  newWebsite: varchar("new_website", { length: 255 }),
+  newNumberOfEmployees: varchar("new_number_of_employees", { length: 50 }),
+  newCustomerType: varchar("new_customer_type", { length: 50 }),
+  newBusinessAddress: text("new_business_address"),
+  newCityMunicipality: varchar("new_city_municipality", { length: 200 }),
+  newLandmarks: text("new_landmarks"),
+  newDeliveryAddress: text("new_delivery_address"),
+  newDeliveryMobile: varchar("new_delivery_mobile", { length: 50 }),
+  newDeliveryTelephone: varchar("new_delivery_telephone", { length: 50 }),
+
   // Finance evaluation
   financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
   financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
   financeMetricPoints: jsonb("finance_metric_points"),
+
+  // Snapshot of CIS values at the moment this CUS was approved (before changes were applied)
+  beforeSnapshot: jsonb("before_snapshot"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -360,6 +377,57 @@ export const cusEvents = pgTable("cus_events", {
   index("cus_events_cus_id_idx").on(t.cusId, t.createdAt),
 ]);
 
+export const ctrSubmissions = pgTable("ctr_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cisId: uuid("cis_id").notNull().references(() => cisSubmissions.id),
+  agentId: uuid("agent_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("draft"),
+  // draft | submitted | pending_legal_review | pending_finance_review
+  // | pending_documents | pending_approval | approved | denied
+  targetCustomerType: varchar("target_customer_type", { length: 50 }).notNull(),
+  reason: text("reason"),
+  requiredDocSlots: jsonb("required_doc_slots"),
+  requiredDocsNote: text("required_docs_note"),
+  docValidId: jsonb("doc_valid_id"),
+  docMayorsPermit: jsonb("doc_mayors_permit"),
+  docSecDti: jsonb("doc_sec_dti"),
+  docBirCertificate: jsonb("doc_bir_certificate"),
+  docLocationMap: jsonb("doc_location_map"),
+  docFinancialStatement: jsonb("doc_financial_statement"),
+  docBankStatement: jsonb("doc_bank_statement"),
+  docProofOfBilling: jsonb("doc_proof_of_billing"),
+  docLeaseContract: jsonb("doc_lease_contract"),
+  docProofOfOwnership: jsonb("doc_proof_of_ownership"),
+  docStorePhoto: jsonb("doc_store_photo"),
+  docSupplierInvoice: jsonb("doc_supplier_invoice"),
+  docSocialMedia: jsonb("doc_social_media"),
+  docCompanyWebsite: jsonb("doc_company_website"),
+  docIsoCertification: jsonb("doc_iso_certification"),
+  docHalalCertificate: jsonb("doc_halal_certificate"),
+  docOther: jsonb("doc_other"),
+  financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
+  financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
+  financeMetricPoints: jsonb("finance_metric_points"),
+  beforeSnapshot: jsonb("before_snapshot"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  index("ctr_agent_id_created_at_idx").on(t.agentId, t.createdAt.desc()),
+  index("ctr_cis_id_idx").on(t.cisId),
+  index("ctr_status_created_at_idx").on(t.status, t.createdAt.desc()),
+]);
+
+export const ctrEvents = pgTable("ctr_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ctrId: uuid("ctr_id").notNull().references(() => ctrSubmissions.id),
+  actorId: uuid("actor_id").notNull().references(() => users.id),
+  action: text("action").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("ctr_events_ctr_id_idx").on(t.ctrId, t.createdAt),
+]);
+
 // --- Inferred types ---
 
 export type User = typeof users.$inferSelect;
@@ -370,3 +438,5 @@ export type WorkflowEvent = typeof workflowEvents.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type CusSubmission = typeof cusSubmissions.$inferSelect;
 export type CusEvent = typeof cusEvents.$inferSelect;
+export type CtrSubmission = typeof ctrSubmissions.$inferSelect;
+export type CtrEvent = typeof ctrEvents.$inferSelect;
