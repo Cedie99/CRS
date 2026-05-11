@@ -25,6 +25,7 @@ export async function PATCH(
       agentId: cusSubmissions.agentId,
       status: cusSubmissions.status,
       cisId: cusSubmissions.cisId,
+      newCustomerType: cusSubmissions.newCustomerType,
     })
     .from(cusSubmissions)
     .where(eq(cusSubmissions.id, id))
@@ -48,8 +49,11 @@ export async function PATCH(
 
   if (!cis) return NextResponse.json({ error: "Linked CIS not found" }, { status: 404 });
 
+  // If the CUS requests a customer type reclassification, route based on the
+  // new type — not the original CIS type.
+  const effectiveCustomerType = cus.newCustomerType ?? cis.customerType;
   const nextStatus =
-    cis.customerType === "dealer" ? "pending_legal_review" : "pending_finance_review";
+    effectiveCustomerType === "dealer" ? "pending_legal_review" : "pending_finance_review";
 
   const reviewerRole =
     nextStatus === "pending_legal_review" ? "legal_approver" : "finance_reviewer";

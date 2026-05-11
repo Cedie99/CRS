@@ -338,15 +338,16 @@ export function DocUploadSlot({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <p
             className={
+              "truncate " + (
               reviewStatus === "rejected"
                 ? "text-sm font-medium text-red-600"
                 : hasAcceptedFiles
                   ? "text-sm font-medium text-green-700 line-through decoration-2 decoration-green-600"
-                  : "text-sm font-medium text-zinc-900"
+                  : "text-sm font-medium text-zinc-900")
             }
           >
             {label}
@@ -362,28 +363,29 @@ export function DocUploadSlot({
             </span>
           ) : null}
         </div>
-        {!hideUploadButtons && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={disabled || uploading}
-            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 sm:flex-none"
-          >
-            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-            Upload
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void openCamera();
-            }}
-            disabled={disabled || uploading}
-            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 sm:flex-none"
-          >
-            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
-            Take Photo
-          </button>
-        </div>}
+        {!hideUploadButtons && (
+          <div className="flex shrink-0 overflow-hidden rounded-md border border-zinc-200">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={disabled || uploading}
+              className="flex h-8 items-center gap-1.5 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              Upload
+            </button>
+            <div className="w-px self-stretch bg-zinc-200" />
+            <button
+              type="button"
+              onClick={() => { void openCamera(); }}
+              disabled={disabled || uploading}
+              className="flex h-8 items-center gap-1.5 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              Take Photo
+            </button>
+          </div>
+        )}
         {!hideUploadButtons && <>
         <input
           ref={inputRef}

@@ -12,6 +12,7 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function SupportCisDetailPage({
   params,
@@ -56,6 +57,8 @@ export default async function SupportCisDetailPage({
   const canPrint = needsPhysicalSignature || cis.status === "erp_encoded";
 
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Link
@@ -72,14 +75,6 @@ export default async function SupportCisDetailPage({
         </div>
       )}
 
-      {canAct && (
-        <SalesSupportFillOutActions
-          cisId={id}
-          initialOtherDocs={(cis.docSalesSupportOther as any) ?? []}
-        />
-      )}
-
-
       <CusApprovedBanner
         cisId={cis.id}
         originalCreditTerms={cis.financeCreditTerms}
@@ -90,6 +85,7 @@ export default async function SupportCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             printEnabled={canPrint}
             cisId={cis.id}
             pointsMode="summary"
@@ -180,6 +176,8 @@ export default async function SupportCisDetailPage({
             agentSalesManager={cis.agentSalesManager}
             agentTpcFirst={cis.agentTpcFirst}
             agentTpcLast={cis.agentTpcLast}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             salesSupportAccountType={cis.salesSupportAccountType}
             salesSupportPriceList1={cis.salesSupportPriceList1}
             salesSupportPriceList2={cis.salesSupportPriceList2}
@@ -207,6 +205,13 @@ export default async function SupportCisDetailPage({
           </Card>
         </div>
       </div>
+
+      {canAct && (
+        <SalesSupportFillOutActions
+          cisId={id}
+          initialOtherDocs={(cis.docSalesSupportOther as any) ?? []}
+        />
+      )}
     </div>
   );
 }
