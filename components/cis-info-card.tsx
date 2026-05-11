@@ -56,9 +56,6 @@ const SALES_CHANNEL_LABELS: Record<string, string> = {
 };
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "End-User",
-  fs_petroleum: "FS Petroleum",
-  special: "Special",
   dealer: "Dealer",
   distributor: "Distributor",
   private_label: "Private Label",
@@ -67,9 +64,6 @@ const CUSTOMER_TYPE_LABELS: Record<string, string> = {
 };
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
-  standard: "bg-green-50 text-green-700 border border-green-100",
-  fs_petroleum: "bg-purple-50 text-purple-700 border border-purple-100",
-  special: "bg-amber-50 text-amber-700 border border-amber-100",
   dealer: "bg-blue-50 text-blue-700 border border-blue-100",
   distributor: "bg-teal-50 text-teal-700 border border-teal-100",
   private_label: "bg-violet-50 text-violet-700 border border-violet-100",
@@ -453,6 +447,11 @@ interface CisInfoCardProps {
   onDocReview?: (docType: DocType, status: DocReviewStatus, reason?: string | null) => Promise<void>;
   /** Called when Finance saves metric points inline from the doc review panel */
   onMetricSave?: (metricPoints: Record<string, number>) => Promise<void>;
+  /**
+   * Optional map of CIS field names → their previous values captured by an approved CUS.
+   * When provided, the previous value is shown with low opacity above the current value.
+   */
+  fieldHistory?: Record<string, string | null>;
   /** Hide the PointsBreakdownPanel from the main form (it will still be shown in print mode) */
   hidePointsPanel?: boolean;
   /** Controls how much of the scoring panel is visible. "summary" = agent view (total + terms only). "full" = finance/staff view (default). */
@@ -561,7 +560,7 @@ function MetricPointPicker({
       {hasExistingPoints && (
         <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
           <p className="text-[10px] text-emerald-700">
-            <span className="font-semibold">Points have been recorded.</span> To make changes, contact the system administrator.
+            <span className="font-semibold">Points have been recorded.</span> You may update them below if needed.
           </p>
         </div>
       )}
@@ -585,15 +584,13 @@ function MetricPointPicker({
                     <button
                       key={tier.pts}
                       type="button"
-                      onClick={() => !hasExistingPoints && setValues((prev) => ({ ...prev, [key]: tier.pts }))}
-                      disabled={hasExistingPoints}
+                      onClick={() => setValues((prev) => ({ ...prev, [key]: tier.pts }))}
                       className={cn(
                         "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
                         i !== 0 && "border-t border-zinc-100",
                         isSelected
                           ? "bg-violet-50"
                           : "bg-white hover:bg-zinc-50",
-                        hasExistingPoints && "cursor-default",
                       )}
                     >
                       {/* Radio circle */}
@@ -629,43 +626,41 @@ function MetricPointPicker({
       </div>
 
       {/* Save button */}
-      {!hasExistingPoints && (
-        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2.5">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || !allSelected}
-            className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition-all",
-              allSelected && !saving
-                ? "bg-violet-600 text-white shadow-sm hover:bg-violet-700 active:scale-[0.98]"
-                : "bg-zinc-200 text-zinc-400 cursor-not-allowed",
-            )}
-          >
-            {saving ? (
-              <>
-                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Saving Points…
-              </>
-            ) : (
-              <>
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                {allSelected ? "Save Scoring Points" : "Select all metrics to save"}
-              </>
-            )}
-          </button>
-          {!allSelected && (
-            <p className="mt-1.5 text-center text-[10px] text-zinc-400">
-              {metricKeys.filter((k) => values[k] == null).length} of {metricKeys.length} metrics not yet scored
-            </p>
+      <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2.5">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || !allSelected}
+          className={cn(
+            "flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition-all",
+            allSelected && !saving
+              ? "bg-violet-600 text-white shadow-sm hover:bg-violet-700 active:scale-[0.98]"
+              : "bg-zinc-200 text-zinc-400 cursor-not-allowed",
           )}
-        </div>
-      )}
+        >
+          {saving ? (
+            <>
+              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Saving Points…
+            </>
+          ) : (
+            <>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              {allSelected ? "Save Scoring Points" : "Select all metrics to save"}
+            </>
+          )}
+        </button>
+        {!allSelected && (
+          <p className="mt-1.5 text-center text-[10px] text-zinc-400">
+            {metricKeys.filter((k) => values[k] == null).length} of {metricKeys.length} metrics not yet scored
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -676,6 +671,7 @@ function Field({
   icon: Icon,
   mono,
   printBlank,
+  oldValue,
 }: {
   label: string;
   value?: string | null;
@@ -683,14 +679,26 @@ function Field({
   mono?: boolean;
   /** On print, show a blank underline instead of — when value is empty */
   printBlank?: boolean;
+  /** Previous value from an approved CUS — shown faded above the current value */
+  oldValue?: string | null;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3 print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-3">
-      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 print:text-[13px] print:text-zinc-500">
-        {Icon && <Icon className="h-3 w-3 print:hidden" />}
+    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white p-4 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-3">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500 print:text-[13px] print:text-zinc-500">
+        {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
       </p>
-      <p className={`mt-1 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 print:mt-1 print:text-[20px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
+      {oldValue && (
+        <div className="mt-1.5 print:hidden">
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+            Updated
+          </span>
+          <p className={`mt-0.5 min-w-0 wrap-break-word text-xs leading-relaxed text-zinc-400 line-through opacity-60 ${mono ? "font-mono" : ""}`}>
+            {oldValue}
+          </p>
+        </div>
+      )}
+      <p className={`mt-1.5 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-1 print:text-[20px] print:leading-[1.4] ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
@@ -893,7 +901,19 @@ export function CisInfoCard(props: CisInfoCardProps) {
     metricPoints,
     hidePointsPanel = false,
     pointsMode = "full",
+    fieldHistory,
   } = props;
+
+  // Helper: get old value from fieldHistory for a given CIS field key
+  const old = (key: string): string | null | undefined => {
+    if (!fieldHistory) return undefined;
+    if (!(key in fieldHistory)) return undefined;
+    const v = fieldHistory[key];
+    // For customerType, humanize the raw enum value
+    if (key === "customerType" && v) return CUSTOMER_TYPE_LABELS[v] ?? v.replace(/_/g, " ");
+    if (key === "financeCreditTerms" && v) return v.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return v;
+  };
 
   const hasSignatures = customerSignature || approverSignature;
 
@@ -921,7 +941,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     label: DOC_LABELS[slot.key],
     files: (props[slot.key as keyof CisInfoCardProps] as FileEntry[] | null) ?? [],
   }));
-  const docEntries = allDocEntries.filter((e) => e.files.length > 0 && e.key !== "docAgentOtherRequirements");
+  const docEntries = allDocEntries.filter((e) => e.files.length > 0 && e.key !== "docAgentOtherRequirements" && e.key !== "docSalesSupportOther");
   const allDocsByType = Object.fromEntries(
     allDocEntries.map((entry) => [entry.key, entry.files])
   ) as Record<DocType, FileEntry[]>;
@@ -991,9 +1011,10 @@ export function CisInfoCard(props: CisInfoCardProps) {
   const showCfoSignatureBox = !hasCfoSigned && canPrint;
 
   const agentOtherDocs = sortFilesByUploadedAtDesc(allDocsByType.docAgentOtherRequirements ?? []);
+  const salesSupportOtherDocs = sortFilesByUploadedAtDesc(allDocsByType.docSalesSupportOther ?? []);
   const hasAgentInfo = agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast || agentOtherDocs.length > 0;
   const hasFinanceData = financeEu || financeDl || financeDr || financePlTs || financePossiblePoints != null || financeApprovedPoints != null || financeCreditLimit || financeCreditTerms;
-  const hasSalesSupportData = salesSupportAccountType || salesSupportPriceList1 || salesSupportPriceList2 || salesSupportSalesType || salesSupportVatCode || salesSupportOtherRemarks;
+  const hasSalesSupportData = salesSupportAccountType || salesSupportPriceList1 || salesSupportPriceList2 || salesSupportSalesType || salesSupportVatCode || salesSupportOtherRemarks || salesSupportOtherDocs.length > 0;
 
   const hasDelivery = !deliverySameAsOffice && (deliveryAddress || deliveryMobile || deliveryTelephone);
   const hasClassification = lineOfBusiness || businessActivity;
@@ -1084,9 +1105,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionTitle icon={Briefcase} label="Business Information" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             {corporateName && <div className="sm:col-span-2 lg:col-span-3"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} /></div>}
-            <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} />
+            <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} oldValue={old("tradeName")} />
             {dateOfBusinessReg && <Field label="Date of Registration" value={dateOfBusinessReg} />}
-            {numberOfEmployees && <Field label="No. of Employees" value={numberOfEmployees} icon={Users} />}
+            {numberOfEmployees && <Field label="No. of Employees" value={numberOfEmployees} icon={Users} oldValue={old("numberOfEmployees")} />}
           </div>
         </SectionCard>
 
@@ -1094,11 +1115,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
         <SectionCard>
           <SectionTitle icon={User} label="Contact Details" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
-            <Field label="Contact Person" value={contactPerson} icon={User} />
-            <Field label="Email Address" value={emailAddress} icon={Mail} />
-            <Field label="Mobile Number" value={contactNumber} icon={Phone} />
-            {telephoneNumber && <Field label="Telephone" value={telephoneNumber} icon={Phone} />}
-            {website && <div className="sm:col-span-2 lg:col-span-1"><Field label="Website" value={website} icon={LinkIcon} /></div>}
+            <Field label="Contact Person" value={contactPerson} icon={User} oldValue={old("contactPerson")} />
+            <Field label="Email Address" value={emailAddress} icon={Mail} oldValue={old("emailAddress")} />
+            <Field label="Mobile Number" value={contactNumber} icon={Phone} oldValue={old("contactNumber")} />
+            {(telephoneNumber || old("telephoneNumber")) && <Field label="Telephone" value={telephoneNumber} icon={Phone} oldValue={old("telephoneNumber")} />}
+            {(website || old("website")) && <div className="sm:col-span-2 lg:col-span-1"><Field label="Website" value={website} icon={LinkIcon} oldValue={old("website")} /></div>}
           </div>
         </SectionCard>
 
@@ -1107,22 +1128,22 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionTitle icon={MapPin} label="Office Address" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             <div className="sm:col-span-2 lg:col-span-3">
-              <Field label="Street Address" value={businessAddress} icon={MapPin} />
+              <Field label="Street Address" value={businessAddress} icon={MapPin} oldValue={old("businessAddress")} />
             </div>
-            <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} />
-            {landmarks && <Field label="Landmarks" value={landmarks} />}
+            <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} oldValue={old("cityMunicipality")} />
+            {(landmarks || old("landmarks")) && <Field label="Landmarks" value={landmarks} oldValue={old("landmarks")} />}
           </div>
         </SectionCard>
 
         {/* ── Delivery Address ── */}
-        {hasDelivery && (
+        {(hasDelivery || old("deliveryAddress") || old("deliveryMobile") || old("deliveryTelephone")) && (
           <SectionCard>
               <SectionTitle icon={MapPin} label="Delivery Address" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
-                {deliveryAddress && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} /></div>}
+                {(deliveryAddress || old("deliveryAddress")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} oldValue={old("deliveryAddress")} /></div>}
                 {deliveryLandmarks && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Landmarks" value={deliveryLandmarks} /></div>}
-                {deliveryMobile && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} />}
-                {deliveryTelephone && <Field label="Delivery Telephone" value={deliveryTelephone} icon={Phone} />}
+                {(deliveryMobile || old("deliveryMobile")) && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} oldValue={old("deliveryMobile")} />}
+                {(deliveryTelephone || old("deliveryTelephone")) && <Field label="Delivery Telephone" value={deliveryTelephone} icon={Phone} oldValue={old("deliveryTelephone")} />}
               </div>
           </SectionCard>
         )}
@@ -1587,8 +1608,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 </div>
               )}
               <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-                <Field label="Credit Limit" value={financeCreditLimit} printBlank />
-                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} printBlank />
+                <Field label="Credit Limit" value={financeCreditLimit} printBlank oldValue={old("financeCreditLimit")} />
+                <Field label="Credit Terms" value={financeCreditTerms ? (FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)) : null} printBlank oldValue={old("financeCreditTerms")} />
                 <Field label="Price List / Terms & Schedule (PL/TS)" value={financePlTs} />
               </div>
               <div className={hidePointsPanel ? "hidden print:block" : ""}>
@@ -1603,21 +1624,6 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   mode={pointsMode}
                 />
               </div>
-          </SectionCard>
-        )}
-
-        {/* ── Sales Support Evaluation ── */}
-        {hasSalesSupportData && (
-          <SectionCard>
-            <SectionTitle icon={Users} label="Sales Support Evaluation" />
-            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
-              {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} />}
-              {salesSupportPriceList1 && <Field label="Price List 1" value={salesSupportPriceList1} />}
-              {salesSupportPriceList2 && <Field label="Price List 2" value={salesSupportPriceList2} />}
-              {salesSupportSalesType && <Field label="Sales Type" value={salesSupportSalesType} />}
-              {salesSupportVatCode && <Field label="VAT Code" value={salesSupportVatCode} />}
-              {salesSupportOtherRemarks && <div className="sm:col-span-2"><Field label="Other Remarks" value={salesSupportOtherRemarks} /></div>}
-            </div>
           </SectionCard>
         )}
 
@@ -1701,6 +1707,50 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </div>
             </div>
         </SectionCard>}
+
+        {/* ── Sales Support Evaluation ── */}
+        {hasSalesSupportData && (
+          <SectionCard>
+            <SectionTitle icon={Users} label="Sales Support Evaluation" />
+            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} />}
+              {salesSupportPriceList1 && <Field label="Price List 1" value={salesSupportPriceList1} />}
+              {salesSupportPriceList2 && <Field label="Price List 2" value={salesSupportPriceList2} />}
+              {salesSupportSalesType && <Field label="Sales Type" value={salesSupportSalesType} />}
+              {salesSupportVatCode && <Field label="VAT Code" value={salesSupportVatCode} />}
+              {salesSupportOtherRemarks && <div className="sm:col-span-2"><Field label="Other Remarks" value={salesSupportOtherRemarks} /></div>}
+            </div>
+            {salesSupportOtherDocs.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Other Documents for New Pricelist</p>
+                <div className="space-y-2">
+                  {salesSupportOtherDocs.map((f) => {
+                    const isImage = isImageFile(f);
+                    const isPdf = isPdfFile(f);
+                    const isDocx = isDocxFile(f);
+                    return (
+                      <div key={f.url} className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                        {isImage && (
+                          <a href={f.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
+                            <img src={f.url} alt={f.name} className="max-h-56 w-auto max-w-full rounded border border-zinc-200 object-contain" />
+                          </a>
+                        )}
+                        {isPdf && <div className="mb-2"><PdfPrintRenderer url={f.url} name={f.name} /></div>}
+                        {isDocx && <div className="mb-2"><DocxRenderer url={f.url} name={f.name} /></div>}
+                        <a href={f.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                          <span className="flex-1 truncate">{f.name}</span>
+                          <span className="shrink-0 text-[10px] text-zinc-400">{(f.size / 1024).toFixed(0)} KB</span>
+                        </a>
+                        <p className="mt-1 text-[10px] text-zinc-400">{formatUploadedAt(f.uploadedAt)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </SectionCard>
+        )}
 
         {/* Screen footer */}
         <div className="print:hidden">
