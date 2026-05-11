@@ -22,22 +22,33 @@ const CREDIT_TERMS_OPTIONS = [
   { value: "60_days", label: "60 Days" },
 ];
 
+const CUSTOMER_TYPE_OPTIONS = [
+  { value: "dealer", label: "Dealer" },
+  { value: "distributor", label: "Distributor" },
+  { value: "private_label", label: "Private Label" },
+  { value: "toll_blend", label: "Toll Blend" },
+  { value: "end_user", label: "End User" },
+];
+
 export function CusFinancePanel({
   cusId,
   initialCreditLimit,
   initialCreditTerms,
+  newCustomerType: initialNewCustomerType,
   backHref,
   isLegal = false,
 }: {
   cusId: string;
   initialCreditLimit: string;
   initialCreditTerms: string;
+  newCustomerType?: string;
   backHref: string;
   isLegal?: boolean;
 }) {
   const router = useRouter();
   const [creditLimit, setCreditLimit] = useState(initialCreditLimit);
   const [creditTerms, setCreditTerms] = useState(initialCreditTerms);
+  const [newCustomerType, setNewCustomerType] = useState(initialNewCustomerType ?? "");
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
   const [denying, setDenying] = useState(false);
@@ -55,7 +66,11 @@ export function CusFinancePanel({
       const res = await fetch(`/api/cus/${cusId}/finance-save`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ financeCreditLimit: creditLimit, financeCreditTerms: creditTerms }),
+        body: JSON.stringify({
+          financeCreditLimit: creditLimit,
+          financeCreditTerms: creditTerms,
+          newCustomerType: newCustomerType || undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -110,154 +125,142 @@ export function CusFinancePanel({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Credit evaluation form */}
-      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-        <div className={`border-b px-5 py-3 ${accentClass} border-opacity-50`}>
-          <h2 className="text-sm font-semibold">Credit Evaluation</h2>
-          <p className="text-xs mt-0.5 opacity-80">Set the credit terms to grant upon approval.</p>
+    <div>
+      {/* Fields */}
+      <div className="p-4 space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="creditLimit" className="text-xs">
+            Credit Limit
+          </Label>
+          <Input
+            id="creditLimit"
+            placeholder="e.g. ₱500,000"
+            value={creditLimit}
+            onChange={(e) => setCreditLimit(e.target.value)}
+            className="h-8 text-sm"
+          />
         </div>
-        <div className="p-5 space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="creditTerms" className="text-xs">Credit Terms</Label>
+          <Select value={creditTerms} onValueChange={(v) => setCreditTerms(v ?? "")}>
+            <SelectTrigger id="creditTerms" className="w-full h-8 text-sm">
+              <SelectValue placeholder="Select terms..." />
+            </SelectTrigger>
+            <SelectContent>
+              {CREDIT_TERMS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {initialNewCustomerType && (
           <div className="space-y-1.5">
-            <Label htmlFor="creditLimit">
-              Credit Limit <span className="text-zinc-400 font-normal text-xs">(e.g. ₱500,000)</span>
+            <Label htmlFor="newCustomerType" className="text-xs text-zinc-600">
+              Override customer type
             </Label>
-            <Input
-              id="creditLimit"
-              placeholder="₱0.00"
-              value={creditLimit}
-              onChange={(e) => setCreditLimit(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="creditTerms">Credit Terms</Label>
-            <Select value={creditTerms} onValueChange={(v) => setCreditTerms(v ?? "")}>
-              <SelectTrigger id="creditTerms" className="w-full">
-                <SelectValue placeholder="Select payment terms..." />
+            <Select value={newCustomerType} onValueChange={(v) => setNewCustomerType(v ?? "")}>
+              <SelectTrigger id="newCustomerType" className="w-full h-8 text-sm">
+                <SelectValue placeholder="Confirm or override..." />
               </SelectTrigger>
               <SelectContent>
-                {CREDIT_TERMS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
+                {CUSTOMER_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+        )}
 
+        {/* Save row */}
+        <div className="flex justify-end pt-1">
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="w-full gap-1.5"
+            className="h-7 gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 px-2"
           >
-            {saving ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
-            ) : (
-              <><Save className="h-4 w-4" />Save Draft</>
-            )}
+            {saving ? <><Loader2 className="h-3 w-3 animate-spin" />Saving...</> : <><Save className="h-3 w-3" />Save draft</>}
           </Button>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-        <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3">
-          <h2 className="text-sm font-semibold text-zinc-700">Decision</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Approve or deny this credit upgrade request.</p>
-        </div>
-        <div className="p-5 space-y-3">
-          {!showApproveConfirm && !showDenyDialog && (
-            <div className="space-y-2">
-              <Button
-                onClick={() => setShowApproveConfirm(true)}
-                disabled={approving || denying}
-                className="w-full gap-1.5 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Approve CUS
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDenyDialog(true)}
-                disabled={approving || denying}
-                className="w-full gap-1.5 border-red-200 text-red-700 hover:bg-red-50"
-              >
-                <XCircle className="h-4 w-4" />
-                Deny CUS
-              </Button>
-            </div>
-          )}
+      {/* Decision area */}
+      <div className="border-t border-zinc-200">
+        {!showApproveConfirm && !showDenyDialog && (
+          <div className="flex gap-2 px-4 py-3">
+            <Button
+              onClick={() => setShowApproveConfirm(true)}
+              disabled={approving || denying}
+              size="sm"
+              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowDenyDialog(true)}
+              disabled={approving || denying}
+              size="sm"
+              className="flex-1 gap-1.5 border-red-200 text-red-700 hover:bg-red-50"
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Deny
+            </Button>
+          </div>
+        )}
 
-          {showApproveConfirm && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-green-800">Confirm Approval</p>
-                  <p className="text-xs text-green-700 mt-0.5">
-                    {creditTerms
-                      ? <>This will grant <strong>{CREDIT_TERMS_OPTIONS.find(o => o.value === creditTerms)?.label ?? creditTerms}</strong> credit terms
-                        {creditLimit ? <> with a limit of <strong>{creditLimit}</strong></> : ""}.</>
-                      : "Make sure you've set the credit limit and terms before approving."
-                    }
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleApprove}
-                  disabled={approving}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5"
-                >
-                  {approving ? <><Loader2 className="h-4 w-4 animate-spin" />Approving...</> : "Yes, Approve"}
-                </Button>
-                <Button variant="outline" onClick={() => setShowApproveConfirm(false)} disabled={approving} className="flex-1">
-                  Cancel
-                </Button>
+        {showApproveConfirm && (
+          <div className="px-4 py-3 space-y-3 bg-green-50">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">Confirm Approval</p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  {creditTerms
+                    ? <>Grant <strong>{CREDIT_TERMS_OPTIONS.find(o => o.value === creditTerms)?.label ?? creditTerms}</strong>
+                        {creditLimit ? <> · <strong>{creditLimit}</strong></> : ""}.</>
+                    : "Set credit terms before approving."
+                  }
+                </p>
               </div>
             </div>
-          )}
+            <div className="flex gap-2">
+              <Button onClick={handleApprove} disabled={approving} size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-1.5">
+                {approving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Approving...</> : "Yes, Approve"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowApproveConfirm(false)} disabled={approving}>Cancel</Button>
+            </div>
+          </div>
+        )}
 
-          {showDenyDialog && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-red-800">Deny this CUS?</p>
-                  <p className="text-xs text-red-700 mt-0.5">
-                    The agent will be notified. This action cannot be undone.
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="denyNote" className="text-red-700 text-xs">
-                  Reason for denial <span className="font-normal">(optional but recommended)</span>
-                </Label>
-                <Textarea
-                  id="denyNote"
-                  placeholder="e.g. Insufficient financial documents, unable to verify business income..."
-                  value={denyNote}
-                  onChange={(e) => setDenyNote(e.target.value)}
-                  rows={3}
-                  className="text-sm"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleDeny}
-                  disabled={denying}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white gap-1.5"
-                >
-                  {denying ? <><Loader2 className="h-4 w-4 animate-spin" />Denying...</> : "Confirm Deny"}
-                </Button>
-                <Button variant="outline" onClick={() => setShowDenyDialog(false)} disabled={denying} className="flex-1">
-                  Cancel
-                </Button>
+        {showDenyDialog && (
+          <div className="px-4 py-3 space-y-3 bg-red-50">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-800">Deny this CUS?</p>
+                <p className="text-xs text-red-700 mt-0.5">The agent will be notified. This cannot be undone.</p>
               </div>
             </div>
-          )}
-        </div>
+            <Textarea
+              id="denyNote"
+              placeholder="Reason for denial (optional)..."
+              value={denyNote}
+              onChange={(e) => setDenyNote(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+            <div className="flex gap-2">
+              <Button onClick={handleDeny} disabled={denying} size="sm" className="bg-red-600 hover:bg-red-700 text-white gap-1.5">
+                {denying ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Denying...</> : "Confirm Deny"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowDenyDialog(false)} disabled={denying}>Cancel</Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

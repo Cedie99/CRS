@@ -151,30 +151,30 @@ function RolePill({ roleKey, action, label }: RolePillProps) {
   if (!role) return null;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
         {label === "with" ? (
-          <Inbox className="h-3 w-3" />
+          <Inbox className="h-3.5 w-3.5" />
         ) : (
-          <Send className="h-3 w-3" />
+          <Send className="h-3.5 w-3.5" />
         )}
         {label === "with" ? "Currently with" : "Will forward to"}
       </span>
       <div
         className={cn(
-          "inline-flex items-center gap-2 rounded-lg border px-3 py-2",
+          "inline-flex items-center gap-3 rounded-xl border-2 px-4 py-3 shadow-sm transition-all hover:shadow-md",
           role.bgColor,
           role.borderColor
         )}
       >
         <span
-          className={cn("h-2 w-2 shrink-0 rounded-full", role.dotColor)}
+          className={cn("h-2.5 w-2.5 shrink-0 rounded-full shadow-sm", role.dotColor)}
         />
         <div className="min-w-0">
-          <p className={cn("text-sm font-semibold leading-tight", role.textColor)}>
+          <p className={cn("text-sm font-bold leading-tight", role.textColor)}>
             {role.label}
           </p>
-          <p className="mt-0.5 text-xs text-zinc-500 leading-snug">{action}</p>
+          <p className="mt-1 text-xs text-zinc-600 leading-snug font-medium">{action}</p>
         </div>
       </div>
     </div>
@@ -191,20 +191,20 @@ export function WorkflowHandoff({ status, customerType }: WorkflowHandoffProps) 
   if (!handoff) return null;
 
   return (
-    <div className="rounded-xl border bg-white px-4 py-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-white to-zinc-50 px-5 py-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         <RolePill roleKey={handoff.current.role} action={handoff.current.action} label="with" />
 
         {handoff.next ? (
           <>
-            <div className="flex items-center justify-center sm:mt-8 sm:shrink-0">
-              <ArrowRight className="h-4 w-4 rotate-90 text-zinc-300 sm:rotate-0" />
+            <div className="flex items-center justify-center sm:mt-10 sm:shrink-0">
+              <ArrowRight className="h-5 w-5 rotate-90 text-zinc-400 sm:rotate-0" />
             </div>
             <RolePill roleKey={handoff.next.role} action={handoff.next.action} label="next" />
           </>
         ) : (
-          <div className="flex items-center justify-center sm:mt-8 sm:shrink-0">
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+          <div className="flex items-center justify-center sm:mt-10 sm:shrink-0">
+            <span className="rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
               Final step
             </span>
           </div>

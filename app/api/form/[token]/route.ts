@@ -62,18 +62,6 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  // Valid ID is required when payment terms is credit
-  const paymentTerms = parsed.data.paymentTerms ?? "";
-  if (
-    ["with_terms", "credit_30", "credit_60", "credit_90"].includes(paymentTerms) &&
-    (!body.docValidId || (Array.isArray(body.docValidId) && body.docValidId.length === 0))
-  ) {
-    return NextResponse.json(
-      { error: { docValidId: ["Valid ID is required for credit terms."] } },
-      { status: 400 }
-    );
-  }
-
   // Default blank TIN to "0000000"
   const tinNumber = parsed.data.tinNumber?.trim() || "0000000";
 

@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import type { CisStatus } from "@/components/status-badge";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function SpecialistCisDetailPage({
   params,
@@ -63,6 +64,8 @@ export default async function SpecialistCisDetailPage({
 
   const canAct = cis.status === "pending_erp_encoding" && !isReadOnlyContextView;
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Link
@@ -90,6 +93,7 @@ export default async function SpecialistCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
             pointsMode="summary"
             tradeName={cis.tradeName}
@@ -179,6 +183,8 @@ export default async function SpecialistCisDetailPage({
             agentSalesManager={cis.agentSalesManager}
             agentTpcFirst={cis.agentTpcFirst}
             agentTpcLast={cis.agentTpcLast}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             salesSupportAccountType={cis.salesSupportAccountType}
             salesSupportPriceList1={cis.salesSupportPriceList1}
             salesSupportPriceList2={cis.salesSupportPriceList2}

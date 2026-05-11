@@ -25,9 +25,11 @@ const ROLE_SCOPES: Record<string, Scope[]> = {
 };
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "Standard",
-  fs_petroleum: "FS Petroleum",
-  special: "Special",
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+  end_user: "End-User",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -173,7 +175,7 @@ export async function GET(req: Request) {
   const rows = whereClause ? await query.where(whereClause) : await query;
 
   const normalizedRows = rows.map((r) => {
-    const customerType = r.customerType ?? "standard";
+    const customerType = r.customerType ?? "end_user";
 
     return {
       ID: r.id,

@@ -340,13 +340,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
         errs.businessActivityOther = "Please specify";
       }
     }
-    if (step === 5) {
-      for (const key of requiredDocs) {
-        if ((docs[key] ?? []).length === 0) {
-          errs[key as keyof FieldErrors] = "This document is required.";
-        }
-      }
-    }
+
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return false;
@@ -906,7 +900,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
               {/* Required document guidance banner */}
               <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
                 <p className="font-semibold">
-                  Required for {customerType === "end_user" ? "End-User" : customerType === "dealer" ? "Dealer" : customerType === "distributor" ? "Distributor" : customerType === "private_label" ? "Private Label" : customerType === "toll_blend" ? "Toll Blend" : "your account type"}
+                  Recommended for {customerType === "end_user" ? "End-User" : customerType === "dealer" ? "Dealer" : customerType === "distributor" ? "Distributor" : customerType === "private_label" ? "Private Label" : customerType === "toll_blend" ? "Toll Blend" : "your account type"}
                   {withTermsSelected ? " (With Terms)" : " (COD/Prepaid)"}:
                 </p>
                 <ul className="mt-1.5 list-disc pl-4 text-xs space-y-0.5">
@@ -915,17 +909,17 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                   {(isCorporateType || withTermsSelected) && <li>BIR Certificate of Registration</li>}
                   {withTermsSelected && <li>3-Month Bank Statement / Bank Authorization Letter</li>}
                 </ul>
+                <p className="mt-2 text-xs text-blue-600">You may continue without uploading, but these will be needed for review.</p>
               </div>
 
               <div className="space-y-4">
                 {SCORING_DOC_SLOTS.filter((s) => s.key !== "docIsoCertification" && s.key !== "docHalalCertificate").map((slot) => {
                   const isRequired = requiredDocs.includes(slot.key);
-                  const slotError = errors[slot.key as keyof FieldErrors];
                   return (
                     <div key={slot.key}>
                       {isRequired && (
-                        <p className="mb-1 text-xs font-semibold text-red-600 flex items-center gap-1">
-                          <span className="font-bold text-red-600 text-base leading-none">*</span> Required
+                        <p className="mb-1 text-xs font-semibold text-amber-600 flex items-center gap-1">
+                          <span className="font-bold text-amber-600 text-base leading-none">*</span> Recommended
                         </p>
                       )}
                       <DocUploadSlot
@@ -937,9 +931,6 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                         disabled={isLoading}
                         allowDelete={slot.key !== "docMayorsPermit"}
                       />
-                      {slotError && (
-                        <p className="mt-1 text-xs text-red-600">{slotError}</p>
-                      )}
                     </div>
                   );
                 })}

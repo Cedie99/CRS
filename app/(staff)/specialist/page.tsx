@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Database, CheckCircle, XCircle, Clock, LayoutList } from "lucide-react";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import type { CisStatus } from "@/components/status-badge";
+import { ActionRequiredSection } from "@/components/action-required-section";
 
 export const metadata = { title: "Project Development - CRS" };
 
@@ -202,6 +203,8 @@ export default async function SpecialistDashboard({
 
       <DashboardFilters />
 
+      
+
       <div className="rounded-xl border border-zinc-200 bg-white">
         <div className="px-4 py-3">
           <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
@@ -222,6 +225,20 @@ export default async function SpecialistDashboard({
           ))}
         </div>
       </div>
+
+      {!isAllView && (
+        <ActionRequiredSection
+          submissions={rows
+            .filter((r) => r.status === "pending_erp_encoding")
+            .map((r) => ({ ...r, status: r.status as CisStatus }))}
+          totalCount={pendingTotal}
+          hrefPrefix="specialist"
+          label="Forms You Need to Encode to ERP"
+          sublabel="These accounts have been approved and are waiting to be encoded into the ERP system."
+          accentClass="border-indigo-300 bg-indigo-50/60"
+          badgeClass="bg-indigo-100 text-indigo-800"
+        />
+      )}
 
       <CustomerTypeNavCards
         basePath="/specialist"

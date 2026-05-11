@@ -194,16 +194,16 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
     currentIndex <= 0 ? 0 : (currentIndex / Math.max(steps.length - 1, 1)) * 100;
 
   return (
-    <div className="animate-in fade-in-0 slide-in-from-bottom-1 rounded-2xl border border-zinc-200 bg-linear-to-b from-zinc-50 to-white p-4 shadow-sm duration-500 md:p-5">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="animate-in fade-in-0 slide-in-from-bottom-1 rounded-2xl border border-zinc-200/80 bg-linear-to-br from-white via-zinc-50 to-white p-5 shadow-md md:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-400">
             Workflow Progress
           </p>
-          <h3 className="mt-1 text-lg font-bold tracking-tight text-zinc-900 md:text-xl">
+          <h3 className="mt-1.5 text-xl font-bold tracking-tight text-zinc-900 md:text-2xl">
             {isDone ? "Workflow completed" : "Form is moving forward"}
           </h3>
-          <p className="mt-0.5 text-xs text-zinc-600 md:text-sm">
+          <p className="mt-1 text-sm text-zinc-600 md:text-base">
             {isDone
               ? "All business steps are complete."
               : `Currently in ${currentStepLabel} stage.`}
@@ -212,10 +212,10 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
 
         <span
           className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-xs font-semibold",
+            "shrink-0 rounded-full px-4 py-1.5 text-sm font-bold shadow-sm",
             isDone
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-zinc-200/80 text-zinc-700"
+              ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
+              : "bg-blue-100 text-blue-700 ring-1 ring-blue-200"
           )}
         >
           {progressPercent}%
@@ -223,7 +223,7 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
       </div>
 
       {/* Colour bar */}
-      <div className="mb-3.5 flex gap-1 rounded-md bg-white/70 px-1 py-1">
+      <div className="mb-4 flex gap-1.5 rounded-lg bg-white px-1.5 py-1.5 shadow-inner">
         {Array.from({ length: totalSegments }).map((_, i) => {
           const isFilled = i < filledSegments;
           const hue = Math.round((120 * i) / Math.max(totalSegments - 1, 1));
@@ -231,22 +231,22 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
             <span
               key={i}
               className={cn(
-                "h-4 flex-1 rounded-xs transition-all duration-500",
-                isFilled ? "opacity-100" : "bg-zinc-200/80 opacity-70"
+                "h-3 flex-1 rounded-full transition-all duration-500",
+                isFilled ? "opacity-100 shadow-sm" : "bg-zinc-200/60 opacity-50"
               )}
-              style={isFilled ? { backgroundColor: `hsl(${hue} 90% 55%)` } : undefined}
+              style={isFilled ? { backgroundColor: `hsl(${hue} 85% 50%)` } : undefined}
             />
           );
         })}
       </div>
 
       {/* Step nodes — no overflow-x-auto, fits in container */}
-      <div className="rounded-xl bg-white/70 px-1 py-2">
-        <div className="relative mt-2 pb-2">
+      <div className="rounded-xl bg-white/80 px-2 py-3 shadow-sm">
+        <div className="relative mt-2 pb-3">
           {/* Connecting track */}
-          <div className="absolute left-[8.33%] right-[8.33%] top-3 h-0.5 rounded-full bg-zinc-200" />
+          <div className="absolute left-[8.33%] right-[8.33%] top-3 h-1 rounded-full bg-zinc-200" />
           <div
-            className="absolute left-[8.33%] top-3 h-0.5 rounded-full bg-emerald-500/70 transition-all duration-500"
+            className="absolute left-[8.33%] top-3 h-1 rounded-full bg-linear-to-r from-emerald-400 to-emerald-600 transition-all duration-700 ease-out shadow-sm"
             style={{ width: `calc(${horizontalFillPct}% * (100% - 16.66%) / 100)` }}
           />
 
@@ -276,26 +276,26 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                   style={{ animationDelay: `${i * 55}ms` }}
                 >
                   {/* Node */}
-                  <div className="relative flex h-6 w-6 items-center justify-center">
+                  <div className="relative flex h-7 w-7 items-center justify-center">
                     {isCurrent && !isDoneStep && (
                       <>
-                        <span className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping" />
-                        <span className="absolute inset-0.5 rounded-full border border-emerald-600/40 animate-pulse" />
+                        <span className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+                        <span className="absolute inset-0 rounded-full border-2 border-blue-400/50 animate-pulse" />
                       </>
                     )}
                     {isDoneStep && (
                       <>
-                        <span className="absolute -inset-1 rounded-full bg-yellow-400/30 animate-[glow-pulse_2s_ease-in-out_infinite]" />
-                        <span className="absolute -inset-0.5 rounded-full border-2 border-yellow-400/60" />
+                        <span className="absolute -inset-1.5 rounded-full bg-yellow-400/30 animate-[glow-pulse_2s_ease-in-out_infinite]" />
+                        <span className="absolute -inset-1 rounded-full border-2 border-yellow-400/60" />
                       </>
                     )}
                     <div
                       className={cn(
-                        "relative z-10 flex h-5 w-5 items-center justify-center rounded-full transition-all duration-500 overflow-hidden",
-                        isCompleted && !isDoneStep && "bg-emerald-600 text-white",
-                        isCurrent && !isDoneStep && "bg-emerald-600 text-white ring-2 ring-emerald-200",
+                        "relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-500 overflow-hidden",
+                        isCompleted && !isDoneStep && "bg-emerald-500 text-white shadow-md shadow-emerald-200",
+                        isCurrent && !isDoneStep && "bg-blue-500 text-white ring-3 ring-blue-200 shadow-lg shadow-blue-200",
                         isFuture && "bg-zinc-200 text-zinc-400",
-                        isDoneStep && "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-200 shadow-lg"
+                        isDoneStep && "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-3 ring-yellow-200 shadow-lg shadow-yellow-200"
                       )}
                     >
                       {isDoneStep && (
@@ -306,18 +306,18 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                       )}
                       {isCompleted ? (
                         isDoneStep ? (
-                          <Sparkles className="h-3 w-3 relative z-10" />
+                          <Sparkles className="h-3.5 w-3.5 relative z-10" />
                         ) : (
-                          <Check className="h-2.5 w-2.5" />
+                          <Check className="h-3 w-3" />
                         )
                       ) : isCurrent ? (
                         isDoneStep ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 relative z-10" />
+                          <CheckCircle2 className="h-4 w-4 relative z-10" />
                         ) : (
-                          <Circle className="h-2 w-2 fill-current" />
+                          <Circle className="h-2.5 w-2.5 fill-current" />
                         )
                       ) : (
-                        <Circle className="h-2 w-2" />
+                        <Circle className="h-2.5 w-2.5" />
                       )}
                     </div>
                   </div>
@@ -325,9 +325,9 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                   {/* Label */}
                   <p
                     className={cn(
-                      "mt-1.5 text-center text-[10px] font-semibold leading-tight",
+                      "mt-2 text-center text-[11px] font-bold leading-tight",
                       isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-400",
-                      isDoneStep && "text-amber-700"
+                      isDoneStep && "text-amber-800"
                     )}
                   >
                     {step.label}
@@ -336,11 +336,11 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                   {/* Status sub-label */}
                   <p
                     className={cn(
-                      "mt-0.5 text-[9px] font-medium",
-                      isCompleted && !isDoneStep && "text-emerald-700",
-                      isCurrent && !isDoneStep && "text-emerald-700",
+                      "mt-1 text-[10px] font-semibold",
+                      isCompleted && !isDoneStep && "text-emerald-600",
+                      isCurrent && !isDoneStep && "text-blue-600",
                       isFuture && "text-zinc-400",
-                      isDoneStep && "text-amber-600 font-bold"
+                      isDoneStep && "text-amber-600"
                     )}
                   >
                     {isDoneStep ? "Done!" : isCompleted ? "Done" : isCurrent ? "Current" : "—"}
@@ -350,8 +350,8 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
                   {timeLabel && !isDoneStep && (
                     <p
                       className={cn(
-                        "mt-0.5 text-[9px] tabular-nums leading-tight text-center",
-                        isCurrent ? "font-semibold text-amber-600" : "text-zinc-400"
+                        "mt-1 text-[10px] tabular-nums leading-tight text-center font-medium",
+                        isCurrent ? "text-blue-600" : "text-zinc-400"
                       )}
                     >
                       {isCurrent ? `${timeLabel} here` : timeLabel}
@@ -364,7 +364,7 @@ export function WorkflowStepper({ status, customerType, events, cisCreatedAt }: 
         </div>
       </div>
 
-      <div className="mt-2 text-[11px] text-zinc-500">
+      <div className="mt-3 text-[11px] text-zinc-500 leading-relaxed">
         Workflow path is determined by customer type and current approval status.
       </div>
     </div>

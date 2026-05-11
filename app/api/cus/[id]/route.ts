@@ -17,12 +17,13 @@ export async function GET(
 
   const [row] = await db
     .select({
-      // Full CUS row
+      // CUS core
       id: cusSubmissions.id,
       cisId: cusSubmissions.cisId,
       agentId: cusSubmissions.agentId,
       status: cusSubmissions.status,
       note: cusSubmissions.note,
+      // CUS docs
       docValidId: cusSubmissions.docValidId,
       docMayorsPermit: cusSubmissions.docMayorsPermit,
       docSecDti: cusSubmissions.docSecDti,
@@ -40,9 +41,26 @@ export async function GET(
       docIsoCertification: cusSubmissions.docIsoCertification,
       docHalalCertificate: cusSubmissions.docHalalCertificate,
       docOther: cusSubmissions.docOther,
+      // Finance evaluation
       financeCreditLimit: cusSubmissions.financeCreditLimit,
       financeCreditTerms: cusSubmissions.financeCreditTerms,
       financeMetricPoints: cusSubmissions.financeMetricPoints,
+      // Requested changes
+      newTradeName: cusSubmissions.newTradeName,
+      newContactPerson: cusSubmissions.newContactPerson,
+      newContactNumber: cusSubmissions.newContactNumber,
+      newTelephoneNumber: cusSubmissions.newTelephoneNumber,
+      newEmailAddress: cusSubmissions.newEmailAddress,
+      newWebsite: cusSubmissions.newWebsite,
+      newNumberOfEmployees: cusSubmissions.newNumberOfEmployees,
+      newCustomerType: cusSubmissions.newCustomerType,
+      newBusinessAddress: cusSubmissions.newBusinessAddress,
+      newCityMunicipality: cusSubmissions.newCityMunicipality,
+      newLandmarks: cusSubmissions.newLandmarks,
+      newDeliveryAddress: cusSubmissions.newDeliveryAddress,
+      newDeliveryMobile: cusSubmissions.newDeliveryMobile,
+      newDeliveryTelephone: cusSubmissions.newDeliveryTelephone,
+      beforeSnapshot: cusSubmissions.beforeSnapshot,
       createdAt: cusSubmissions.createdAt,
       updatedAt: cusSubmissions.updatedAt,
       // Linked CIS fields
@@ -50,9 +68,41 @@ export async function GET(
         id: cisSubmissions.id,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
+        contactNumber: cisSubmissions.contactNumber,
+        telephoneNumber: cisSubmissions.telephoneNumber,
+        emailAddress: cisSubmissions.emailAddress,
+        website: cisSubmissions.website,
+        numberOfEmployees: cisSubmissions.numberOfEmployees,
         customerType: cisSubmissions.customerType,
+        businessAddress: cisSubmissions.businessAddress,
+        cityMunicipality: cisSubmissions.cityMunicipality,
+        landmarks: cisSubmissions.landmarks,
+        deliveryAddress: cisSubmissions.deliveryAddress,
+        deliveryMobile: cisSubmissions.deliveryMobile,
+        deliveryTelephone: cisSubmissions.deliveryTelephone,
         status: cisSubmissions.status,
         agentCode: cisSubmissions.agentCode,
+        businessType: cisSubmissions.businessType,
+        financeCreditTerms: cisSubmissions.financeCreditTerms,
+        financeCreditLimit: cisSubmissions.financeCreditLimit,
+        // CIS docs for reference
+        docValidId: cisSubmissions.docValidId,
+        docMayorsPermit: cisSubmissions.docMayorsPermit,
+        docSecDti: cisSubmissions.docSecDti,
+        docBirCertificate: cisSubmissions.docBirCertificate,
+        docLocationMap: cisSubmissions.docLocationMap,
+        docFinancialStatement: cisSubmissions.docFinancialStatement,
+        docBankStatement: cisSubmissions.docBankStatement,
+        docProofOfBilling: cisSubmissions.docProofOfBilling,
+        docLeaseContract: cisSubmissions.docLeaseContract,
+        docProofOfOwnership: cisSubmissions.docProofOfOwnership,
+        docStorePhoto: cisSubmissions.docStorePhoto,
+        docSupplierInvoice: cisSubmissions.docSupplierInvoice,
+        docSocialMedia: cisSubmissions.docSocialMedia,
+        docCompanyWebsite: cisSubmissions.docCompanyWebsite,
+        docIsoCertification: cisSubmissions.docIsoCertification,
+        docHalalCertificate: cisSubmissions.docHalalCertificate,
+        docOther: cisSubmissions.docOther,
       },
     })
     .from(cusSubmissions)
@@ -79,19 +129,17 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Fetch audit timeline with actor names
-  const actorUsers = users;
   const events = await db
     .select({
       id: cusEvents.id,
       action: cusEvents.action,
       note: cusEvents.note,
       createdAt: cusEvents.createdAt,
-      actorName: actorUsers.fullName,
+      actorName: users.fullName,
       actorId: cusEvents.actorId,
     })
     .from(cusEvents)
-    .innerJoin(actorUsers, eq(cusEvents.actorId, actorUsers.id))
+    .innerJoin(users, eq(cusEvents.actorId, users.id))
     .where(eq(cusEvents.cusId, id))
     .orderBy(asc(cusEvents.createdAt));
 

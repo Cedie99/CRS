@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
-import { ClipboardCheck } from "lucide-react";
-import { formatDistanceToNow } from "@/lib/utils";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { CisCard } from "@/components/cis-card";
+import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "Awaiting Agent Completion — CRS" };
 
@@ -35,17 +35,28 @@ export default async function AgentCompletionQueuePage({
     );
   }
 
-  const rows = await db
-    .select({
-      id: cisSubmissions.id,
-      tradeName: cisSubmissions.tradeName,
-      contactPerson: cisSubmissions.contactPerson,
-      createdAt: cisSubmissions.createdAt,
-      updatedAt: cisSubmissions.updatedAt,
-    })
-    .from(cisSubmissions)
-    .where(and(...conditions))
-    .orderBy(desc(cisSubmissions.updatedAt));
+  const [rows, countRow] = await Promise.all([
+    db
+      .select({
+        id: cisSubmissions.id,
+        tradeName: cisSubmissions.tradeName,
+        contactPerson: cisSubmissions.contactPerson,
+        customerType: cisSubmissions.customerType,
+        agentCode: cisSubmissions.agentCode,
+        status: cisSubmissions.status,
+        createdAt: cisSubmissions.createdAt,
+        updatedAt: cisSubmissions.updatedAt,
+      })
+      .from(cisSubmissions)
+      .where(and(...conditions))
+      .orderBy(desc(cisSubmissions.updatedAt)),
+    db
+      .select({ total: count() })
+      .from(cisSubmissions)
+      .where(and(...conditions)),
+  ]);
+
+  const total = Number(countRow[0]?.total ?? 0);
 
   return (
     <div className="space-y-6">
@@ -57,48 +68,36 @@ export default async function AgentCompletionQueuePage({
         </p>
       </div>
 
-      {rows.length === 0 ? (
+      {total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
           <EmptyStateLogo />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No pending agent completion</h2>
           <p className="mt-1 text-sm text-zinc-500">All customer-submitted forms have been completed by the agent.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-white">
-          <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3.5">
-            <p className="text-sm font-semibold text-zinc-700">
-              {rows.length} submission{rows.length !== 1 ? "s" : ""} awaiting action
-            </p>
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-600">
+              {total} submission{total !== 1 ? "s" : ""} awaiting action
+            </span>
           </div>
-          <ul className="divide-y divide-zinc-50">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((row) => (
-              <li key={row.id}>
-                <Link
-                  href={`/agent/${row.id}`}
-                  className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-50"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50">
-                    <ClipboardCheck className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-zinc-900">
-                      {row.tradeName ?? <span className="font-normal italic text-zinc-400">Untitled customer</span>}
-                    </p>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Customer: {row.contactPerson ?? "-"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-zinc-400">
-                      Submitted {formatDistanceToNow(row.createdAt)} ago
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-200">
-                    Complete agent step
-                  </span>
-                </Link>
-              </li>
+              <CisCard
+                key={row.id}
+                id={row.id}
+                tradeName={row.tradeName}
+                contactPerson={row.contactPerson}
+                customerType={row.customerType}
+                agentCode={row.agentCode}
+                status={row.status as CisStatus}
+                createdAt={row.createdAt}
+                updatedAt={row.updatedAt ?? undefined}
+                href={`/agent/${row.id}`}
+              />
             ))}
-          </ul>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

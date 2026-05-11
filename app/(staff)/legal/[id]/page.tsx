@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { SCORING_DOC_KEYS } from "@/lib/doc-types";
 import { LegalCisDetailClient } from "./legal-cis-detail-client";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function LegalCisDetailPage({
   params,
@@ -158,6 +159,8 @@ export default async function LegalCisDetailPage({
   });
   const initialPrintEnabled = !hasPendingDocReviews;
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -183,6 +186,7 @@ export default async function LegalCisDetailPage({
       />
 
       <LegalCisDetailClient
+        fieldHistory={fieldHistory ?? undefined}
         cisId={cis.id}
         initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
         canAct={canAct}

@@ -5,9 +5,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Clock, Building2, ChevronRight, RefreshCw } from "lucide-react";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "End-User",
-  fs_petroleum: "FS Petroleum",
-  special: "Special",
   dealer: "Dealer",
   distributor: "Distributor",
   private_label: "Private Label",
@@ -16,9 +13,6 @@ const CUSTOMER_TYPE_LABELS: Record<string, string> = {
 };
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
-  standard: "bg-green-50 text-green-700",
-  fs_petroleum: "bg-purple-50 text-purple-700",
-  special: "bg-amber-50 text-amber-700",
   dealer: "bg-blue-50 text-blue-700",
   distributor: "bg-teal-50 text-teal-700",
   private_label: "bg-violet-50 text-violet-700",

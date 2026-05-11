@@ -14,6 +14,7 @@ import { ArrowLeft, History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import type { FileEntry } from "@/lib/doc-types";
 import type { CisStatus } from "@/components/status-badge";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function ApproverCisDetailPage({
   params,
@@ -66,6 +67,8 @@ export default async function ApproverCisDetailPage({
   const needsPhysicalSignature = ((cis.docSirRestySigned as FileEntry[] | null) ?? []).length === 0;
   const canPrint = needsPhysicalSignature || cis.status === "erp_encoded";
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Link
@@ -93,6 +96,7 @@ export default async function ApproverCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             printEnabled={canPrint}
             cisId={cis.id}
             pointsMode="summary"
@@ -183,6 +187,8 @@ export default async function ApproverCisDetailPage({
             agentSalesManager={cis.agentSalesManager}
             agentTpcFirst={cis.agentTpcFirst}
             agentTpcLast={cis.agentTpcLast}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             salesSupportAccountType={cis.salesSupportAccountType}
             salesSupportPriceList1={cis.salesSupportPriceList1}
             salesSupportPriceList2={cis.salesSupportPriceList2}

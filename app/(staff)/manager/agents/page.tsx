@@ -86,9 +86,11 @@ export default async function ManagerAgentsPage() {
       deniedReturned: number;
       successCount: number;
       latestActivity: Date | null;
-      typeStandard: number;
-      typeFsPetroleum: number;
-      typeSpecial: number;
+      typeDealer: number;
+      typeDistributor: number;
+      typePrivateLabel: number;
+      typeTollBlend: number;
+      typeEndUser: number;
     }
   >();
 
@@ -101,9 +103,11 @@ export default async function ManagerAgentsPage() {
       deniedReturned: 0,
       successCount: 0,
       latestActivity: null,
-      typeStandard: 0,
-      typeFsPetroleum: 0,
-      typeSpecial: 0,
+      typeDealer: 0,
+      typeDistributor: 0,
+      typePrivateLabel: 0,
+      typeTollBlend: 0,
+      typeEndUser: 0,
     });
   }
 
@@ -133,9 +137,11 @@ export default async function ManagerAgentsPage() {
       }
     }
 
-    if (s.customerType === "standard") stats.typeStandard++;
-    else if (s.customerType === "fs_petroleum") stats.typeFsPetroleum++;
-    else if (s.customerType === "special") stats.typeSpecial++;
+    if (s.customerType === "dealer") stats.typeDealer++;
+    else if (s.customerType === "distributor") stats.typeDistributor++;
+    else if (s.customerType === "private_label") stats.typePrivateLabel++;
+    else if (s.customerType === "toll_blend") stats.typeTollBlend++;
+    else if (s.customerType === "end_user") stats.typeEndUser++;
   }
 
   const totalAgents = agents.length;
@@ -297,15 +303,21 @@ export default async function ManagerAgentsPage() {
                 </div>
 
                 {/* Customer type breakdown */}
-                <div className="mx-5 mb-3 flex items-center gap-1.5">
-                  <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-sky-100">
-                    {stats.typeStandard} Std
+                <div className="mx-5 mb-3 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-blue-100">
+                    {stats.typeDealer} Dealer
                   </span>
-                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 ring-1 ring-orange-100">
-                    {stats.typeFsPetroleum} FSP
+                  <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-medium text-teal-700 ring-1 ring-teal-100">
+                    {stats.typeDistributor} Dist
                   </span>
                   <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 ring-1 ring-violet-100">
-                    {stats.typeSpecial} Spl
+                    {stats.typePrivateLabel} PL
+                  </span>
+                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 ring-1 ring-orange-100">
+                    {stats.typeTollBlend} TB
+                  </span>
+                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 ring-1 ring-green-100">
+                    {stats.typeEndUser} EU
                   </span>
                 </div>
 

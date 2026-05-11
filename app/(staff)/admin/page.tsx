@@ -14,15 +14,19 @@ import type { CisStatus } from "@/components/status-badge";
 export const metadata = { title: "Admin — All Submissions — CRS" };
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  standard: "Standard",
-  fs_petroleum: "FS Petroleum",
-  special: "Special",
+  dealer: "Dealer",
+  distributor: "Distributor",
+  private_label: "Private Label",
+  toll_blend: "Toll Blend",
+  end_user: "End-User",
 };
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
-  standard: "bg-zinc-100 text-zinc-600",
-  fs_petroleum: "bg-purple-50 text-purple-700",
-  special: "bg-amber-50 text-amber-700",
+  dealer: "bg-blue-50 text-blue-700",
+  distributor: "bg-teal-50 text-teal-700",
+  private_label: "bg-violet-50 text-violet-700",
+  toll_blend: "bg-orange-50 text-orange-700",
+  end_user: "bg-green-50 text-green-700",
 };
 
 export default async function AdminDashboard({
@@ -179,7 +183,7 @@ export default async function AdminDashboard({
             </div>
           ) : (
             submissions.map((s) => {
-              const customerType = s.customerType ?? "standard";
+              const customerType = s.customerType ?? "end_user";
 
               return (
               <Link
@@ -243,7 +247,7 @@ export default async function AdminDashboard({
                 </tr>
               ) : (
                 submissions.map((s) => {
-                  const customerType = s.customerType ?? "standard";
+                  const customerType = s.customerType ?? "end_user";
 
                   return (
                   <tr key={s.id} className="group hover:bg-zinc-50 transition-colors">

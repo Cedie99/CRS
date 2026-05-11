@@ -52,7 +52,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const isLegal = cis.customerType === "fs_petroleum" || cis.customerType === "special";
+  const isLegal = cis.customerType === "dealer";
 
   await transitionCis({
     cisId: id,

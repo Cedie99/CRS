@@ -113,14 +113,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Only agents can create CUS forms" }, { status: 403 });
   }
 
-  let body: { cisId?: string; note?: string };
+  let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { cisId, note } = body;
+  const { cisId, note } = body as { cisId?: string; note?: string };
   if (!cisId || typeof cisId !== "string") {
     return NextResponse.json({ error: "cisId is required" }, { status: 400 });
   }
@@ -149,6 +149,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const VALID_CUSTOMER_TYPES = [
+    "dealer", "distributor", "private_label", "toll_blend", "end_user",
+  ];
+
+  function str(v: unknown): string | null {
+    return typeof v === "string" ? v.trim() || null : null;
+  }
+
+  const newCustomerType = str(body.newCustomerType);
+
   const [inserted] = await db
     .insert(cusSubmissions)
     .values({
@@ -156,6 +166,20 @@ export async function POST(req: Request) {
       agentId: userId,
       status: "draft",
       note: note ?? null,
+      newTradeName: str(body.newTradeName),
+      newContactPerson: str(body.newContactPerson),
+      newContactNumber: str(body.newContactNumber),
+      newTelephoneNumber: str(body.newTelephoneNumber),
+      newEmailAddress: str(body.newEmailAddress),
+      newWebsite: str(body.newWebsite),
+      newNumberOfEmployees: str(body.newNumberOfEmployees),
+      newCustomerType: newCustomerType && VALID_CUSTOMER_TYPES.includes(newCustomerType) ? newCustomerType : null,
+      newBusinessAddress: str(body.newBusinessAddress),
+      newCityMunicipality: str(body.newCityMunicipality),
+      newLandmarks: str(body.newLandmarks),
+      newDeliveryAddress: str(body.newDeliveryAddress),
+      newDeliveryMobile: str(body.newDeliveryMobile),
+      newDeliveryTelephone: str(body.newDeliveryTelephone),
     })
     .returning({ id: cusSubmissions.id });
 

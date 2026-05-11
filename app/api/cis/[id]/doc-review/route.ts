@@ -48,12 +48,15 @@ export async function PATCH(
   }
 
   const current = (cis.docReviewStatuses as DocReviewStatuses) ?? {};
+  const existing = current[docType as DocType];
   const merged: DocReviewStatuses = {
     ...current,
     [docType as DocType]: {
       status: status as DocReviewStatus,
       reason: typeof reason === "string" && reason.trim() ? reason.trim() : null,
-      rejectedAt: status === "rejected" ? new Date().toISOString() : null,
+      // Preserve the previous rejectedAt so getFileReview can still distinguish
+      // old rejected files from new replacement files after the slot is approved.
+      rejectedAt: status === "rejected" ? new Date().toISOString() : (existing?.rejectedAt ?? null),
     },
   };
 

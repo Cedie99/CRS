@@ -146,7 +146,7 @@ function ActorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | n
 export function AuditTimeline({ events }: AuditTimelineProps) {
   if (events.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-zinc-400">No activity recorded yet.</p>
+      <p className="py-6 text-center text-sm text-zinc-400">No activity recorded yet.</p>
     );
   }
 
@@ -162,32 +162,32 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
             {/* Left: icon + connector line */}
             <div className="flex flex-col items-center">
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config?.bgColor ?? "bg-zinc-100"}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm ${config?.bgColor ?? "bg-zinc-100"}`}
               >
-                <Icon className={`h-4 w-4 ${config?.iconColor ?? "text-zinc-500"}`} />
+                <Icon className={`h-4.5 w-4.5 ${config?.iconColor ?? "text-zinc-500"}`} />
               </div>
-              {!isLast && <div className="mt-1 w-px flex-1 bg-zinc-100" />}
+              {!isLast && <div className="mt-2 w-px flex-1 bg-zinc-200" />}
             </div>
 
             {/* Right: content */}
-            <div className={`min-w-0 pb-5 ${isLast ? "pb-0" : ""}`}>
-              <p className="text-sm font-semibold text-zinc-900">
+            <div className={`min-w-0 pb-6 ${isLast ? "pb-0" : ""}`}>
+              <p className="text-sm font-bold text-zinc-900">
                 {config?.label ?? humanizeDisplayValue(event.action)}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <ActorAvatar name={event.actorName} avatarUrl={event.actorAvatarUrl} />
                 <p className="wrap-break-word text-xs text-zinc-500">
-                  <span className="font-medium text-zinc-700">{event.actorName}</span>
+                  <span className="font-semibold text-zinc-700">{event.actorName}</span>
                   {event.actorRole && (
                     <>
                       {" · "}
-                      <span className="text-zinc-400">
+                      <span className="text-zinc-400 font-medium">
                         {ROLE_LABELS[event.actorRole] ?? humanizeDisplayValue(event.actorRole)}
                       </span>
                     </>
                   )}
                   {" · "}
-                  {formatDistanceToNow(event.createdAt)}
+                  <span className="font-medium text-zinc-600">{formatDistanceToNow(event.createdAt)}</span>
                 </p>
               </div>
               {event.note && (() => {
@@ -197,12 +197,12 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
                 return (
                   <>
                     {humanLines && (
-                      <p className="mt-2 wrap-break-word rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600">
+                      <p className="mt-2.5 wrap-break-word rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs leading-relaxed text-zinc-600 shadow-sm">
                         {humanLines}
                       </p>
                     )}
                     {fpLine && (
-                      <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] text-zinc-400">
+                      <p className="mt-2 flex items-center gap-1.5 font-mono text-[10px] text-zinc-400">
                         <Fingerprint className="h-3 w-3 shrink-0" />
                         {fpLine.replace("sha256:", "").slice(0, 16).match(/.{4}/g)?.join(" ")}
                         <span className="text-zinc-300">···</span>

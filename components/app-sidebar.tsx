@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -18,6 +19,7 @@ import {
   X,
   Database,
   Network,
+  GitMerge,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, humanizeDisplayValue } from "@/lib/utils";
@@ -34,11 +36,13 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
     { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
+    { label: "Type Reclassification", href: "/agent/ctr", icon: GitMerge },
   ],
   rsr: [
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
     { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
+    { label: "Type Reclassification", href: "/agent/ctr", icon: GitMerge },
   ],
   sales_manager: [
     { label: "My Team", href: "/manager", icon: ClipboardCheck, exact: true },
@@ -51,13 +55,16 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   finance_reviewer: [
     { label: "Finance Review", href: "/finance", icon: DollarSign, exact: true },
     { label: "Customer Updates", href: "/finance/cus", icon: RefreshCw },
+    { label: "Type Reclassification", href: "/finance/ctr", icon: GitMerge },
   ],
   legal_approver: [
     { label: "Legal Review", href: "/legal", icon: Scale, exact: true },
     { label: "Customer Updates", href: "/legal/cus", icon: RefreshCw },
+    { label: "Type Reclassification", href: "/legal/ctr", icon: GitMerge },
   ],
   senior_approver: [
     { label: "Approval Queue", href: "/approver", icon: BadgeCheck },
+    { label: "CTR Approvals", href: "/approver/ctr", icon: GitMerge },
   ],
   sales_support: [
     { label: "Sales Support", href: "/support", icon: Inbox },
@@ -93,10 +100,33 @@ interface SidebarContentProps {
   onClose?: () => void;
 }
 
+function useSidebarBadges(role: string) {
+  const [badges, setBadges] = useState<Record<string, number>>({});
+
+  const fetchBadges = useCallback(async () => {
+    if (role !== "finance_reviewer" && role !== "legal_approver" && role !== "admin") return;
+    try {
+      const res = await fetch("/api/sidebar-badges");
+      if (res.ok) setBadges(await res.json());
+    } catch { /* silent */ }
+  }, [role]);
+
+  useEffect(() => {
+    fetchBadges();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchBadges();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchBadges]);
+
+  return badges;
+}
+
 function SidebarContent({ role, userName, avatarUrl, isTopManager = false, onClose }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
   const baseItems = NAV_ITEMS[role] ?? [];
+  const badges = useSidebarBadges(role);
 
   // Inject "Team Overview" for top-level managers
   const items: NavItem[] =
@@ -160,7 +190,12 @@ function SidebarContent({ role, userName, avatarUrl, isTopManager = false, onClo
                   isActive ? "text-white" : "text-emerald-100/70 group-hover:text-emerald-50"
                 )}
               />
-              {item.label}
+              <span className="flex-1 min-w-0 truncate">{item.label}</span>
+              {(badges[item.href] ?? 0) > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                  {badges[item.href]}
+                </span>
+              )}
             </Link>
           );
         })}

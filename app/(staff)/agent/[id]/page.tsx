@@ -16,6 +16,7 @@ import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { RejectedDocsSummary } from "@/components/rejected-docs-summary";
 import type { DocReviewStatuses, DocType, FileEntry } from "@/lib/doc-types";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function AgentCisDetailPage({
   params,
@@ -243,6 +244,8 @@ export default async function AgentCisDetailPage({
       })()
     : false;
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -325,6 +328,7 @@ export default async function AgentCisDetailPage({
         {/* Main */}
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
             pointsMode="summary"
             tradeName={cis.tradeName}

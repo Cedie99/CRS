@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cisSubmissions, workflowEvents, notifications, cusSubmissions, cusEvents } from "@/lib/db/schema";
+import { cisSubmissions, workflowEvents, notifications, cusSubmissions, cusEvents, ctrSubmissions, ctrEvents } from "@/lib/db/schema";
 
 // DELETE /api/admin/cis/[id] — permanently delete a CIS submission and all related records
 export async function DELETE(
@@ -35,6 +35,17 @@ export async function DELETE(
   }
 
   await db.delete(cusSubmissions).where(eq(cusSubmissions.cisId, id));
+
+  const ctrSubs = await db
+    .select({ id: ctrSubmissions.id })
+    .from(ctrSubmissions)
+    .where(eq(ctrSubmissions.cisId, id));
+
+  for (const ctr of ctrSubs) {
+    await db.delete(ctrEvents).where(eq(ctrEvents.ctrId, ctr.id));
+  }
+
+  await db.delete(ctrSubmissions).where(eq(ctrSubmissions.cisId, id));
   await db.delete(workflowEvents).where(eq(workflowEvents.cisId, id));
   await db.delete(notifications).where(eq(notifications.cisId, id));
   await db.delete(cisSubmissions).where(eq(cisSubmissions.id, id));

@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { FinanceCisDetailClient } from "./finance-cis-detail-client";
 import { SCORING_DOC_KEYS } from "@/lib/doc-types";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function FinanceCisDetailPage({
   params,
@@ -58,6 +59,8 @@ export default async function FinanceCisDetailPage({
     return uploaded && !REVIEWED_STATUSES.has(reviewStatuses[field]?.status);
   });
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -83,6 +86,7 @@ export default async function FinanceCisDetailPage({
       />
 
       <FinanceCisDetailClient
+        fieldHistory={fieldHistory ?? undefined}
         cisId={cis.id}
         initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
         canAct={canAct}

@@ -42,6 +42,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const VALID_CUSTOMER_TYPES = [
+    "dealer", "distributor", "private_label", "toll_blend", "end_user",
+  ];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: Record<string, any> = {};
 
@@ -50,6 +54,15 @@ export async function PATCH(
   }
   if (typeof body.financeCreditTerms === "string") {
     updates.financeCreditTerms = body.financeCreditTerms.trim();
+  }
+  if (typeof body.newCustomerType === "string" && VALID_CUSTOMER_TYPES.includes(body.newCustomerType)) {
+    updates.newCustomerType = body.newCustomerType;
+  }
+  if (typeof body.newBusinessAddress === "string") {
+    updates.newBusinessAddress = body.newBusinessAddress.trim() || null;
+  }
+  if (typeof body.newCityMunicipality === "string") {
+    updates.newCityMunicipality = body.newCityMunicipality.trim() || null;
   }
 
   // Direct metric points (each 0-5) — stored as JSONB

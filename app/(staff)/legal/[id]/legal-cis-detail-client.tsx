@@ -110,19 +110,6 @@ export function LegalCisDetailClient({
 
   return (
     <>
-      {canAct && (
-        <FinanceActions
-          cisId={cisId}
-          initialSirRestyFiles={initialSirRestyFiles as any}
-          forwardEndpoint={forwardEndpoint}
-          denyEndpoint={denyEndpoint}
-          dashboardPath="/legal"
-          printEnabled={printEnabled}
-          docReviewStatuses={docReviewStatuses}
-          hasUnresolvedRejections={hasUnresolvedRejections}
-          hasUnreviewedDocs={hasPendingDocReviews}
-        />
-      )}
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <DocReviewPanel
@@ -186,6 +173,20 @@ export function LegalCisDetailClient({
           </Card>
         </div>
       </div>
+
+      {canAct && (
+        <FinanceActions
+          cisId={cisId}
+          initialSirRestyFiles={initialSirRestyFiles as any}
+          forwardEndpoint={forwardEndpoint}
+          denyEndpoint={denyEndpoint}
+          dashboardPath="/legal"
+          printEnabled={printEnabled}
+          docReviewStatuses={docReviewStatuses}
+          hasUnresolvedRejections={hasUnresolvedRejections}
+          hasUnreviewedDocs={hasPendingDocReviews}
+        />
+      )}
     </>
   );
 }

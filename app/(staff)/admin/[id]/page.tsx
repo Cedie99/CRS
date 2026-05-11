@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { DeleteCisZone } from "@/components/admin/delete-cis-button";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function AdminCisDetailPage({
   params,
@@ -49,6 +50,8 @@ export default async function AdminCisDetailPage({
 
   const canEncode = cis.status === "approved";
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -67,6 +70,7 @@ export default async function AdminCisDetailPage({
       <div className="grid gap-5 xl:grid-cols-5">
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
             pointsMode="summary"
             tradeName={cis.tradeName}
@@ -141,6 +145,29 @@ export default async function AdminCisDetailPage({
             docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
             docOther={cis.docOther}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
+            financeEu={cis.financeEu}
+            financeDl={cis.financeDl}
+            financeDr={cis.financeDr}
+            financePlTs={cis.financePlTs}
+            financePossiblePoints={cis.financePossiblePoints}
+            financeApprovedPoints={cis.financeApprovedPoints}
+            financeCreditLimit={cis.financeCreditLimit}
+            financeCreditTerms={cis.financeCreditTerms}
+            docSirRestySigned={cis.docSirRestySigned}
+            agentAccountSpecialistFirst={cis.agentAccountSpecialistFirst}
+            agentAccountSpecialistLast={cis.agentAccountSpecialistLast}
+            agentSalesSpecialist={cis.agentSalesSpecialist}
+            agentSalesManager={cis.agentSalesManager}
+            agentTpcFirst={cis.agentTpcFirst}
+            agentTpcLast={cis.agentTpcLast}
+            salesSupportAccountType={cis.salesSupportAccountType}
+            salesSupportPriceList1={cis.salesSupportPriceList1}
+            salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportSalesType={cis.salesSupportSalesType}
+            salesSupportVatCode={cis.salesSupportVatCode}
+            salesSupportOtherRemarks={cis.salesSupportOtherRemarks}
             docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
             metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />

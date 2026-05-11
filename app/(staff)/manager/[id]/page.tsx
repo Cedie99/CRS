@@ -11,6 +11,7 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
+import { getCusFieldHistory } from "@/lib/cus-field-history";
 
 export default async function ManagerCisDetailPage({
   params,
@@ -98,6 +99,8 @@ export default async function ManagerCisDetailPage({
       docHalalCertificate: cisSubmissions.docHalalCertificate,
       docCertifications: cisSubmissions.docCertifications,
       docOther: cisSubmissions.docOther,
+      docAgentOtherRequirements: cisSubmissions.docAgentOtherRequirements,
+      docSalesSupportOther: cisSubmissions.docSalesSupportOther,
       financeEu: cisSubmissions.financeEu,
       financeDl: cisSubmissions.financeDl,
       financeDr: cisSubmissions.financeDr,
@@ -155,6 +158,8 @@ export default async function ManagerCisDetailPage({
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
 
+  const fieldHistory = await getCusFieldHistory(cis.id);
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -174,6 +179,7 @@ export default async function ManagerCisDetailPage({
         {/* Main */}
         <div className="space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
+            fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
             pointsMode="summary"
             tradeName={cis.tradeName}
@@ -263,6 +269,8 @@ export default async function ManagerCisDetailPage({
             agentSalesManager={cis.agentSalesManager}
             agentTpcFirst={cis.agentTpcFirst}
             agentTpcLast={cis.agentTpcLast}
+            docAgentOtherRequirements={cis.docAgentOtherRequirements}
+            docSalesSupportOther={cis.docSalesSupportOther}
             salesSupportAccountType={cis.salesSupportAccountType}
             salesSupportPriceList1={cis.salesSupportPriceList1}
             salesSupportPriceList2={cis.salesSupportPriceList2}
