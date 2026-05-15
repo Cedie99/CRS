@@ -62,8 +62,6 @@ export default async function AdminCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        originalCreditTerms={cis.financeCreditTerms}
-        originalCreditLimit={cis.financeCreditLimit}
         hrefPrefix="admin"
       />
 
@@ -150,7 +148,6 @@ export default async function AdminCisDetailPage({
             financeEu={cis.financeEu}
             financeDl={cis.financeDl}
             financeDr={cis.financeDr}
-            financePlTs={cis.financePlTs}
             financePossiblePoints={cis.financePossiblePoints}
             financeApprovedPoints={cis.financeApprovedPoints}
             financeCreditLimit={cis.financeCreditLimit}
