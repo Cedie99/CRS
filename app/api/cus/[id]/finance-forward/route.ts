@@ -27,22 +27,44 @@ const DOC_FIELDS = [
 
 // Fields that a CUS can change on the linked CIS (maps cisField → cusNewField)
 const CIS_CHANGE_MAP = [
-  { cisField: "tradeName",          cusField: "newTradeName" },
-  { cisField: "contactPerson",      cusField: "newContactPerson" },
-  { cisField: "contactNumber",      cusField: "newContactNumber" },
-  { cisField: "telephoneNumber",    cusField: "newTelephoneNumber" },
-  { cisField: "emailAddress",       cusField: "newEmailAddress" },
-  { cisField: "website",            cusField: "newWebsite" },
-  { cisField: "numberOfEmployees",  cusField: "newNumberOfEmployees" },
-  { cisField: "customerType",       cusField: "newCustomerType" },
-  { cisField: "businessAddress",    cusField: "newBusinessAddress" },
-  { cisField: "cityMunicipality",   cusField: "newCityMunicipality" },
-  { cisField: "landmarks",          cusField: "newLandmarks" },
-  { cisField: "deliveryAddress",    cusField: "newDeliveryAddress" },
-  { cisField: "deliveryMobile",     cusField: "newDeliveryMobile" },
-  { cisField: "deliveryTelephone",  cusField: "newDeliveryTelephone" },
-  { cisField: "financeCreditTerms", cusField: "financeCreditTerms" },
-  { cisField: "financeCreditLimit", cusField: "financeCreditLimit" },
+  { cisField: "tradeName",              cusField: "newTradeName" },
+  { cisField: "contactPerson",          cusField: "newContactPerson" },
+  { cisField: "contactNumber",          cusField: "newContactNumber" },
+  { cisField: "telephoneNumber",        cusField: "newTelephoneNumber" },
+  { cisField: "emailAddress",           cusField: "newEmailAddress" },
+  { cisField: "website",                cusField: "newWebsite" },
+  { cisField: "numberOfEmployees",      cusField: "newNumberOfEmployees" },
+  { cisField: "customerType",           cusField: "newCustomerType" },
+  { cisField: "businessAddress",        cusField: "newBusinessAddress" },
+  { cisField: "cityMunicipality",       cusField: "newCityMunicipality" },
+  { cisField: "landmarks",              cusField: "newLandmarks" },
+  { cisField: "deliveryAddress",        cusField: "newDeliveryAddress" },
+  { cisField: "deliveryLandmarks",      cusField: "newDeliveryLandmarks" },
+  { cisField: "deliveryMobile",         cusField: "newDeliveryMobile" },
+  { cisField: "deliveryTelephone",      cusField: "newDeliveryTelephone" },
+  { cisField: "corporateName",          cusField: "newCorporateName" },
+  { cisField: "dateOfBusinessReg",      cusField: "newDateOfBusinessReg" },
+  { cisField: "tinNumber",              cusField: "newTinNumber" },
+  { cisField: "businessType",           cusField: "newBusinessType" },
+  { cisField: "lineOfBusiness",         cusField: "newLineOfBusiness" },
+  { cisField: "lineOfBusinessOther",    cusField: "newLineOfBusinessOther" },
+  { cisField: "businessActivity",       cusField: "newBusinessActivity" },
+  { cisField: "businessActivityOther",  cusField: "newBusinessActivityOther" },
+  { cisField: "salesChannel",           cusField: "newSalesChannel" },
+  { cisField: "paymentTerms",           cusField: "newPaymentTerms" },
+  { cisField: "owners",                 cusField: "newOwners" },
+  { cisField: "officers",               cusField: "newOfficers" },
+  { cisField: "businessLife",           cusField: "newBusinessLife" },
+  { cisField: "howLongAtAddress",       cusField: "newHowLongAtAddress" },
+  { cisField: "numberOfBranches",       cusField: "newNumberOfBranches" },
+  { cisField: "govCertifications",      cusField: "newGovCertifications" },
+  { cisField: "tradeReferences",        cusField: "newTradeReferences" },
+  { cisField: "bankReferences",         cusField: "newBankReferences" },
+  { cisField: "achievements",           cusField: "newAchievements" },
+  { cisField: "otherMerits",            cusField: "newOtherMerits" },
+  { cisField: "additionalNotes",        cusField: "newAdditionalNotes" },
+  { cisField: "financeCreditTerms",     cusField: "financeCreditTerms" },
+  { cisField: "financeCreditLimit",     cusField: "financeCreditLimit" },
 ] as const;
 
 // PATCH /api/cus/[id]/finance-forward — approve the CUS
@@ -68,6 +90,7 @@ export async function PATCH(
       agentId: cusSubmissions.agentId,
       financeCreditLimit: cusSubmissions.financeCreditLimit,
       financeCreditTerms: cusSubmissions.financeCreditTerms,
+      docSirRestySigned: cusSubmissions.docSirRestySigned,
       newTradeName: cusSubmissions.newTradeName,
       newContactPerson: cusSubmissions.newContactPerson,
       newContactNumber: cusSubmissions.newContactNumber,
@@ -80,8 +103,30 @@ export async function PATCH(
       newCityMunicipality: cusSubmissions.newCityMunicipality,
       newLandmarks: cusSubmissions.newLandmarks,
       newDeliveryAddress: cusSubmissions.newDeliveryAddress,
+      newDeliveryLandmarks: cusSubmissions.newDeliveryLandmarks,
       newDeliveryMobile: cusSubmissions.newDeliveryMobile,
       newDeliveryTelephone: cusSubmissions.newDeliveryTelephone,
+      newCorporateName: cusSubmissions.newCorporateName,
+      newDateOfBusinessReg: cusSubmissions.newDateOfBusinessReg,
+      newTinNumber: cusSubmissions.newTinNumber,
+      newBusinessType: cusSubmissions.newBusinessType,
+      newLineOfBusiness: cusSubmissions.newLineOfBusiness,
+      newLineOfBusinessOther: cusSubmissions.newLineOfBusinessOther,
+      newBusinessActivity: cusSubmissions.newBusinessActivity,
+      newBusinessActivityOther: cusSubmissions.newBusinessActivityOther,
+      newSalesChannel: cusSubmissions.newSalesChannel,
+      newPaymentTerms: cusSubmissions.newPaymentTerms,
+      newOwners: cusSubmissions.newOwners,
+      newOfficers: cusSubmissions.newOfficers,
+      newBusinessLife: cusSubmissions.newBusinessLife,
+      newHowLongAtAddress: cusSubmissions.newHowLongAtAddress,
+      newNumberOfBranches: cusSubmissions.newNumberOfBranches,
+      newGovCertifications: cusSubmissions.newGovCertifications,
+      newTradeReferences: cusSubmissions.newTradeReferences,
+      newBankReferences: cusSubmissions.newBankReferences,
+      newAchievements: cusSubmissions.newAchievements,
+      newOtherMerits: cusSubmissions.newOtherMerits,
+      newAdditionalNotes: cusSubmissions.newAdditionalNotes,
       // Document uploads
       docValidId: cusSubmissions.docValidId,
       docMayorsPermit: cusSubmissions.docMayorsPermit,
@@ -113,11 +158,41 @@ export async function PATCH(
     return NextResponse.json({ error: "CUS is not pending review" }, { status: 409 });
   }
 
-  let body: { note?: string } = {};
+  const sirRestyFiles = Array.isArray(cus.docSirRestySigned) ? cus.docSirRestySigned : [];
+  if (sirRestyFiles.length === 0) {
+    return NextResponse.json(
+      { error: "Upload the CFO-signed CUS form before approving." },
+      { status: 422 }
+    );
+  }
+
+  if (!cus.financeCreditTerms?.trim()) {
+    return NextResponse.json(
+      { error: "Credit terms are required before approving." },
+      { status: 422 }
+    );
+  }
+
+  if (!cus.financeCreditLimit?.trim()) {
+    return NextResponse.json(
+      { error: "Credit limit is required before approving." },
+      { status: 422 }
+    );
+  }
+
+  let body: { note?: string; financeCreditTerms?: string; financeCreditLimit?: string } = {};
   try {
     body = await req.json();
   } catch {
-    // note is optional; ignore parse errors
+    // body is optional; ignore parse errors
+  }
+
+  // Accept credit fields from the request body so they don't need a separate save step
+  if (typeof body.financeCreditTerms === "string" && body.financeCreditTerms.trim()) {
+    cus.financeCreditTerms = body.financeCreditTerms.trim();
+  }
+  if (typeof body.financeCreditLimit === "string" && body.financeCreditLimit.trim()) {
+    cus.financeCreditLimit = body.financeCreditLimit.trim();
   }
 
   // Fetch the current CIS values that will be overwritten so we can store a before snapshot
@@ -135,8 +210,30 @@ export async function PATCH(
       cityMunicipality: cisSubmissions.cityMunicipality,
       landmarks: cisSubmissions.landmarks,
       deliveryAddress: cisSubmissions.deliveryAddress,
+      deliveryLandmarks: cisSubmissions.deliveryLandmarks,
       deliveryMobile: cisSubmissions.deliveryMobile,
       deliveryTelephone: cisSubmissions.deliveryTelephone,
+      corporateName: cisSubmissions.corporateName,
+      dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
+      tinNumber: cisSubmissions.tinNumber,
+      businessType: cisSubmissions.businessType,
+      lineOfBusiness: cisSubmissions.lineOfBusiness,
+      lineOfBusinessOther: cisSubmissions.lineOfBusinessOther,
+      businessActivity: cisSubmissions.businessActivity,
+      businessActivityOther: cisSubmissions.businessActivityOther,
+      salesChannel: cisSubmissions.salesChannel,
+      paymentTerms: cisSubmissions.paymentTerms,
+      owners: cisSubmissions.owners,
+      officers: cisSubmissions.officers,
+      businessLife: cisSubmissions.businessLife,
+      howLongAtAddress: cisSubmissions.howLongAtAddress,
+      numberOfBranches: cisSubmissions.numberOfBranches,
+      govCertifications: cisSubmissions.govCertifications,
+      tradeReferences: cisSubmissions.tradeReferences,
+      bankReferences: cisSubmissions.bankReferences,
+      achievements: cisSubmissions.achievements,
+      otherMerits: cisSubmissions.otherMerits,
+      additionalNotes: cisSubmissions.additionalNotes,
       financeCreditTerms: cisSubmissions.financeCreditTerms,
       financeCreditLimit: cisSubmissions.financeCreditLimit,
       // Current doc arrays (needed to append CUS docs)
@@ -194,8 +291,30 @@ export async function PATCH(
   if (cus.newCityMunicipality) cisUpdates.cityMunicipality = cus.newCityMunicipality;
   if (cus.newLandmarks) cisUpdates.landmarks = cus.newLandmarks;
   if (cus.newDeliveryAddress) cisUpdates.deliveryAddress = cus.newDeliveryAddress;
+  if (cus.newDeliveryLandmarks) cisUpdates.deliveryLandmarks = cus.newDeliveryLandmarks;
   if (cus.newDeliveryMobile) cisUpdates.deliveryMobile = cus.newDeliveryMobile;
   if (cus.newDeliveryTelephone) cisUpdates.deliveryTelephone = cus.newDeliveryTelephone;
+  if (cus.newCorporateName) cisUpdates.corporateName = cus.newCorporateName;
+  if (cus.newDateOfBusinessReg) cisUpdates.dateOfBusinessReg = cus.newDateOfBusinessReg;
+  if (cus.newTinNumber) cisUpdates.tinNumber = cus.newTinNumber;
+  if (cus.newBusinessType) cisUpdates.businessType = cus.newBusinessType;
+  if (cus.newLineOfBusiness) cisUpdates.lineOfBusiness = cus.newLineOfBusiness;
+  if (cus.newLineOfBusinessOther) cisUpdates.lineOfBusinessOther = cus.newLineOfBusinessOther;
+  if (cus.newBusinessActivity) cisUpdates.businessActivity = cus.newBusinessActivity;
+  if (cus.newBusinessActivityOther) cisUpdates.businessActivityOther = cus.newBusinessActivityOther;
+  if (cus.newSalesChannel) cisUpdates.salesChannel = cus.newSalesChannel;
+  if (cus.newPaymentTerms) cisUpdates.paymentTerms = cus.newPaymentTerms;
+  if (Array.isArray(cus.newOwners) && cus.newOwners.length > 0) cisUpdates.owners = cus.newOwners;
+  if (Array.isArray(cus.newOfficers) && cus.newOfficers.length > 0) cisUpdates.officers = cus.newOfficers;
+  if (cus.newBusinessLife) cisUpdates.businessLife = cus.newBusinessLife;
+  if (cus.newHowLongAtAddress) cisUpdates.howLongAtAddress = cus.newHowLongAtAddress;
+  if (cus.newNumberOfBranches) cisUpdates.numberOfBranches = cus.newNumberOfBranches;
+  if (cus.newGovCertifications) cisUpdates.govCertifications = cus.newGovCertifications;
+  if (Array.isArray(cus.newTradeReferences) && cus.newTradeReferences.length > 0) cisUpdates.tradeReferences = cus.newTradeReferences;
+  if (Array.isArray(cus.newBankReferences) && cus.newBankReferences.length > 0) cisUpdates.bankReferences = cus.newBankReferences;
+  if (cus.newAchievements) cisUpdates.achievements = cus.newAchievements;
+  if (cus.newOtherMerits) cisUpdates.otherMerits = cus.newOtherMerits;
+  if (cus.newAdditionalNotes) cisUpdates.additionalNotes = cus.newAdditionalNotes;
 
   // Append CUS documents to the corresponding CIS doc arrays
   if (currentCis) {

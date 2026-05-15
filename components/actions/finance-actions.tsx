@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,15 +22,18 @@ import {
   CheckCircle2,
   PenLine,
   Printer,
+  Save,
   ScanLine,
   XCircle,
 } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import type { FileEntry, DocReviewStatuses } from "@/lib/doc-types";
 
 interface FinanceActionsProps {
   cisId: string;
   initialSirRestyFiles?: FileEntry[];
+  initialCreditTerms?: string;
+  initialCreditLimit?: string;
   /** Override the forward endpoint. Defaults to /api/cis/{cisId}/finance-forward */
   forwardEndpoint?: string;
   /** Override the deny endpoint. Defaults to /api/cis/{cisId}/finance-deny */
@@ -57,6 +61,8 @@ interface FieldErrors {
 export function FinanceActions({
   cisId,
   initialSirRestyFiles = [],
+  initialCreditTerms = "",
+  initialCreditLimit = "",
   forwardEndpoint,
   denyEndpoint,
   dashboardPath = "/finance",
@@ -69,6 +75,11 @@ export function FinanceActions({
 
   const [sirRestyFiles, setSirRestyFiles] =
     useState<FileEntry[]>(initialSirRestyFiles);
+  const [creditTerms, setCreditTerms] = useState(initialCreditTerms);
+  const [creditLimit, setCreditLimit] = useState(initialCreditLimit);
+  const [savedCreditTerms, setSavedCreditTerms] = useState(initialCreditTerms);
+  const [savedCreditLimit, setSavedCreditLimit] = useState(initialCreditLimit);
+  const [savingCredit, setSavingCredit] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [open, setOpen] = useState(false);
@@ -76,6 +87,33 @@ export function FinanceActions({
   const [note, setNote] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const creditDirty = creditTerms !== savedCreditTerms || creditLimit !== savedCreditLimit;
+
+  async function handleSaveCredit() {
+    setSavingCredit(true);
+    try {
+      const res = await fetch(`/api/cis/${cisId}/finance-save`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          financeCreditTerms: creditTerms || undefined,
+          financeCreditLimit: creditLimit || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+      }
+      setSavedCreditTerms(creditTerms);
+      setSavedCreditLimit(creditLimit);
+      toast.success({ title: "Credit details saved." });
+    } catch (err: unknown) {
+      toast.error({ title: err instanceof Error ? err.message : "Failed to save." });
+    } finally {
+      setSavingCredit(false);
+    }
+  }
 
   const uploadComplete = sirRestyFiles.length > 0;
   const hasRejectedDocs = hasUnresolvedRejections ?? Object.values(docReviewStatuses).some((s) => s?.status === "rejected");
@@ -125,6 +163,8 @@ export function FinanceActions({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               note: note.trim() || undefined,
+              financeCreditTerms: creditTerms || undefined,
+              financeCreditLimit: creditLimit || undefined,
             }),
           },
         );
@@ -158,16 +198,17 @@ export function FinanceActions({
       }
 
       setOpen(false);
-      toast.success({
-        title:
-          action === "forward"
-            ? "Forwarded to Senior Approver."
-            : "Returned to agent.",
-        description:
-          action === "forward"
-            ? "The Senior Approver has been notified for final review."
-            : "The form has been returned to the agent with your denial reason.",
-      });
+      if (action === "forward") {
+        toast.success({
+          title: "Forwarded to Senior Approver.",
+          description: "The Senior Approver has been notified for final review.",
+        });
+      } else {
+        toast.error({
+          title: "Returned to agent.",
+          description: "The form has been returned to the agent with your denial reason.",
+        });
+      }
       router.push(dashboardPath);
       router.refresh();
     } catch {
@@ -298,6 +339,58 @@ export function FinanceActions({
               )}
             </div>
           </section>
+
+          {/* Credit details — shown after signed form is uploaded */}
+          {uploadComplete && (
+            <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-zinc-800">Credit Evaluation</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Enter the credit details as filled in by the CFO on the signed form.</p>
+                </div>
+                {creditDirty && (
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+                    Unsaved
+                  </span>
+                )}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="creditTerms" className="text-xs font-medium text-zinc-600">Credit Terms</Label>
+                  <Input
+                    id="creditTerms"
+                    value={creditTerms}
+                    onChange={(e) => setCreditTerms(e.target.value)}
+                    placeholder="e.g. 30 days"
+                    className={`h-8 text-sm ${creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
+                    disabled={isLoading || savingCredit}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="creditLimit" className="text-xs font-medium text-zinc-600">Credit Limit</Label>
+                  <Input
+                    id="creditLimit"
+                    value={creditLimit}
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                    placeholder="e.g. 500,000"
+                    className={`h-8 text-sm ${creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
+                    disabled={isLoading || savingCredit}
+                  />
+                </div>
+              </div>
+              <Button
+                variant={creditDirty ? "default" : "ghost"}
+                size="sm"
+                onClick={handleSaveCredit}
+                disabled={savingCredit || isLoading || !creditDirty}
+                className={`gap-1.5 text-xs ${creditDirty ? "bg-amber-500 hover:bg-amber-600 text-white" : "text-zinc-400"}`}
+              >
+                {savingCredit
+                  ? <><Save className="h-3 w-3 animate-pulse" />Saving...</>
+                  : <><Save className="h-3 w-3" />Save Credit Details</>}
+              </Button>
+            </section>
+          )}
 
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <p className={`text-xs ${hasRejectedDocs ? "text-red-600 font-medium" : hasUnreviewedDocs ? "text-amber-700 font-medium" : "text-zinc-500"}`}>

@@ -24,6 +24,8 @@ export async function PATCH(
       id: cisSubmissions.id,
       status: cisSubmissions.status,
       docSirRestySigned: cisSubmissions.docSirRestySigned,
+      financeCreditTerms: cisSubmissions.financeCreditTerms,
+      financeCreditLimit: cisSubmissions.financeCreditLimit,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -42,7 +44,32 @@ export async function PATCH(
     );
   }
 
+  if (!cis.financeCreditTerms?.trim()) {
+    return NextResponse.json(
+      { error: "Credit terms are required before forwarding." },
+      { status: 422 }
+    );
+  }
+
+  if (!cis.financeCreditLimit?.trim()) {
+    return NextResponse.json(
+      { error: "Credit limit is required before forwarding." },
+      { status: 422 }
+    );
+  }
+
   const body = await req.json();
+
+  // Accept credit fields from request body so the reviewer doesn't need a separate save step
+  if (typeof body.financeCreditTerms === "string" && body.financeCreditTerms.trim()) {
+    await db.update(cisSubmissions).set({ financeCreditTerms: body.financeCreditTerms.trim() }).where(eq(cisSubmissions.id, id));
+    cis.financeCreditTerms = body.financeCreditTerms.trim();
+  }
+  if (typeof body.financeCreditLimit === "string" && body.financeCreditLimit.trim()) {
+    await db.update(cisSubmissions).set({ financeCreditLimit: body.financeCreditLimit.trim() }).where(eq(cisSubmissions.id, id));
+    cis.financeCreditLimit = body.financeCreditLimit.trim();
+  }
+
   const parsed = financeForwardSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });

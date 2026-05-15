@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { CusFinancePanel } from "./cus-finance-panel";
+import { CusPrintForm } from "./cus-print-form";
 
 export default async function FinanceCusDetailPage({
   params,
@@ -40,9 +41,10 @@ export default async function FinanceCusDetailPage({
       agentId: cusSubmissions.agentId,
       status: cusSubmissions.status,
       note: cusSubmissions.note,
-      financeCreditLimit: cusSubmissions.financeCreditLimit,
-      financeCreditTerms: cusSubmissions.financeCreditTerms,
       financeMetricPoints: cusSubmissions.financeMetricPoints,
+      docSirRestySigned: cusSubmissions.docSirRestySigned,
+      financeCreditTerms: cusSubmissions.financeCreditTerms,
+      financeCreditLimit: cusSubmissions.financeCreditLimit,
       beforeSnapshot: cusSubmissions.beforeSnapshot,
       newTradeName: cusSubmissions.newTradeName,
       newContactPerson: cusSubmissions.newContactPerson,
@@ -56,8 +58,30 @@ export default async function FinanceCusDetailPage({
       newCityMunicipality: cusSubmissions.newCityMunicipality,
       newLandmarks: cusSubmissions.newLandmarks,
       newDeliveryAddress: cusSubmissions.newDeliveryAddress,
+      newDeliveryLandmarks: cusSubmissions.newDeliveryLandmarks,
       newDeliveryMobile: cusSubmissions.newDeliveryMobile,
       newDeliveryTelephone: cusSubmissions.newDeliveryTelephone,
+      newCorporateName: cusSubmissions.newCorporateName,
+      newDateOfBusinessReg: cusSubmissions.newDateOfBusinessReg,
+      newTinNumber: cusSubmissions.newTinNumber,
+      newBusinessType: cusSubmissions.newBusinessType,
+      newLineOfBusiness: cusSubmissions.newLineOfBusiness,
+      newLineOfBusinessOther: cusSubmissions.newLineOfBusinessOther,
+      newBusinessActivity: cusSubmissions.newBusinessActivity,
+      newBusinessActivityOther: cusSubmissions.newBusinessActivityOther,
+      newSalesChannel: cusSubmissions.newSalesChannel,
+      newPaymentTerms: cusSubmissions.newPaymentTerms,
+      newOwners: cusSubmissions.newOwners,
+      newOfficers: cusSubmissions.newOfficers,
+      newBusinessLife: cusSubmissions.newBusinessLife,
+      newHowLongAtAddress: cusSubmissions.newHowLongAtAddress,
+      newNumberOfBranches: cusSubmissions.newNumberOfBranches,
+      newGovCertifications: cusSubmissions.newGovCertifications,
+      newTradeReferences: cusSubmissions.newTradeReferences,
+      newBankReferences: cusSubmissions.newBankReferences,
+      newAchievements: cusSubmissions.newAchievements,
+      newOtherMerits: cusSubmissions.newOtherMerits,
+      newAdditionalNotes: cusSubmissions.newAdditionalNotes,
       docValidId: cusSubmissions.docValidId,
       docMayorsPermit: cusSubmissions.docMayorsPermit,
       docSecDti: cusSubmissions.docSecDti,
@@ -102,8 +126,29 @@ export default async function FinanceCusDetailPage({
       cityMunicipality: cisSubmissions.cityMunicipality,
       landmarks: cisSubmissions.landmarks,
       deliveryAddress: cisSubmissions.deliveryAddress,
+      deliveryLandmarks: cisSubmissions.deliveryLandmarks,
       deliveryMobile: cisSubmissions.deliveryMobile,
       deliveryTelephone: cisSubmissions.deliveryTelephone,
+      corporateName: cisSubmissions.corporateName,
+      dateOfBusinessReg: cisSubmissions.dateOfBusinessReg,
+      tinNumber: cisSubmissions.tinNumber,
+      lineOfBusiness: cisSubmissions.lineOfBusiness,
+      lineOfBusinessOther: cisSubmissions.lineOfBusinessOther,
+      businessActivity: cisSubmissions.businessActivity,
+      businessActivityOther: cisSubmissions.businessActivityOther,
+      salesChannel: cisSubmissions.salesChannel,
+      paymentTerms: cisSubmissions.paymentTerms,
+      owners: cisSubmissions.owners,
+      officers: cisSubmissions.officers,
+      businessLife: cisSubmissions.businessLife,
+      howLongAtAddress: cisSubmissions.howLongAtAddress,
+      numberOfBranches: cisSubmissions.numberOfBranches,
+      govCertifications: cisSubmissions.govCertifications,
+      tradeReferences: cisSubmissions.tradeReferences,
+      bankReferences: cisSubmissions.bankReferences,
+      achievements: cisSubmissions.achievements,
+      otherMerits: cisSubmissions.otherMerits,
+      additionalNotes: cisSubmissions.additionalNotes,
       status: cisSubmissions.status,
       agentCode: cisSubmissions.agentCode,
       businessType: cisSubmissions.businessType,
@@ -146,38 +191,86 @@ export default async function FinanceCusDetailPage({
     denied: "Denied",
   };
 
+  function humanize(v: string | null | undefined) {
+    if (!v) return null;
+    return v.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function ownersSummary(arr: any): string | null {
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr.map((o: { name?: string; percentage?: string }) =>
+      [o.name, o.percentage ? `(${o.percentage})` : ""].filter(Boolean).join(" ")
+    ).join(", ");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function officersSummary(arr: any): string | null {
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr.map((o: { name?: string; position?: string }) =>
+      [o.name, o.position ? `(${o.position})` : ""].filter(Boolean).join(" ")
+    ).join(", ");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function tradeRefSummary(arr: any): string | null {
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr.map((r: { company?: string }) => r.company).filter(Boolean).join(", ");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function bankRefSummary(arr: any): string | null {
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr.map((r: { bank?: string; branch?: string }) =>
+      [r.bank, r.branch].filter(Boolean).join(" - ")
+    ).join(", ");
+  }
+
   // Build the before/after change rows for approved CUS
   type ChangeRow = { label: string; before: string | null; after: string };
   const changeRows: ChangeRow[] = [];
   if (cus.status === "approved" && cus.beforeSnapshot) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const snap = cus.beforeSnapshot as Record<string, any>;
-    const CHANGE_FIELDS: Array<{ label: string; cisKey: string; cusValue: string | null }> = [
-      { label: "Trade Name",         cisKey: "tradeName",         cusValue: cus.newTradeName },
-      { label: "Customer Type",      cisKey: "customerType",      cusValue: cus.newCustomerType?.replace(/_/g, " ") ?? null },
-      { label: "Contact Person",     cisKey: "contactPerson",     cusValue: cus.newContactPerson },
-      { label: "Mobile",             cisKey: "contactNumber",     cusValue: cus.newContactNumber },
-      { label: "Telephone",          cisKey: "telephoneNumber",   cusValue: cus.newTelephoneNumber },
-      { label: "Email",              cisKey: "emailAddress",      cusValue: cus.newEmailAddress },
-      { label: "Website",            cisKey: "website",           cusValue: cus.newWebsite },
-      { label: "No. of Employees",   cisKey: "numberOfEmployees", cusValue: cus.newNumberOfEmployees },
-      { label: "Business Address",   cisKey: "businessAddress",   cusValue: cus.newBusinessAddress },
-      { label: "City/Municipality",  cisKey: "cityMunicipality",  cusValue: cus.newCityMunicipality },
-      { label: "Landmarks",          cisKey: "landmarks",         cusValue: cus.newLandmarks },
-      { label: "Delivery Address",   cisKey: "deliveryAddress",   cusValue: cus.newDeliveryAddress },
-      { label: "Delivery Mobile",    cisKey: "deliveryMobile",    cusValue: cus.newDeliveryMobile },
-      { label: "Delivery Tel",       cisKey: "deliveryTelephone", cusValue: cus.newDeliveryTelephone },
-      { label: "Credit Terms",       cisKey: "financeCreditTerms",cusValue: cus.financeCreditTerms?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? null },
-      { label: "Credit Limit",       cisKey: "financeCreditLimit",cusValue: cus.financeCreditLimit },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type Fmt = (v: any) => string | null;
+    const CHANGE_FIELDS: Array<{ label: string; cisKey: string; cusValue: string | null; fmt?: Fmt }> = [
+      { label: "Trade Name",          cisKey: "tradeName",            cusValue: cus.newTradeName },
+      { label: "Corporate Name",      cisKey: "corporateName",        cusValue: cus.newCorporateName },
+      { label: "Customer Type",       cisKey: "customerType",         cusValue: humanize(cus.newCustomerType),       fmt: humanize },
+      { label: "Business Type",       cisKey: "businessType",         cusValue: humanize(cus.newBusinessType),       fmt: humanize },
+      { label: "Date of Reg.",        cisKey: "dateOfBusinessReg",    cusValue: cus.newDateOfBusinessReg },
+      { label: "No. of Employees",    cisKey: "numberOfEmployees",    cusValue: cus.newNumberOfEmployees },
+      { label: "TIN Number",          cisKey: "tinNumber",            cusValue: cus.newTinNumber },
+      { label: "Contact Person",      cisKey: "contactPerson",        cusValue: cus.newContactPerson },
+      { label: "Mobile",              cisKey: "contactNumber",        cusValue: cus.newContactNumber },
+      { label: "Telephone",           cisKey: "telephoneNumber",      cusValue: cus.newTelephoneNumber },
+      { label: "Email",               cisKey: "emailAddress",         cusValue: cus.newEmailAddress },
+      { label: "Website",             cisKey: "website",              cusValue: cus.newWebsite },
+      { label: "Business Address",    cisKey: "businessAddress",      cusValue: cus.newBusinessAddress },
+      { label: "City/Municipality",   cisKey: "cityMunicipality",     cusValue: cus.newCityMunicipality },
+      { label: "Landmarks",           cisKey: "landmarks",            cusValue: cus.newLandmarks },
+      { label: "Delivery Address",    cisKey: "deliveryAddress",      cusValue: cus.newDeliveryAddress },
+      { label: "Delivery Landmarks",  cisKey: "deliveryLandmarks",    cusValue: cus.newDeliveryLandmarks },
+      { label: "Delivery Mobile",     cisKey: "deliveryMobile",       cusValue: cus.newDeliveryMobile },
+      { label: "Delivery Tel",        cisKey: "deliveryTelephone",    cusValue: cus.newDeliveryTelephone },
+      { label: "Line of Business",    cisKey: "lineOfBusiness",       cusValue: humanize(cus.newLineOfBusiness),     fmt: humanize },
+      { label: "Business Activity",   cisKey: "businessActivity",     cusValue: humanize(cus.newBusinessActivity),   fmt: humanize },
+      { label: "Sales Channel",       cisKey: "salesChannel",         cusValue: humanize(cus.newSalesChannel),       fmt: humanize },
+      { label: "Payment Terms",       cisKey: "paymentTerms",         cusValue: humanize(cus.newPaymentTerms),       fmt: humanize },
+      { label: "Owners",              cisKey: "owners",               cusValue: ownersSummary(cus.newOwners),        fmt: ownersSummary },
+      { label: "Officers",            cisKey: "officers",             cusValue: officersSummary(cus.newOfficers),    fmt: officersSummary },
+      { label: "Business Life",       cisKey: "businessLife",         cusValue: cus.newBusinessLife },
+      { label: "How Long at Address", cisKey: "howLongAtAddress",     cusValue: cus.newHowLongAtAddress },
+      { label: "No. of Branches",     cisKey: "numberOfBranches",     cusValue: cus.newNumberOfBranches },
+      { label: "Gov. Certifications", cisKey: "govCertifications",    cusValue: cus.newGovCertifications },
+      { label: "Trade References",    cisKey: "tradeReferences",      cusValue: tradeRefSummary(cus.newTradeReferences), fmt: tradeRefSummary },
+      { label: "Bank References",     cisKey: "bankReferences",       cusValue: bankRefSummary(cus.newBankReferences),   fmt: bankRefSummary },
+      { label: "Achievements",        cisKey: "achievements",         cusValue: cus.newAchievements },
+      { label: "Other Merits",        cisKey: "otherMerits",          cusValue: cus.newOtherMerits },
+      { label: "Additional Notes",    cisKey: "additionalNotes",      cusValue: cus.newAdditionalNotes },
     ];
-    for (const { label, cisKey, cusValue } of CHANGE_FIELDS) {
+    for (const { label, cisKey, cusValue, fmt } of CHANGE_FIELDS) {
       if (cusValue && cisKey in snap) {
-        const before = snap[cisKey];
-        changeRows.push({
-          label,
-          before: before ? String(before).replace(/_/g, " ") : null,
-          after: cusValue,
-        });
+        const raw = snap[cisKey];
+        const before = fmt ? fmt(raw) : (raw != null ? String(raw) : null);
+        changeRows.push({ label, before: before || null, after: cusValue });
       }
     }
   }
@@ -191,28 +284,76 @@ export default async function FinanceCusDetailPage({
   // All fields shown in the comparison table
   type CompRow = { label: string; current: string | null; requested: string | null };
   const compRows: CompRow[] = [
-    { label: "Trade Name",         current: cis?.tradeName ?? null,         requested: cus.newTradeName ?? null },
-    { label: "Customer Type",      current: cis?.customerType?.replace(/_/g, " ") ?? null, requested: cus.newCustomerType?.replace(/_/g, " ") ?? null },
-    { label: "Contact Person",     current: cis?.contactPerson ?? null,     requested: cus.newContactPerson ?? null },
-    { label: "Mobile",             current: cis?.contactNumber ?? null,     requested: cus.newContactNumber ?? null },
-    { label: "Telephone",          current: cis?.telephoneNumber ?? null,   requested: cus.newTelephoneNumber ?? null },
-    { label: "Email",              current: cis?.emailAddress ?? null,      requested: cus.newEmailAddress ?? null },
-    { label: "Website",            current: cis?.website ?? null,           requested: cus.newWebsite ?? null },
-    { label: "No. of Employees",   current: cis?.numberOfEmployees ?? null, requested: cus.newNumberOfEmployees ?? null },
-    { label: "Business Address",   current: cis?.businessAddress ?? null,   requested: cus.newBusinessAddress ?? null },
-    { label: "City / Municipality",current: cis?.cityMunicipality ?? null,  requested: cus.newCityMunicipality ?? null },
-    { label: "Landmarks",          current: cis?.landmarks ?? null,         requested: cus.newLandmarks ?? null },
-    { label: "Delivery Address",   current: cis?.deliveryAddress ?? null,   requested: cus.newDeliveryAddress ?? null },
-    { label: "Delivery Mobile",    current: cis?.deliveryMobile ?? null,    requested: cus.newDeliveryMobile ?? null },
-    { label: "Delivery Tel",       current: cis?.deliveryTelephone ?? null, requested: cus.newDeliveryTelephone ?? null },
-    { label: "Credit Terms",       current: cis?.financeCreditTerms?.replace(/_/g, " ") ?? null, requested: null },
-    { label: "Credit Limit",       current: cis?.financeCreditLimit ?? null, requested: null },
+    { label: "Trade Name",          current: cis?.tradeName ?? null,                       requested: cus.newTradeName ?? null },
+    { label: "Corporate Name",      current: cis?.corporateName ?? null,                   requested: cus.newCorporateName ?? null },
+    { label: "Customer Type",       current: humanize(cis?.customerType) ?? null,          requested: humanize(cus.newCustomerType) ?? null },
+    { label: "Business Type",       current: humanize(cis?.businessType) ?? null,          requested: humanize(cus.newBusinessType) ?? null },
+    { label: "Date of Reg.",        current: cis?.dateOfBusinessReg ?? null,               requested: cus.newDateOfBusinessReg ?? null },
+    { label: "No. of Employees",    current: cis?.numberOfEmployees ?? null,               requested: cus.newNumberOfEmployees ?? null },
+    { label: "TIN Number",          current: cis?.tinNumber ?? null,                       requested: cus.newTinNumber ?? null },
+    { label: "Contact Person",      current: cis?.contactPerson ?? null,                   requested: cus.newContactPerson ?? null },
+    { label: "Mobile",              current: cis?.contactNumber ?? null,                   requested: cus.newContactNumber ?? null },
+    { label: "Telephone",           current: cis?.telephoneNumber ?? null,                 requested: cus.newTelephoneNumber ?? null },
+    { label: "Email",               current: cis?.emailAddress ?? null,                    requested: cus.newEmailAddress ?? null },
+    { label: "Website",             current: cis?.website ?? null,                         requested: cus.newWebsite ?? null },
+    { label: "Business Address",    current: cis?.businessAddress ?? null,                 requested: cus.newBusinessAddress ?? null },
+    { label: "City / Municipality", current: cis?.cityMunicipality ?? null,                requested: cus.newCityMunicipality ?? null },
+    { label: "Landmarks",           current: cis?.landmarks ?? null,                       requested: cus.newLandmarks ?? null },
+    { label: "Delivery Address",    current: cis?.deliveryAddress ?? null,                 requested: cus.newDeliveryAddress ?? null },
+    { label: "Delivery Landmarks",  current: cis?.deliveryLandmarks ?? null,               requested: cus.newDeliveryLandmarks ?? null },
+    { label: "Delivery Mobile",     current: cis?.deliveryMobile ?? null,                  requested: cus.newDeliveryMobile ?? null },
+    { label: "Delivery Tel",        current: cis?.deliveryTelephone ?? null,               requested: cus.newDeliveryTelephone ?? null },
+    { label: "Line of Business",    current: humanize(cis?.lineOfBusiness) ?? null,        requested: humanize(cus.newLineOfBusiness) ?? null },
+    { label: "Business Activity",   current: humanize(cis?.businessActivity) ?? null,      requested: humanize(cus.newBusinessActivity) ?? null },
+    { label: "Sales Channel",       current: humanize(cis?.salesChannel) ?? null,          requested: humanize(cus.newSalesChannel) ?? null },
+    { label: "Payment Terms",       current: humanize(cis?.paymentTerms) ?? null,          requested: humanize(cus.newPaymentTerms) ?? null },
+    { label: "Owners",              current: ownersSummary(cis?.owners),                   requested: ownersSummary(cus.newOwners) },
+    { label: "Officers",            current: officersSummary(cis?.officers),               requested: officersSummary(cus.newOfficers) },
+    { label: "Business Life",       current: cis?.businessLife ?? null,                    requested: cus.newBusinessLife ?? null },
+    { label: "How Long at Address", current: cis?.howLongAtAddress ?? null,                requested: cus.newHowLongAtAddress ?? null },
+    { label: "No. of Branches",     current: cis?.numberOfBranches ?? null,                requested: cus.newNumberOfBranches ?? null },
+    { label: "Gov. Certifications", current: cis?.govCertifications ?? null,               requested: cus.newGovCertifications ?? null },
+    { label: "Trade References",    current: tradeRefSummary(cis?.tradeReferences),        requested: tradeRefSummary(cus.newTradeReferences) },
+    { label: "Bank References",     current: bankRefSummary(cis?.bankReferences),          requested: bankRefSummary(cus.newBankReferences) },
+    { label: "Achievements",        current: cis?.achievements ?? null,                    requested: cus.newAchievements ?? null },
+    { label: "Other Merits",        current: cis?.otherMerits ?? null,                     requested: cus.newOtherMerits ?? null },
+    { label: "Additional Notes",    current: cis?.additionalNotes ?? null,                 requested: cus.newAdditionalNotes ?? null },
   ].filter((r) => r.current || r.requested);
 
-  const changedCount = compRows.filter((r) => r.requested && r.requested !== r.current).length;
+  const changedCount = cus.status === "approved"
+    ? changeRows.length
+    : compRows.filter((r) => r.requested && r.requested !== r.current).length;
+
+  const submittedEvent = events.find((e) => e.action === "submitted");
+  const submittedAt = submittedEvent
+    ? new Date(submittedEvent.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : new Date(cus.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div className="space-y-5">
+    <>
+    {/* ── Print-only CUS form ── */}
+    <CusPrintForm
+      tradeName={cis?.tradeName ?? ""}
+      agentCode={cis?.agentCode ?? null}
+      submittedAt={submittedAt}
+      rows={
+        cus.status === "approved" && changeRows.length > 0
+          ? changeRows.map((r) => ({ label: r.label, current: r.before, requested: r.after }))
+          : compRows
+      }
+      agentNote={cus.note ?? null}
+      uploadedDocs={uploadedSlots.map((slot) => ({
+        label: slot.label,
+        files: ((cus as Record<string, unknown>)[slot.key] as FileEntry[]).map((f) => ({
+          name: f.name,
+          url: f.url,
+          type: f.type,
+        })),
+      }))}
+    />
+
+    {/* ── Screen UI (hidden on print) ── */}
+    <div className="space-y-5 print:hidden">
       <Breadcrumbs items={[
         { label: "Customer Updates", href: isLegal ? "/legal/cus" : "/finance/cus" },
         { label: cis?.tradeName ?? "CUS Detail" },
@@ -244,6 +385,22 @@ export default async function FinanceCusDetailPage({
               ? "This CUS was denied."
               : "Review the requested changes below, set credit evaluation, then approve or deny."}
           </p>
+          {/* Current credit terms — always visible */}
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Current Credit:</span>
+            {cis?.financeCreditTerms ? (
+              <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                {cis.financeCreditTerms.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-400 italic">No terms set</span>
+            )}
+            {cis?.financeCreditLimit && (
+              <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                {cis.financeCreditLimit}
+              </span>
+            )}
+          </div>
         </div>
         <Link
           href={cisHref}
@@ -258,18 +415,22 @@ export default async function FinanceCusDetailPage({
       <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
 
         {/* Column headers */}
-        <div className="grid lg:grid-cols-[1fr_260px] border-b border-zinc-200">
+        <div className="grid lg:grid-cols-[1fr_320px] border-b border-zinc-200">
           <div className="grid grid-cols-[140px_1fr_1fr] border-b lg:border-b-0 lg:border-r border-zinc-200">
             <div className="px-4 py-3 border-r border-zinc-200">
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Field</p>
             </div>
             <div className="px-4 py-3 border-r border-zinc-200 flex items-center gap-1.5">
               <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-              <p className="text-xs font-semibold text-zinc-600">Current</p>
+              <p className="text-xs font-semibold text-zinc-600">
+                {cus.status === "approved" ? "Before" : "Current"}
+              </p>
             </div>
             <div className={`px-4 py-3 flex items-center gap-1.5 ${accentBg}`}>
               <RefreshCw className={`h-3.5 w-3.5 ${accentIcon} shrink-0`} />
-              <p className={`text-xs font-semibold ${accentText}`}>Requested</p>
+              <p className={`text-xs font-semibold ${accentText}`}>
+                {cus.status === "approved" ? "After (Applied)" : "Requested"}
+              </p>
             </div>
           </div>
           <div className={`px-4 py-3 flex items-center gap-1.5 ${accentBg}`}>
@@ -278,11 +439,14 @@ export default async function FinanceCusDetailPage({
         </div>
 
         {/* Body: table rows on left, panel on right */}
-        <div className="grid lg:grid-cols-[1fr_260px]">
+        <div className="grid lg:grid-cols-[1fr_320px]">
 
           {/* Comparison rows */}
           <div className="divide-y divide-zinc-100 lg:border-r border-zinc-200">
-            {compRows.map(({ label, current, requested: req }) => {
+            {(cus.status === "approved" && changeRows.length > 0
+              ? changeRows.map((r) => ({ label: r.label, current: r.before, requested: r.after }))
+              : compRows
+            ).map(({ label, current, requested: req }) => {
               const hasChange = !!req && req !== current;
               return (
                 <div
@@ -293,7 +457,7 @@ export default async function FinanceCusDetailPage({
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 leading-snug mt-0.5">{label}</p>
                   </div>
                   <div className="px-4 py-2.5 border-r border-zinc-100">
-                    <p className={`text-sm break-words leading-snug ${current ? (hasChange ? "text-zinc-500" : "text-zinc-800") : "text-zinc-300 italic"}`}>
+                    <p className={`text-sm break-words leading-snug ${current ? (hasChange ? "text-zinc-500 line-through decoration-zinc-400" : "text-zinc-800") : "text-zinc-300 italic"}`}>
                       {current ?? "—"}
                     </p>
                   </div>
@@ -326,29 +490,16 @@ export default async function FinanceCusDetailPage({
           {/* Credit evaluation panel — right column */}
           <div className="lg:self-start lg:sticky lg:top-4">
             {cus.status === "approved" || cus.status === "denied" ? (
-              <div className="p-4 space-y-3">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Credit Terms</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-900">
-                    {cus.financeCreditTerms
-                      ? cus.financeCreditTerms.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-                      : "—"}
-                  </p>
-                </div>
-                {cus.financeCreditLimit && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Credit Limit</p>
-                    <p className="mt-1 text-sm font-semibold text-zinc-900">{cus.financeCreditLimit}</p>
-                  </div>
-                )}
+              <div className="p-4">
                 <p className="text-xs text-zinc-400 capitalize">This CUS was {cus.status}.</p>
               </div>
             ) : (
               <CusFinancePanel
                 cusId={id}
-                initialCreditLimit={cus.financeCreditLimit ?? ""}
-                initialCreditTerms={cus.financeCreditTerms ?? ""}
                 newCustomerType={cus.newCustomerType ?? undefined}
+                initialSirRestyFiles={(cus.docSirRestySigned as any) ?? []}
+                initialCreditTerms={cus.financeCreditTerms ?? ""}
+                initialCreditLimit={cus.financeCreditLimit ?? ""}
                 backHref={backHref}
                 isLegal={isLegal}
               />
@@ -358,7 +509,7 @@ export default async function FinanceCusDetailPage({
       </div>
 
       {/* ── Below-the-fold: documents + activity ── */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
 
         {/* ── Submitted documents ── */}
         <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
@@ -483,5 +634,6 @@ export default async function FinanceCusDetailPage({
         ) : <div />}
       </div>
     </div>
+    </>
   );
 }

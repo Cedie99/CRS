@@ -150,12 +150,14 @@ export function AuditTimeline({ events }: AuditTimelineProps) {
     );
   }
 
+  const reversed = [...events].reverse();
+
   return (
     <ol className="space-y-0">
-      {events.map((event, idx) => {
+      {reversed.map((event, idx) => {
         const config = ACTION_CONFIG[event.action];
         const Icon = config?.icon ?? FileText;
-        const isLast = idx === events.length - 1;
+        const isLast = idx === reversed.length - 1;
 
         return (
           <li key={event.id} className="flex gap-4">

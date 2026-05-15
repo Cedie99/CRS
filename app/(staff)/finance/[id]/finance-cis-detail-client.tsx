@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { DocReviewPanel } from "@/components/doc-review-panel";
 import { AuditTimeline } from "@/components/audit-timeline";
 import { FinanceActions } from "@/components/actions/finance-actions";
@@ -118,7 +118,6 @@ interface FinanceCisDetailClientProps {
   financeEu?: string | null;
   financeDl?: string | null;
   financeDr?: string | null;
-  financePlTs?: string | null;
   financeCreditLimit?: string | null;
   financeCreditTerms?: string | null;
   docSirRestySigned?: unknown;
@@ -226,6 +225,7 @@ export function FinanceCisDetailClient({
             printEnabled={printEnabled}
             hidePrintButton
             hidePointsPanel
+            printCreditFields
             onStatusesChange={handleStatusesChange}
             onMetricSave={canAct ? handleMetricSave : undefined}
             reviewRejectionTimestamp={latestReturnedAt}
@@ -241,7 +241,7 @@ export function FinanceCisDetailClient({
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={status as any} customerType={customerType} events={events as any} cisCreatedAt={cisData.createdAt as any} />
-          <WorkflowHandoff status={status as any} customerType={customerType} />
+          <WorkflowHandoff status={status as any} customerType={customerType} agentType={cisData.agentType} />
 
           <PointsBreakdownPanel
             docValidId={cisData.docValidId}
@@ -286,6 +286,8 @@ export function FinanceCisDetailClient({
         <FinanceActions
           cisId={cisId}
           initialSirRestyFiles={initialSirRestyFiles as any}
+          initialCreditTerms={cisData.financeCreditTerms ?? ""}
+          initialCreditLimit={cisData.financeCreditLimit ?? ""}
           forwardEndpoint={forwardEndpoint}
           denyEndpoint={denyEndpoint}
           dashboardPath={dashboardPath}
