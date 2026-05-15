@@ -88,8 +88,6 @@ export default async function ApproverCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        originalCreditTerms={cis.financeCreditTerms}
-        originalCreditLimit={cis.financeCreditLimit}
         hrefPrefix="approver"
       />
 
@@ -173,7 +171,6 @@ export default async function ApproverCisDetailPage({
             docCertifications={cis.docCertifications}
             docSirRestySigned={cis.docSirRestySigned}
             docOther={cis.docOther}
-            financePlTs={cis.financePlTs}
             financePossiblePoints={cis.financePossiblePoints}
             financeApprovedPoints={cis.financeApprovedPoints}
             financeCreditLimit={cis.financeCreditLimit}
@@ -202,7 +199,7 @@ export default async function ApproverCisDetailPage({
 
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as CisStatus} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
-          <WorkflowHandoff status={cis.status as CisStatus} customerType={cis.customerType} />
+          <WorkflowHandoff status={cis.status as CisStatus} customerType={cis.customerType} agentType={cis.agentType} />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">

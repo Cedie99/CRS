@@ -105,7 +105,6 @@ export default async function LegalCisDetailPage({
         financeEu: cisSubmissions.financeEu,
         financeDl: cisSubmissions.financeDl,
         financeDr: cisSubmissions.financeDr,
-        financePlTs: cisSubmissions.financePlTs,
         financePossiblePoints: cisSubmissions.financePossiblePoints,
         financeApprovedPoints: cisSubmissions.financeApprovedPoints,
         financeMetricPoints: cisSubmissions.financeMetricPoints,
@@ -180,8 +179,6 @@ export default async function LegalCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        originalCreditTerms={cis.financeCreditTerms}
-        originalCreditLimit={cis.financeCreditLimit}
         hrefPrefix="legal"
       />
 
@@ -274,7 +271,6 @@ export default async function LegalCisDetailPage({
         financeEu={cis.financeEu}
         financeDl={cis.financeDl}
         financeDr={cis.financeDr}
-        financePlTs={cis.financePlTs}
         financePossiblePoints={cis.financePossiblePoints}
         financeApprovedPoints={cis.financeApprovedPoints}
         metricPoints={cis.financeMetricPoints as any}

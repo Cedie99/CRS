@@ -134,7 +134,6 @@ export default async function AgentCisDetailPage({
         financeEu: cisSubmissions.financeEu,
         financeDl: cisSubmissions.financeDl,
         financeDr: cisSubmissions.financeDr,
-        financePlTs: cisSubmissions.financePlTs,
         financePossiblePoints: cisSubmissions.financePossiblePoints,
         financeApprovedPoints: cisSubmissions.financeApprovedPoints,
         financeCreditLimit: cisSubmissions.financeCreditLimit,
@@ -255,50 +254,79 @@ export default async function AgentCisDetailPage({
 
       {/* Status banners */}
       {(cis.status === "returned" || cis.status === "denied") && (
-        <div
-          className={`print:hidden flex flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:px-5 ${
-            cis.status === "returned"
-              ? "border-rose-200 bg-rose-50"
-              : "border-red-200 bg-red-50"
-          }`}
-        >
-          <AlertTriangle
-            className={`mt-0.5 h-5 w-5 shrink-0 ${
-              cis.status === "returned" ? "text-rose-500" : "text-red-500"
-            }`}
-          />
-          <div>
-            <p
-              className={`text-sm font-semibold ${
-                cis.status === "returned" ? "text-rose-700" : "text-red-700"
-              }`}
-            >
-              {cis.status === "returned"
-                ? `This form was returned by ${returnedBy ?? "a reviewer"}`
-                : "This form was not approved"}
-            </p>
-            {cis.status === "returned" && isFinanceOrLegalReturn && (
-              <p className="mt-1 text-xs text-rose-600">
-                This is likely due to document issues or incomplete information.
+        <div className={`print:hidden overflow-hidden rounded-xl border ${
+          cis.status === "returned" ? "border-rose-200" : "border-red-200"
+        }`}>
+          {/* Coloured header strip */}
+          <div className={`flex items-center justify-between gap-3 px-4 py-3 sm:px-5 ${
+            cis.status === "returned" ? "bg-rose-600" : "bg-red-700"
+          }`}>
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-white" />
+              <p className="text-sm font-bold text-white">
+                {cis.status === "returned"
+                  ? `Form Returned by ${returnedBy ?? "Reviewer"}`
+                  : "Application Denied"}
               </p>
-            )}
-            {(returnedEvent?.note || deniedEvent?.note) && (
-              <p
-                className={`mt-1 text-sm ${
-                  cis.status === "returned" ? "text-rose-600" : "text-red-600"
-                }`}
-              >
-                {returnedEvent?.note ?? deniedEvent?.note}
-              </p>
-            )}
-            {cis.status === "returned" && (
-              <p className="mt-1.5 text-xs text-rose-500">
-                Review the documents and denial reason above, fix any issues, then use the Resubmit button below.
-              </p>
-            )}
-          </div>
-          <div className="shrink-0 self-start sm:ml-auto">
+            </div>
             <DismissButton cisId={cis.id} />
+          </div>
+
+          {/* Body */}
+          <div className={`px-4 py-4 sm:px-5 space-y-4 ${
+            cis.status === "returned" ? "bg-rose-50/40" : "bg-red-50/40"
+          }`}>
+
+            {/* Reviewer's note */}
+            {(returnedEvent?.note || deniedEvent?.note) && (
+              <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  Reviewer&rsquo;s Note
+                </p>
+                <p className={`text-sm leading-relaxed ${
+                  cis.status === "returned" ? "text-rose-800" : "text-red-800"
+                }`}>
+                  {returnedEvent?.note ?? deniedEvent?.note}
+                </p>
+              </div>
+            )}
+
+            {/* What to do next — returned */}
+            {cis.status === "returned" && (
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">
+                  What to do next
+                </p>
+                <ol className="space-y-2">
+                  {(isFinanceOrLegalReturn
+                    ? [
+                        "Check the list of rejected documents below.",
+                        "Upload a replacement file for each rejected document.",
+                        "Click \u201CResubmit\u201D once all replacements are uploaded.",
+                      ]
+                    : [
+                        "Read the reviewer\u2019s note above carefully.",
+                        "Make the necessary corrections or uploads.",
+                        "Click \u201CResubmit\u201D when ready.",
+                      ]
+                  ).map((step, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-200 text-[11px] font-bold text-rose-700">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-zinc-700">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {/* What to do next — denied */}
+            {cis.status === "denied" && (
+              <p className="text-sm text-red-700">
+                This submission has been permanently denied and cannot be resubmitted. You may archive it to remove it from your active view.
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -314,13 +342,12 @@ export default async function AgentCisDetailPage({
           initialOtherRequirements={(cis.docAgentOtherRequirements as any) ?? []}
           tradeName={cis.tradeName}
           managerName={managerName}
+          agentType={session.user.role === "rsr" ? "rsr" : "sales_agent"}
         />
       )}
 
       <CusApprovedBanner
         cisId={cis.id}
-        originalCreditTerms={cis.financeCreditTerms}
-        originalCreditLimit={cis.financeCreditLimit}
         hrefPrefix="agent"
       />
       {/* Two-column layout */}
@@ -414,7 +441,6 @@ export default async function AgentCisDetailPage({
             financeEu={cis.financeEu}
             financeDl={cis.financeDl}
             financeDr={cis.financeDr}
-            financePlTs={cis.financePlTs}
             financePossiblePoints={cis.financePossiblePoints}
             financeApprovedPoints={cis.financeApprovedPoints}
             financeCreditLimit={cis.financeCreditLimit}
@@ -435,7 +461,7 @@ export default async function AgentCisDetailPage({
         {/* Sidebar */}
         <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
-          <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} />
+          <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} agentType={cis.agentType} />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">

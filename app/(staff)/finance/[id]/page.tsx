@@ -80,8 +80,6 @@ export default async function FinanceCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        originalCreditTerms={cis.financeCreditTerms}
-        originalCreditLimit={cis.financeCreditLimit}
         hrefPrefix="finance"
       />
 
@@ -178,7 +176,6 @@ export default async function FinanceCisDetailPage({
         financeEu={cis.financeEu}
         financeDl={cis.financeDl}
         financeDr={cis.financeDr}
-        financePlTs={cis.financePlTs}
         financeCreditLimit={cis.financeCreditLimit}
         financeCreditTerms={cis.financeCreditTerms}
         docSirRestySigned={cis.docSirRestySigned}
