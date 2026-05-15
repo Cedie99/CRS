@@ -40,12 +40,6 @@ export const toast = {
   info: (opts: SileoOptions) =>
     sileo.info(withTitle("text-blue-600", opts)),
 
-  loading: (opts: SileoOptions) =>
-    sileo.loading(withTitle("text-zinc-600", opts)),
-
-  action: (opts: SileoOptions) =>
-    sileo.action(withTitle("text-[#2d6e1e]", opts)),
-
   promise: sileo.promise.bind(sileo),
   dismiss: sileo.dismiss.bind(sileo),
   clear: sileo.clear.bind(sileo),
