@@ -1,6 +1,6 @@
 "use client";
 
-import { FileWarning, ArrowRight } from "lucide-react";
+import { FileX2, MoveDown } from "lucide-react";
 import { DOC_LABELS } from "@/lib/doc-types";
 import type { DocType } from "@/lib/doc-types";
 
@@ -21,51 +21,72 @@ export function RejectedDocsSummary({ rejectedDocs }: RejectedDocsSummaryProps) 
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.classList.remove("doc-reject-glow");
-    // Force reflow so re-clicking the same item re-triggers the animation
     void el.offsetWidth;
     el.classList.add("doc-reject-glow");
     setTimeout(() => el.classList.remove("doc-reject-glow"), 2000);
   }
 
   return (
-    <div className="print:hidden rounded-xl border border-orange-200 bg-orange-50/60 px-4 py-4">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 ring-1 ring-orange-200">
-          <FileWarning className="h-4 w-4 text-orange-600" />
+    <div className="print:hidden overflow-hidden rounded-xl border border-amber-200 bg-white">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-amber-100 bg-amber-50 px-4 py-3 sm:px-5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 ring-2 ring-amber-200">
+          <FileX2 className="h-4 w-4 text-amber-600" />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-orange-900">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-amber-900">
             {rejectedDocs.length === 1
-              ? "1 document needs to be replaced"
-              : `${rejectedDocs.length} documents need to be replaced`}
+              ? "1 Document Needs Replacement"
+              : `${rejectedDocs.length} Documents Need Replacement`}
           </p>
-          <p className="mt-0.5 text-xs text-orange-700">
-            Click a document below to jump directly to its upload field.
+          <p className="text-xs text-amber-700">
+            Upload a new file for each document listed below, then resubmit.
           </p>
-          <div className="mt-3 flex flex-col gap-1.5">
-            {rejectedDocs.map(({ key, reason }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => scrollToDoc(key)}
-                className="group flex items-center gap-2.5 rounded-lg border border-orange-200 bg-white px-3 py-2 text-left transition-colors hover:border-orange-300 hover:bg-orange-50"
-              >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
-                  !
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-medium text-zinc-800">
-                    {DOC_LABELS[key] ?? key}
-                  </span>
-                  {reason && (
-                    <span className="block truncate text-[11px] text-zinc-500">{reason}</span>
-                  )}
-                </div>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-orange-400 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            ))}
-          </div>
         </div>
+      </div>
+
+      {/* Document list */}
+      <div className="divide-y divide-zinc-100">
+        {rejectedDocs.map(({ key, reason }, i) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => scrollToDoc(key)}
+            className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-50 sm:px-5"
+          >
+            {/* Step number */}
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[11px] font-bold text-red-600">
+              {i + 1}
+            </span>
+
+            {/* Doc name + reason */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-zinc-800">
+                {DOC_LABELS[key] ?? key}
+              </p>
+              {reason ? (
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  Reason: <span className="font-medium text-zinc-700">{reason}</span>
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-zinc-400 italic">No reason given</p>
+              )}
+            </div>
+
+            {/* Jump affordance */}
+            <span className="flex shrink-0 items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition-colors group-hover:border-amber-300 group-hover:bg-amber-50 group-hover:text-amber-700">
+              <MoveDown className="h-3 w-3" />
+              Go to upload
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Footer hint */}
+      <div className="border-t border-amber-100 bg-amber-50/50 px-4 py-2.5 sm:px-5">
+        <p className="text-[11px] text-amber-700">
+          Click any document above to scroll directly to its upload field.
+        </p>
       </div>
     </div>
   );

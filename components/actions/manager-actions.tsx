@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CheckCircle, RotateCcw } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 interface ManagerActionsProps {
   cisId: string;

@@ -36,6 +36,14 @@ const ROLES: Record<string, RoleInfo> = {
     textColor: "text-blue-800",
     borderColor: "border-blue-200",
   },
+  rsr: {
+    label: "RSR Agent",
+    description: "Completing the agent fill-out section",
+    dotColor: "bg-blue-400",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-800",
+    borderColor: "border-blue-200",
+  },
   sales_manager: {
     label: "Sales Manager",
     description: "Notified for monitoring",
@@ -91,19 +99,22 @@ interface HandoffConfig {
   next: { role: string; action: string } | null;
 }
 
-function getHandoff(status: CisStatus, customerType: string): HandoffConfig | null {
+function getHandoff(status: CisStatus, customerType: string, agentType: string): HandoffConfig | null {
   const isDealer = customerType === "dealer";
+  const agentRole = agentType === "rsr" ? "rsr" : "sales_agent";
 
   switch (status) {
     case "draft":
       return {
         current: { role: "customer", action: "Filling out the form via the shared link" },
-        next: { role: "sales_agent", action: "Will complete agent fill-out section" },
+        next: { role: agentRole, action: "Will complete agent fill-out section" },
       };
     case "submitted":
       return {
-        current: { role: "sales_agent", action: "Filling out the agent section" },
-        next: { role: "pending_selection", action: "Agent must select a customer type first" },
+        current: { role: agentRole, action: "Filling out the agent section" },
+        next: isDealer
+          ? { role: "legal_approver", action: "Will conduct credit evaluation (Dealer)" }
+          : { role: "finance_reviewer", action: "Will conduct credit evaluation" },
       };
     case "pending_endorsement":
       return {
@@ -184,10 +195,11 @@ function RolePill({ roleKey, action, label }: RolePillProps) {
 interface WorkflowHandoffProps {
   status: CisStatus;
   customerType?: string | null;
+  agentType?: string | null;
 }
 
-export function WorkflowHandoff({ status, customerType }: WorkflowHandoffProps) {
-  const handoff = getHandoff(status, customerType ?? "");
+export function WorkflowHandoff({ status, customerType, agentType }: WorkflowHandoffProps) {
+  const handoff = getHandoff(status, customerType ?? "", agentType ?? "sales_agent");
   if (!handoff) return null;
 
   return (

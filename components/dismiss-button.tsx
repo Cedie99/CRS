@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EyeOff } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 export function DismissButton({ cisId }: { cisId: string }) {
   const router = useRouter();

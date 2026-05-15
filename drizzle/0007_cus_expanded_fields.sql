@@ -1,0 +1,22 @@
+ALTER TABLE "cus_submissions" ADD COLUMN "new_delivery_landmarks" text;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_corporate_name" varchar(255);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_date_of_business_reg" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_tin_number" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_business_type" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_line_of_business" varchar(100);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_line_of_business_other" varchar(255);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_business_activity" varchar(100);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_business_activity_other" varchar(255);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_sales_channel" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_payment_terms" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_owners" jsonb;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_officers" jsonb;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_business_life" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_how_long_at_address" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_number_of_branches" varchar(50);--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_gov_certifications" text;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_trade_references" jsonb;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_bank_references" jsonb;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_achievements" text;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_other_merits" text;--> statement-breakpoint
+ALTER TABLE "cus_submissions" ADD COLUMN "new_additional_notes" text;

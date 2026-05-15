@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, Upload, RotateCcw } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import type { FileEntry } from "@/lib/doc-types";
 

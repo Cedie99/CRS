@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, RefreshCw } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 interface AgentResubmitFormProps {
   cisId: string;

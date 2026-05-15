@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {

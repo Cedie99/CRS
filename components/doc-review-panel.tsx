@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { CisInfoCard } from "@/components/cis-info-card";
 import type { DocType, DocReviewStatus, DocReviewStatuses } from "@/lib/doc-types";
 

@@ -460,7 +460,7 @@ export function PointsBreakdownPanel({
       {/* ── Recommended Terms ── */}
       <div className="overflow-hidden rounded-xl border-2 border-zinc-200 bg-linear-to-br from-zinc-50 to-white">
         <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-          <h3 className="text-xs font-bold text-zinc-900">Recommended Credit Terms</h3>
+          <h3 className="text-xs font-bold text-zinc-900">Applicable Credit Terms</h3>
           <div className="flex items-center gap-1.5">
             <span className={cn(
               "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
@@ -494,7 +494,7 @@ export function PointsBreakdownPanel({
                 "text-[10px] font-bold uppercase tracking-wider",
                 cleanApply ? "text-emerald-600" : "text-amber-600",
               )}>
-                {cleanApply ? "Recommended" : "Estimated"}
+                {cleanApply ? "Applicable" : "Estimated"}
               </p>
               <p className={cn(
                 "mt-0.5 text-lg font-black",

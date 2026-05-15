@@ -147,6 +147,7 @@ export function DocUploadSlot({
   allowDelete = true,
   reviewStatus,
   hideUploadButtons = false,
+  hideLabel = false,
 }: {
   docType: DocType;
   label: string;
@@ -160,6 +161,8 @@ export function DocUploadSlot({
   reviewStatus?: "approved" | "rejected" | "needs_review";
   /** Hide the Upload / Take Photo buttons (used when showing read-only rejected files). */
   hideUploadButtons?: boolean;
+  /** Hide the label row entirely (render your own label outside the slot). */
+  hideLabel?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -338,8 +341,8 @@ export function DocUploadSlot({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className={`flex items-center gap-3 ${hideLabel ? "justify-end" : "justify-between"}`}>
+        {!hideLabel && <div className="flex min-w-0 items-center gap-2">
           <p
             className={
               "truncate " + (
@@ -362,7 +365,7 @@ export function DocUploadSlot({
               Finished
             </span>
           ) : null}
-        </div>
+        </div>}
         {!hideUploadButtons && (
           <div className="flex shrink-0 overflow-hidden rounded-md border border-zinc-200">
             <button

@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, GitMerge, ChevronRight, Clock3 } from "lucide-react";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CtrNewModal } from "./ctr-new-modal";
 
 export const metadata = { title: "Customer Type Reclassification — Agent — CRS" };
@@ -72,10 +71,6 @@ export default async function AgentCtrListPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[
-        { label: "My Submissions", href: "/agent" },
-        { label: "Type Reclassification" },
-      ]} />
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-indigo-50 p-2.5 shrink-0">

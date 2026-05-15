@@ -343,13 +343,40 @@ export const cusSubmissions = pgTable("cus_submissions", {
   newCityMunicipality: varchar("new_city_municipality", { length: 200 }),
   newLandmarks: text("new_landmarks"),
   newDeliveryAddress: text("new_delivery_address"),
+  newDeliveryLandmarks: text("new_delivery_landmarks"),
   newDeliveryMobile: varchar("new_delivery_mobile", { length: 50 }),
   newDeliveryTelephone: varchar("new_delivery_telephone", { length: 50 }),
+
+  // Extended customer profile fields (mirrors CIS onboarding form)
+  newCorporateName: varchar("new_corporate_name", { length: 255 }),
+  newDateOfBusinessReg: varchar("new_date_of_business_reg", { length: 50 }),
+  newTinNumber: varchar("new_tin_number", { length: 50 }),
+  newBusinessType: varchar("new_business_type", { length: 50 }),
+  newLineOfBusiness: varchar("new_line_of_business", { length: 100 }),
+  newLineOfBusinessOther: varchar("new_line_of_business_other", { length: 255 }),
+  newBusinessActivity: varchar("new_business_activity", { length: 100 }),
+  newBusinessActivityOther: varchar("new_business_activity_other", { length: 255 }),
+  newSalesChannel: varchar("new_sales_channel", { length: 50 }),
+  newPaymentTerms: varchar("new_payment_terms", { length: 50 }),
+  newOwners: jsonb("new_owners"),
+  newOfficers: jsonb("new_officers"),
+  newBusinessLife: varchar("new_business_life", { length: 50 }),
+  newHowLongAtAddress: varchar("new_how_long_at_address", { length: 50 }),
+  newNumberOfBranches: varchar("new_number_of_branches", { length: 50 }),
+  newGovCertifications: text("new_gov_certifications"),
+  newTradeReferences: jsonb("new_trade_references"),
+  newBankReferences: jsonb("new_bank_references"),
+  newAchievements: text("new_achievements"),
+  newOtherMerits: text("new_other_merits"),
+  newAdditionalNotes: text("new_additional_notes"),
 
   // Finance evaluation
   financeCreditLimit: varchar("finance_credit_limit", { length: 100 }),
   financeCreditTerms: varchar("finance_credit_terms", { length: 20 }),
   financeMetricPoints: jsonb("finance_metric_points"),
+
+  // CFO-signed CUS (uploaded by finance/legal after CFO physically fills and signs the printed form)
+  docSirRestySigned: jsonb("doc_sir_resty_signed"),
 
   // Snapshot of CIS values at the moment this CUS was approved (before changes were applied)
   beforeSnapshot: jsonb("before_snapshot"),

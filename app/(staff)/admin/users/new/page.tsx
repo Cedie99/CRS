@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { CreateUserForm } from "@/components/admin/create-user-form";
 import { ShieldCheck, KeyRound, Users } from "lucide-react";
 import { PREDEFINED_AGENT_CODES } from "@/lib/agent-codes";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Create User — CRS" };
 
@@ -31,8 +30,7 @@ export default async function CreateUserPage() {
 
   return (
     <div className="space-y-6">
-    <Breadcrumbs items={[{ label: "All Submissions", href: "/admin" }, { label: "User Management", href: "/admin/users" }, { label: "Create User" }]} />
-    <div className="grid gap-8 lg:grid-cols-5">
+<div className="grid gap-8 lg:grid-cols-5">
       {/* Left — context panel */}
       <div className="lg:col-span-2">
         <div className="sticky top-6 space-y-6">

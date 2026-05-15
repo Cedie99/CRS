@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ArrowRight, XCircle } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 interface LegalActionsProps {
   cisId: string;
@@ -64,13 +64,17 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success({
-        title: action === "forward" ? "Forwarded to Finance." : "Returned to agent.",
-        description:
-          action === "forward"
-            ? "Finance can now review this submission."
-            : "The form has been returned to the agent with your denial reason.",
-      });
+      if (action === "forward") {
+        toast.success({
+          title: "Forwarded to Finance.",
+          description: "Finance can now review this submission.",
+        });
+      } else {
+        toast.error({
+          title: "Returned to agent.",
+          description: "The form has been returned to the agent with your denial reason.",
+        });
+      }
       router.push("/legal");
       router.refresh();
     } catch {

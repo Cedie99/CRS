@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import {
   Camera,
   Trash2,

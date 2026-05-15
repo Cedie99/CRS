@@ -19,9 +19,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { UserCheck, UserX, Pencil, KeyRound } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -78,9 +77,10 @@ export function UserManagementTable({
 
   // Reset password dialog state
   const [resetUser, setResetUser] = useState<UserRow | null>(null);
-  const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
+
+  const TEMP_PASSWORD = "Opc1985!";
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -158,7 +158,7 @@ export function UserManagementTable({
         return;
       }
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isActive: false } : u)));
-      toast.success({ title: "User deactivated.", description: "The account can no longer sign in." });
+      toast.error({ title: "User deactivated.", description: "The account can no longer sign in." });
       router.refresh();
     } catch {
       toast.error({ title: "Something went wrong.", description: "Please try again in a moment." });
@@ -169,19 +169,18 @@ export function UserManagementTable({
 
   function openResetPassword(user: UserRow) {
     setResetUser(user);
-    setNewPassword("");
     setResetError("");
   }
 
   async function handleResetPassword() {
-    if (!resetUser || newPassword.length < 8) return;
+    if (!resetUser) return;
     setResetLoading(true);
     setResetError("");
     try {
       const res = await fetch(`/api/admin/users/${resetUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: newPassword }),
+        body: JSON.stringify({ password: TEMP_PASSWORD }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -522,24 +521,15 @@ export function UserManagementTable({
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription className="wrap-break-word">
-              Set a new temporary password for {resetUser?.fullName}. They will be required to change it on next login.
+              This will reset <strong>{resetUser?.fullName}</strong>&apos;s password to the standard temporary password. They will be required to set a new password on next login.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="reset-pw">New Password</Label>
-              <Input
-                id="reset-pw"
-                type="password"
-                placeholder="Min. 8 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-              {newPassword.length > 0 && newPassword.length < 8 && (
-                <p className="text-xs text-amber-600">Password must be at least 8 characters.</p>
-              )}
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Temporary password</p>
+              <p className="mt-1 font-mono text-base font-semibold text-zinc-900">{TEMP_PASSWORD}</p>
+              <p className="mt-1.5 text-xs text-zinc-500">Share this with the user. They must change it immediately after logging in.</p>
             </div>
 
             {resetError && <p className="text-sm text-red-600">{resetError}</p>}
@@ -547,11 +537,11 @@ export function UserManagementTable({
             <div className="flex flex-col gap-2 pt-1 sm:flex-row">
               <Button
                 onClick={handleResetPassword}
-                disabled={resetLoading || newPassword.length < 8}
+                disabled={resetLoading}
                 className="w-full gap-2 sm:w-auto"
               >
                 <KeyRound className="h-4 w-4" />
-                {resetLoading ? "Resetting…" : "Reset Password"}
+                {resetLoading ? "Resetting…" : "Reset to Temporary Password"}
               </Button>
               <Button variant="ghost" onClick={() => setResetUser(null)} disabled={resetLoading} className="w-full sm:w-auto">
                 Cancel

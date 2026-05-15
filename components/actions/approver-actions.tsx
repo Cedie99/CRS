@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CheckCircle, XCircle } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 interface ApproverActionsProps {
   cisId: string;
@@ -66,13 +66,17 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
         return;
       }
       setOpen(false);
-      toast.success({
-        title: action === "approve" ? "Customer approved." : "Submission denied.",
-        description:
-          action === "approve"
-            ? "Sales Support can now onboard this customer."
-            : "The submission was closed with a denied status.",
-      });
+      if (action === "approve") {
+        toast.success({
+          title: "Customer approved.",
+          description: "Sales Support can now onboard this customer.",
+        });
+      } else {
+        toast.error({
+          title: "Submission denied.",
+          description: "The submission was closed with a denied status.",
+        });
+      }
       router.push("/approver");
       router.refresh();
     } catch {

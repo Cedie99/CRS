@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { UserManagementTable } from "@/components/admin/user-management-table";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { PREDEFINED_AGENT_CODES } from "@/lib/agent-codes";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "User Management — CRS" };
 
@@ -71,7 +70,6 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-4">
-      <Breadcrumbs items={[{ label: "All Submissions", href: "/admin" }, { label: "User Management" }]} className="mb-1" />
       <UserManagementTable
         users={allUsers}
         managers={managers}

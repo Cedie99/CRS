@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 export function CtrApproverActions({ ctrId }: { ctrId: string }) {
   const router = useRouter();
@@ -48,7 +48,7 @@ export function CtrApproverActions({ ctrId }: { ctrId: string }) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
       }
-      toast.success({ title: "CTR Denied.", description: "The agent has been notified." });
+      toast.error({ title: "CTR Denied.", description: "The agent has been notified." });
       router.push("/approver/ctr");
     } catch (err: unknown) {
       toast.error({ title: err instanceof Error ? err.message : "Failed to deny." });

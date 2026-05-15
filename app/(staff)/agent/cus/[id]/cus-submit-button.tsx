@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 export function CusSubmitButton({ cusId }: { cusId: string }) {
   const [loading, setLoading] = useState(false);

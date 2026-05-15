@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 export function DeleteDraftButton({ cisId }: { cisId: string }) {
   const router = useRouter();
@@ -18,7 +18,7 @@ export function DeleteDraftButton({ cisId }: { cisId: string }) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Delete failed");
       }
-      toast.success({
+      toast.error({
         title: "Draft deleted",
         description: "The customer form draft has been removed successfully.",
       });

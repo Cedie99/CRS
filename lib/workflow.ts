@@ -47,6 +47,7 @@ export async function transitionCis({
   note,
   managerId,
   isDealer,
+  isResubmission,
 }: {
   cisId: string;
   toStatus: CisStatus;
@@ -55,6 +56,7 @@ export async function transitionCis({
   note?: string;
   managerId?: string | null;
   isDealer?: boolean;
+  isResubmission?: boolean;
 }) {
   const emailJobs = await db.transaction(async (tx) => {
     const persistedAction = await resolvePersistedWorkflowAction(tx, action);
@@ -71,7 +73,7 @@ export async function transitionCis({
       note: note ?? null,
     });
 
-    return notifyParties({ cisId, action, managerId, isDealer, actorId, tx });
+    return notifyParties({ cisId, action, managerId, isDealer, actorId, isResubmission, tx });
   });
 
   await sendWorkflowEmails(emailJobs);
@@ -83,6 +85,7 @@ async function notifyParties({
   managerId,
   isDealer,
   actorId,
+  isResubmission,
   tx,
 }: {
   cisId: string;
@@ -90,6 +93,7 @@ async function notifyParties({
   managerId?: string | null;
   isDealer?: boolean;
   actorId?: string;
+  isResubmission?: boolean;
   tx: Tx;
 }) {
   const CUSTOMER_TYPE_LABELS: Record<string, string> = {
@@ -276,45 +280,91 @@ async function notifyParties({
 
     // Notify the appropriate reviewer
     if (isDealer) {
-      await notifyRole(
-        "legal_approver",
-        `New CIS for "${label}" (Dealer) requires your legal review.`,
-        `[CRS] Action required – Legal review: ${label}`,
-        "legal",
-        (_name, _url) => ({
-          title: "New CIS Pending Your Legal Review",
-          body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your legal review.<br><br>This is a <strong>Dealer</strong> account and must pass legal clearance before proceeding to finance. Please review the customer details and supporting documents, then approve or deny the submission.`,
-          ctaLabel: "Review Now",
-          accentColor: "#0f2340",
-          statusBadge: { label: "Pending Legal Review", color: "#d97706" },
-          details: [
-            { label: "Business Name", value: label },
-            { label: "Customer Type", value: "Dealer" },
-            { label: "Contact Person", value: cis.contactPerson ?? "—" },
-            { label: "Agent", value: agent?.fullName ?? "—" },
-          ],
-        }),
-      );
+      if (isResubmission) {
+        await notifyRole(
+          "legal_approver",
+          `Agent resubmitted the CIS for "${label}" (Dealer) with updated documents. Please re-review.`,
+          `[CRS] Resubmission – Legal re-review required: ${label}`,
+          "legal",
+          (_name, _url) => ({
+            title: "CIS Resubmitted – Updated Documents Uploaded",
+            body: `The agent has resubmitted the Customer Information Sheet for <strong>${label}</strong> after addressing the issues raised during your previous review.<br><br>The agent has uploaded replacement documents for the rejected items. Please re-review the updated submission and either approve or return it again if further corrections are needed.`,
+            ctaLabel: "Re-review Now",
+            accentColor: "#0f2340",
+            statusBadge: { label: "Resubmitted – Pending Legal Review", color: "#d97706" },
+            details: [
+              { label: "Business Name", value: label },
+              { label: "Customer Type", value: "Dealer" },
+              { label: "Contact Person", value: cis.contactPerson ?? "—" },
+              { label: "Agent", value: agent?.fullName ?? "—" },
+              { label: "Submission", value: "Resubmission (documents updated)" },
+            ],
+          }),
+        );
+      } else {
+        await notifyRole(
+          "legal_approver",
+          `New CIS for "${label}" (Dealer) requires your legal review.`,
+          `[CRS] Action required – Legal review: ${label}`,
+          "legal",
+          (_name, _url) => ({
+            title: "New CIS Pending Your Legal Review",
+            body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your legal review.<br><br>This is a <strong>Dealer</strong> account and must pass legal clearance before proceeding to finance. Please review the customer details and supporting documents, then approve or deny the submission.`,
+            ctaLabel: "Review Now",
+            accentColor: "#0f2340",
+            statusBadge: { label: "Pending Legal Review", color: "#d97706" },
+            details: [
+              { label: "Business Name", value: label },
+              { label: "Customer Type", value: "Dealer" },
+              { label: "Contact Person", value: cis.contactPerson ?? "—" },
+              { label: "Agent", value: agent?.fullName ?? "—" },
+            ],
+          }),
+        );
+      }
     } else {
-      await notifyRole(
-        "finance_reviewer",
-        `New CIS for "${label}" (${custType}) requires your finance review.`,
-        `[CRS] Action required – Finance review: ${label}`,
-        "finance",
-        (_name, _url) => ({
-          title: "New CIS Pending Your Finance Review",
-          body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your finance review.<br><br>Please review the customer details, set the credit limit and terms, print and obtain the required signature, then approve or deny the submission.`,
-          ctaLabel: "Review Now",
-          accentColor: "#0f2340",
-          statusBadge: { label: "Pending Finance Review", color: "#d97706" },
-          details: [
-            { label: "Business Name", value: label },
-            { label: "Customer Type", value: custType },
-            { label: "Contact Person", value: cis.contactPerson ?? "—" },
-            { label: "Agent", value: agent?.fullName ?? "—" },
-          ],
-        }),
-      );
+      if (isResubmission) {
+        await notifyRole(
+          "finance_reviewer",
+          `Agent resubmitted the CIS for "${label}" (${custType}) with updated documents. Please re-review.`,
+          `[CRS] Resubmission – Finance re-review required: ${label}`,
+          "finance",
+          (_name, _url) => ({
+            title: "CIS Resubmitted – Updated Documents Uploaded",
+            body: `The agent has resubmitted the Customer Information Sheet for <strong>${label}</strong> after addressing the issues raised during your previous review.<br><br>The agent has uploaded replacement documents for the rejected items. Please re-review the updated submission and either approve or return it again if further corrections are needed.`,
+            ctaLabel: "Re-review Now",
+            accentColor: "#0f2340",
+            statusBadge: { label: "Resubmitted – Pending Finance Review", color: "#d97706" },
+            details: [
+              { label: "Business Name", value: label },
+              { label: "Customer Type", value: custType },
+              { label: "Contact Person", value: cis.contactPerson ?? "—" },
+              { label: "Agent", value: agent?.fullName ?? "—" },
+              { label: "Submission", value: "Resubmission (documents updated)" },
+            ],
+          }),
+        );
+      } else {
+        await notifyRole(
+          "finance_reviewer",
+          `New CIS for "${label}" (${custType}) requires your finance review.`,
+          `[CRS] Action required – Finance review: ${label}`,
+          "finance",
+          (_name, _url) => ({
+            title: "New CIS Pending Your Finance Review",
+            body: `A new Customer Information Sheet for <strong>${label}</strong> has been submitted and requires your finance review.<br><br>Please review the customer details, set the credit limit and terms, print and obtain the required signature, then approve or deny the submission.`,
+            ctaLabel: "Review Now",
+            accentColor: "#0f2340",
+            statusBadge: { label: "Pending Finance Review", color: "#d97706" },
+            details: [
+              { label: "Business Name", value: label },
+              { label: "Customer Type", value: custType },
+              { label: "Contact Person", value: cis.contactPerson ?? "—" },
+              { label: "Agent", value: agent?.fullName ?? "—" },
+            ],
+          }),
+        );
+      }
     }
   } else if (action === "forwarded_to_legal") {
     await notifyRole(

@@ -7,12 +7,7 @@ import { CusListClient } from "./cus-list-client";
 
 export const metadata = { title: "Customer Updates — CRS" };
 
-export default async function AgentCusListPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ open?: string }>;
-}) {
-  const { open } = await searchParams;
+export default async function AgentCusListPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -60,7 +55,7 @@ export default async function AgentCusListPage({
 
   return (
     <div className="space-y-6">
-      <CusListClient cusList={cusList} approvedCisList={approvedCisList} initialOpenId={open ?? null} />
+      <CusListClient cusList={cusList} approvedCisList={approvedCisList} />
     </div>
   );
 }

@@ -36,6 +36,20 @@
       "when": 1776991414082,
       "tag": "0004_superb_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778567757878,
+      "tag": "0005_absurd_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778640609395,
+      "tag": "0007_cus_expanded_fields",
+      "breakpoints": true
     }
   ]
 }

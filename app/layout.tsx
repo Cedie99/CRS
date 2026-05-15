@@ -33,7 +33,7 @@ export default function RootLayout({
             duration: 6000,
             autopilot: { expand: 180, collapse: 4200 },
             styles: {
-              title: "text-sm font-semibold text-[#2d6e1e]",
+              title: "text-sm font-semibold",
               description: "text-xs text-black",
             },
           }}

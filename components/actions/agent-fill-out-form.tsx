@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
 import { ArrowRight, CheckCircle2, ClipboardList, Paperclip, UserRound } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import type { FileEntry } from "@/lib/doc-types";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
@@ -25,6 +25,7 @@ interface AgentFillOutFormProps {
   initialOtherRequirements?: FileEntry[];
   tradeName?: string | null;
   managerName?: string | null;
+  agentType?: "sales_agent" | "rsr";
 }
 
 interface FormFields {
@@ -41,7 +42,9 @@ interface FormErrors {
   agentSalesSpecialist?: string;
 }
 
-export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [], tradeName, managerName }: AgentFillOutFormProps) {
+export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOtherRequirements = [], tradeName, managerName, agentType = "sales_agent" }: AgentFillOutFormProps) {
+  const isRsr = agentType === "rsr";
+  const roleLabel = isRsr ? "RSR" : "Sales";
   const router = useRouter();
   const [fields, setFields] = useState<FormFields>({
     agentAccountSpecialistFirst: "",
@@ -124,7 +127,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
           <div>
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-sky-900">
               <ClipboardList className="h-4 w-4" />
-              Sales Agent Information
+              {roleLabel} Agent Information
             </CardTitle>
             <p className="mt-1 text-sm text-sky-700">
               Customer already submitted. Complete Step 1 below, then submit to route for review.
@@ -184,7 +187,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="sales-specialist">Sales Specialist *</Label>
+              <Label htmlFor="sales-specialist">{roleLabel} Specialist *</Label>
             <Input
               id="sales-specialist"
               className="bg-white"
@@ -200,7 +203,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label>Sales Manager</Label>
+              <Label>{roleLabel} Manager</Label>
               <div className="flex h-9 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700">
                 {managerName ?? <span className="italic text-zinc-400">No manager assigned</span>}
               </div>

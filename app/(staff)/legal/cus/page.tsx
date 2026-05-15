@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { RefreshCw, ChevronRight, Clock3 } from "lucide-react";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Customer Update Requests — Legal — CRS" };
 
@@ -34,10 +33,6 @@ export default async function LegalCusQueuePage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[
-        { label: "Legal Review", href: "/legal" },
-        { label: "Customer Updates" },
-      ]} />
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-teal-50 p-2.5 shrink-0">
           <RefreshCw className="h-5 w-5 text-teal-600" />

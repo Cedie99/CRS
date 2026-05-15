@@ -50,8 +50,13 @@ export default async function AgentDraftsPage({
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: "My Submissions", href: "/agent" },
+          { label: "Drafts" },
+        ]}
+      />
       <div>
-        <Breadcrumbs items={[{ label: "My Submissions", href: "/agent" }, { label: "Drafts" }]} className="mb-2" />
         <h1 className="mt-2 text-2xl font-bold text-zinc-900">Awaiting Customer Submission</h1>
         <p className="mt-1 text-sm text-zinc-500">
           These links have been sent to customers but they haven&apos;t submitted their form yet.

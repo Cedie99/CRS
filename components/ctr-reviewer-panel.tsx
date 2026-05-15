@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { SCORING_DOC_SLOTS } from "@/lib/doc-types";
 
 const CREDIT_TERMS_OPTIONS = [
@@ -141,7 +141,7 @@ export function CtrReviewerPanel({
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
       }
-      toast.success({ title: "CTR Denied.", description: "The agent has been notified." });
+      toast.error({ title: "CTR Denied.", description: "The agent has been notified." });
       router.push(backHref);
     } catch (err: unknown) {
       toast.error({ title: err instanceof Error ? err.message : "Failed to deny." });

@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { GitMerge, ChevronRight, Clock3, ArrowRight } from "lucide-react";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Customer Type Reclassification — Legal — CRS" };
 
@@ -43,10 +42,6 @@ export default async function LegalCtrQueuePage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[
-        { label: "Legal Review", href: "/legal" },
-        { label: "Type Reclassification" },
-      ]} />
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-purple-50 p-2.5 shrink-0">
           <GitMerge className="h-5 w-5 text-purple-600" />

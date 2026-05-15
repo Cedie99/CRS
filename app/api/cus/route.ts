@@ -121,6 +121,10 @@ export async function POST(req: Request) {
   }
 
   const { cisId, note } = body as { cisId?: string; note?: string };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function arr(v: unknown): any[] | null {
+    return Array.isArray(v) && v.length > 0 ? v : null;
+  }
   if (!cisId || typeof cisId !== "string") {
     return NextResponse.json({ error: "cisId is required" }, { status: 400 });
   }
@@ -178,8 +182,30 @@ export async function POST(req: Request) {
       newCityMunicipality: str(body.newCityMunicipality),
       newLandmarks: str(body.newLandmarks),
       newDeliveryAddress: str(body.newDeliveryAddress),
+      newDeliveryLandmarks: str(body.newDeliveryLandmarks),
       newDeliveryMobile: str(body.newDeliveryMobile),
       newDeliveryTelephone: str(body.newDeliveryTelephone),
+      newCorporateName: str(body.newCorporateName),
+      newDateOfBusinessReg: str(body.newDateOfBusinessReg),
+      newTinNumber: str(body.newTinNumber),
+      newBusinessType: str(body.newBusinessType),
+      newLineOfBusiness: str(body.newLineOfBusiness),
+      newLineOfBusinessOther: str(body.newLineOfBusinessOther),
+      newBusinessActivity: str(body.newBusinessActivity),
+      newBusinessActivityOther: str(body.newBusinessActivityOther),
+      newSalesChannel: str(body.newSalesChannel),
+      newPaymentTerms: str(body.newPaymentTerms),
+      newOwners: arr(body.newOwners),
+      newOfficers: arr(body.newOfficers),
+      newBusinessLife: str(body.newBusinessLife),
+      newHowLongAtAddress: str(body.newHowLongAtAddress),
+      newNumberOfBranches: str(body.newNumberOfBranches),
+      newGovCertifications: str(body.newGovCertifications),
+      newTradeReferences: arr(body.newTradeReferences),
+      newBankReferences: arr(body.newBankReferences),
+      newAchievements: str(body.newAchievements),
+      newOtherMerits: str(body.newOtherMerits),
+      newAdditionalNotes: str(body.newAdditionalNotes),
     })
     .returning({ id: cusSubmissions.id });
 

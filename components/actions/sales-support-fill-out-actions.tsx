@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowRight, CheckCircle2, ClipboardList, FileUp, PackagePlus } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import {
   SALES_SUPPORT_PRICE_LIST_1_OPTIONS,
   SALES_SUPPORT_PRICE_LIST_2_OPTIONS,

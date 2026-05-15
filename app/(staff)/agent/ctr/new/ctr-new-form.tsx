@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Building2, User, MapPin, ArrowRight } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 const ALL_CUSTOMER_TYPES = [
   { value: "dealer", label: "Dealer" },

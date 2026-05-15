@@ -15,9 +15,10 @@ import {
   QrCode, Download, MessageSquare, UserRound, FileText, GitBranch, Lightbulb, PenLine,
   Scale, BadgeDollarSign, CircleArrowRight,
 } from "lucide-react";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import QRCode from "qrcode";
 import { DeleteDraftButton } from "@/components/delete-draft-button";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 const CUSTOMER_TYPES = [
   { value: "dealer",         label: "Dealer",          desc: "Motorcycle shops, resellers" },
@@ -344,6 +345,16 @@ function NewCisContent() {
   /* ─────────────────── render ─────────────────── */
   return (
     <div className="mx-auto mt-3 w-full max-w-7xl pb-4">
+      {draftId && (
+        <Breadcrumbs
+          items={[
+            { label: "My Submissions", href: "/agent" },
+            { label: "Drafts", href: "/agent/drafts" },
+            { label: customerName.trim() || "Draft" },
+          ]}
+          className="mb-4"
+        />
+      )}
       {isLoadingDraft ? (
         <div className="flex min-h-[40vh] items-center justify-center">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />

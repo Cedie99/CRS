@@ -3,6 +3,14 @@
 @import "shadcn/tailwind.css";
 @import "sileo/styles.css";
 
+[data-sileo-toast] {
+  box-shadow: none !important;
+}
+
+[data-sileo-description] {
+  color: #000000 !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -221,7 +229,7 @@
   }
 
   html {
-    font-size: 18px !important;
+    font-size: 19px !important;
   }
 
   /* Fix SPA fixed-shell layout so all content flows onto the page */
@@ -264,7 +272,8 @@
   body {
     background: white !important;
     color: #18181b !important;
-    line-height: 1.35 !important;
+    line-height: 1.45 !important;
+    font-family: Arial, sans-serif !important;
   }
 
   main,

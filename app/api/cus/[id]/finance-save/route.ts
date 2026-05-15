@@ -49,12 +49,6 @@ export async function PATCH(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: Record<string, any> = {};
 
-  if (typeof body.financeCreditLimit === "string") {
-    updates.financeCreditLimit = body.financeCreditLimit.trim();
-  }
-  if (typeof body.financeCreditTerms === "string") {
-    updates.financeCreditTerms = body.financeCreditTerms.trim();
-  }
   if (typeof body.newCustomerType === "string" && VALID_CUSTOMER_TYPES.includes(body.newCustomerType)) {
     updates.newCustomerType = body.newCustomerType;
   }
@@ -63,6 +57,12 @@ export async function PATCH(
   }
   if (typeof body.newCityMunicipality === "string") {
     updates.newCityMunicipality = body.newCityMunicipality.trim() || null;
+  }
+  if (typeof body.financeCreditTerms === "string") {
+    updates.financeCreditTerms = body.financeCreditTerms.trim() || null;
+  }
+  if (typeof body.financeCreditLimit === "string") {
+    updates.financeCreditLimit = body.financeCreditLimit.trim() || null;
   }
 
   // Direct metric points (each 0-5) — stored as JSONB

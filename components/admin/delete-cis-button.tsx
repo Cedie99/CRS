@@ -15,7 +15,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 
 export function DeleteCisZone({ cisId, tradeName }: { cisId: string; tradeName?: string | null }) {
   const router = useRouter();
@@ -42,7 +42,7 @@ export function DeleteCisZone({ cisId, tradeName }: { cisId: string; tradeName?:
         return;
       }
       setOpen(false);
-      toast.success({ title: "Submission deleted." });
+      toast.error({ title: "Submission deleted." });
       router.push("/admin");
       router.refresh();
     } catch {

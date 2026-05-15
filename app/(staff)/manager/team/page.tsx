@@ -7,7 +7,6 @@ import Image from "next/image";
 import { Users, ClipboardList, CheckCircle, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "Team Overview — CRS" };
 
@@ -111,7 +110,6 @@ export default async function TeamOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Team Submissions", href: "/manager" }, { label: "Team Overview" }]} className="mb-1" />
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">

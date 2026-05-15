@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CusDocSection } from "@/components/cus-doc-section";
-import { sileo as toast } from "sileo";
+import { toast } from "@/lib/toast";
 import { SCORING_DOC_SLOTS, type FileEntry } from "@/lib/doc-types";
 
 // ---- Types ----------------------------------------------------------------
@@ -36,6 +36,7 @@ interface CusDetail {
   financeCreditTerms: string | null;
   financeCreditLimit: string | null;
   newTradeName: string | null;
+  newCorporateName: string | null;
   newContactPerson: string | null;
   newContactNumber: string | null;
   newTelephoneNumber: string | null;
@@ -43,12 +44,33 @@ interface CusDetail {
   newWebsite: string | null;
   newNumberOfEmployees: string | null;
   newCustomerType: string | null;
+  newBusinessType: string | null;
+  newDateOfBusinessReg: string | null;
+  newTinNumber: string | null;
   newBusinessAddress: string | null;
   newCityMunicipality: string | null;
   newLandmarks: string | null;
   newDeliveryAddress: string | null;
+  newDeliveryLandmarks: string | null;
   newDeliveryMobile: string | null;
   newDeliveryTelephone: string | null;
+  newLineOfBusiness: string | null;
+  newLineOfBusinessOther: string | null;
+  newBusinessActivity: string | null;
+  newBusinessActivityOther: string | null;
+  newSalesChannel: string | null;
+  newPaymentTerms: string | null;
+  newOwners: unknown;
+  newOfficers: unknown;
+  newBusinessLife: string | null;
+  newHowLongAtAddress: string | null;
+  newNumberOfBranches: string | null;
+  newGovCertifications: string | null;
+  newTradeReferences: unknown;
+  newBankReferences: unknown;
+  newAchievements: string | null;
+  newOtherMerits: string | null;
+  newAdditionalNotes: string | null;
   // Snapshot of CIS values before the CUS was approved
   beforeSnapshot: Record<string, string | null> | null;
   // docs (jsonb arrays)
@@ -188,45 +210,105 @@ export function CusDetailModal({
     return acc;
   }, {});
 
-  const requestedChanges = cus ? ([
-    { v: cus.newTradeName, l: "Trade Name" },
-    { v: cus.newCustomerType?.replace(/_/g, " "), l: "Customer Type" },
-    { v: cus.newContactPerson, l: "Contact Person" },
-    { v: cus.newContactNumber, l: "Mobile" },
-    { v: cus.newTelephoneNumber, l: "Telephone" },
-    { v: cus.newEmailAddress, l: "Email" },
-    { v: cus.newWebsite, l: "Website" },
-    { v: cus.newNumberOfEmployees, l: "Employees" },
-    { v: cus.newBusinessAddress, l: "Business Address" },
-    { v: cus.newCityMunicipality, l: "City" },
-    { v: cus.newLandmarks, l: "Landmarks" },
-    { v: cus.newDeliveryAddress, l: "Delivery Address" },
-    { v: cus.newDeliveryMobile, l: "Delivery Mobile" },
-    { v: cus.newDeliveryTelephone, l: "Delivery Tel" },
-  ].filter(({ v }) => v)) : [];
+  // Comparison table rows (requested fields only — only rows with a new value)
+  const compHumanize = (v: string | null | undefined) => v?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const compOwners = (v: any) => Array.isArray(v) && v.length ? v.map((o: { name?: string; percentage?: string }) => [o.name, o.percentage ? `(${o.percentage}%)` : ""].filter(Boolean).join(" ")).join(", ") : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const compOfficers = (v: any) => Array.isArray(v) && v.length ? v.map((o: { name?: string; position?: string }) => [o.name, o.position ? `(${o.position})` : ""].filter(Boolean).join(" ")).join(", ") : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const compTradeRef = (v: any) => Array.isArray(v) && v.length ? v.map((r: { company?: string }) => r.company).filter(Boolean).join(", ") : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const compBankRef = (v: any) => Array.isArray(v) && v.length ? v.map((r: { bank?: string; branch?: string }) => [r.bank, r.branch].filter(Boolean).join(" - ")).join(", ") : null;
+  type CompRow = { label: string; current: string | null; requested: string | null };
+  const compRows: CompRow[] = cus ? [
+    { label: "Trade Name",          current: cis?.tradeName ?? null,                                   requested: cus.newTradeName ?? null },
+    { label: "Corporate Name",      current: (cis?.corporateName as string) ?? null,                   requested: cus.newCorporateName ?? null },
+    { label: "Customer Type",       current: compHumanize(cis?.customerType),                          requested: compHumanize(cus.newCustomerType) },
+    { label: "Business Type",       current: compHumanize(cis?.businessType as string),                requested: compHumanize(cus.newBusinessType) },
+    { label: "Date of Reg.",        current: (cis?.dateOfBusinessReg as string) ?? null,               requested: cus.newDateOfBusinessReg ?? null },
+    { label: "No. of Employees",    current: (cis?.numberOfEmployees as string) ?? null,               requested: cus.newNumberOfEmployees ?? null },
+    { label: "TIN Number",          current: (cis?.tinNumber as string) ?? null,                       requested: cus.newTinNumber ?? null },
+    { label: "Contact Person",      current: cis?.contactPerson ?? null,                               requested: cus.newContactPerson ?? null },
+    { label: "Mobile",              current: cis?.contactNumber ?? null,                               requested: cus.newContactNumber ?? null },
+    { label: "Telephone",           current: cis?.telephoneNumber ?? null,                             requested: cus.newTelephoneNumber ?? null },
+    { label: "Email",               current: cis?.emailAddress ?? null,                                requested: cus.newEmailAddress ?? null },
+    { label: "Website",             current: cis?.website ?? null,                                     requested: cus.newWebsite ?? null },
+    { label: "Business Address",    current: cis?.businessAddress ?? null,                             requested: cus.newBusinessAddress ?? null },
+    { label: "City/Municipality",   current: cis?.cityMunicipality ?? null,                            requested: cus.newCityMunicipality ?? null },
+    { label: "Landmarks",           current: cis?.landmarks ?? null,                                   requested: cus.newLandmarks ?? null },
+    { label: "Delivery Address",    current: cis?.deliveryAddress ?? null,                             requested: cus.newDeliveryAddress ?? null },
+    { label: "Delivery Landmarks",  current: (cis?.deliveryLandmarks as string) ?? null,               requested: cus.newDeliveryLandmarks ?? null },
+    { label: "Delivery Mobile",     current: cis?.deliveryMobile ?? null,                              requested: cus.newDeliveryMobile ?? null },
+    { label: "Delivery Tel",        current: cis?.deliveryTelephone ?? null,                           requested: cus.newDeliveryTelephone ?? null },
+    { label: "Line of Business",    current: compHumanize(cis?.lineOfBusiness as string),              requested: compHumanize(cus.newLineOfBusiness) },
+    { label: "Business Activity",   current: compHumanize(cis?.businessActivity as string),            requested: compHumanize(cus.newBusinessActivity) },
+    { label: "Sales Channel",       current: compHumanize(cis?.salesChannel as string),                requested: compHumanize(cus.newSalesChannel) },
+    { label: "Payment Terms",       current: compHumanize(cis?.paymentTerms as string),                requested: compHumanize(cus.newPaymentTerms) },
+    { label: "Owners",              current: compOwners(cis?.owners),                                  requested: compOwners(cus.newOwners) },
+    { label: "Officers",            current: compOfficers(cis?.officers),                              requested: compOfficers(cus.newOfficers) },
+    { label: "Business Life",       current: (cis?.businessLife as string) ?? null,                    requested: cus.newBusinessLife ?? null },
+    { label: "How Long at Address", current: (cis?.howLongAtAddress as string) ?? null,                requested: cus.newHowLongAtAddress ?? null },
+    { label: "No. of Branches",     current: (cis?.numberOfBranches as string) ?? null,                requested: cus.newNumberOfBranches ?? null },
+    { label: "Gov. Certifications", current: (cis?.govCertifications as string) ?? null,               requested: cus.newGovCertifications ?? null },
+    { label: "Trade References",    current: compTradeRef(cis?.tradeReferences),                       requested: compTradeRef(cus.newTradeReferences) },
+    { label: "Bank References",     current: compBankRef(cis?.bankReferences),                         requested: compBankRef(cus.newBankReferences) },
+    { label: "Achievements",        current: (cis?.achievements as string) ?? null,                    requested: cus.newAchievements ?? null },
+    { label: "Other Merits",        current: (cis?.otherMerits as string) ?? null,                     requested: cus.newOtherMerits ?? null },
+    { label: "Additional Notes",    current: (cis?.additionalNotes as string) ?? null,                 requested: cus.newAdditionalNotes ?? null },
+  ].filter((r) => r.requested) : [];
 
   // Build before/after rows from the stored snapshot (only for approved CUS)
   type ChangeRow = { label: string; before: string | null; after: string };
   const approvedChangeRows: ChangeRow[] = [];
   if (isApproved && cus?.beforeSnapshot) {
     const snap = cus.beforeSnapshot;
+    const humanize = (v: string | null | undefined) => v?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ownersSummary = (v: any) => Array.isArray(v) && v.length ? v.map((o: { name?: string; percentage?: string }) => [o.name, o.percentage ? `(${o.percentage}%)` : ""].filter(Boolean).join(" ")).join(", ") : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const officersSummary = (v: any) => Array.isArray(v) && v.length ? v.map((o: { name?: string; position?: string }) => [o.name, o.position ? `(${o.position})` : ""].filter(Boolean).join(" ")).join(", ") : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tradeRefSummary = (v: any) => Array.isArray(v) && v.length ? v.map((r: { company?: string }) => r.company).filter(Boolean).join(", ") : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bankRefSummary = (v: any) => Array.isArray(v) && v.length ? v.map((r: { bank?: string; branch?: string }) => [r.bank, r.branch].filter(Boolean).join(" - ")).join(", ") : null;
     const CHANGE_FIELDS: Array<{ label: string; cisKey: string; after: string | null | undefined }> = [
-      { label: "Trade Name",        cisKey: "tradeName",          after: cus.newTradeName },
-      { label: "Customer Type",     cisKey: "customerType",       after: cus.newCustomerType?.replace(/_/g, " ") },
-      { label: "Contact Person",    cisKey: "contactPerson",      after: cus.newContactPerson },
-      { label: "Mobile",            cisKey: "contactNumber",      after: cus.newContactNumber },
-      { label: "Telephone",         cisKey: "telephoneNumber",    after: cus.newTelephoneNumber },
-      { label: "Email",             cisKey: "emailAddress",       after: cus.newEmailAddress },
-      { label: "Website",           cisKey: "website",            after: cus.newWebsite },
-      { label: "No. of Employees",  cisKey: "numberOfEmployees",  after: cus.newNumberOfEmployees },
-      { label: "Business Address",  cisKey: "businessAddress",    after: cus.newBusinessAddress },
-      { label: "City/Municipality", cisKey: "cityMunicipality",   after: cus.newCityMunicipality },
-      { label: "Landmarks",         cisKey: "landmarks",          after: cus.newLandmarks },
-      { label: "Delivery Address",  cisKey: "deliveryAddress",    after: cus.newDeliveryAddress },
-      { label: "Delivery Mobile",   cisKey: "deliveryMobile",     after: cus.newDeliveryMobile },
-      { label: "Delivery Tel",      cisKey: "deliveryTelephone",  after: cus.newDeliveryTelephone },
-      { label: "Credit Terms",      cisKey: "financeCreditTerms", after: cus.financeCreditTerms?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) },
-      { label: "Credit Limit",      cisKey: "financeCreditLimit", after: cus.financeCreditLimit },
+      { label: "Trade Name",          cisKey: "tradeName",            after: cus.newTradeName },
+      { label: "Corporate Name",      cisKey: "corporateName",        after: cus.newCorporateName },
+      { label: "Customer Type",       cisKey: "customerType",         after: humanize(cus.newCustomerType) },
+      { label: "Business Type",       cisKey: "businessType",         after: humanize(cus.newBusinessType) },
+      { label: "Date of Reg.",        cisKey: "dateOfBusinessReg",    after: cus.newDateOfBusinessReg },
+      { label: "No. of Employees",    cisKey: "numberOfEmployees",    after: cus.newNumberOfEmployees },
+      { label: "TIN Number",          cisKey: "tinNumber",            after: cus.newTinNumber },
+      { label: "Contact Person",      cisKey: "contactPerson",        after: cus.newContactPerson },
+      { label: "Mobile",              cisKey: "contactNumber",        after: cus.newContactNumber },
+      { label: "Telephone",           cisKey: "telephoneNumber",      after: cus.newTelephoneNumber },
+      { label: "Email",               cisKey: "emailAddress",         after: cus.newEmailAddress },
+      { label: "Website",             cisKey: "website",              after: cus.newWebsite },
+      { label: "Business Address",    cisKey: "businessAddress",      after: cus.newBusinessAddress },
+      { label: "City/Municipality",   cisKey: "cityMunicipality",     after: cus.newCityMunicipality },
+      { label: "Landmarks",           cisKey: "landmarks",            after: cus.newLandmarks },
+      { label: "Delivery Address",    cisKey: "deliveryAddress",      after: cus.newDeliveryAddress },
+      { label: "Delivery Landmarks",  cisKey: "deliveryLandmarks",    after: cus.newDeliveryLandmarks },
+      { label: "Delivery Mobile",     cisKey: "deliveryMobile",       after: cus.newDeliveryMobile },
+      { label: "Delivery Tel",        cisKey: "deliveryTelephone",    after: cus.newDeliveryTelephone },
+      { label: "Line of Business",    cisKey: "lineOfBusiness",       after: humanize(cus.newLineOfBusiness) },
+      { label: "Business Activity",   cisKey: "businessActivity",     after: humanize(cus.newBusinessActivity) },
+      { label: "Sales Channel",       cisKey: "salesChannel",         after: humanize(cus.newSalesChannel) },
+      { label: "Payment Terms",       cisKey: "paymentTerms",         after: humanize(cus.newPaymentTerms) },
+      { label: "Owners",              cisKey: "owners",               after: ownersSummary(cus.newOwners) },
+      { label: "Officers",            cisKey: "officers",             after: officersSummary(cus.newOfficers) },
+      { label: "Business Life",       cisKey: "businessLife",         after: cus.newBusinessLife },
+      { label: "How Long at Address", cisKey: "howLongAtAddress",     after: cus.newHowLongAtAddress },
+      { label: "No. of Branches",     cisKey: "numberOfBranches",     after: cus.newNumberOfBranches },
+      { label: "Gov. Certifications", cisKey: "govCertifications",    after: cus.newGovCertifications },
+      { label: "Trade References",    cisKey: "tradeReferences",      after: tradeRefSummary(cus.newTradeReferences) },
+      { label: "Bank References",     cisKey: "bankReferences",       after: bankRefSummary(cus.newBankReferences) },
+      { label: "Achievements",        cisKey: "achievements",         after: cus.newAchievements },
+      { label: "Other Merits",        cisKey: "otherMerits",          after: cus.newOtherMerits },
+      { label: "Additional Notes",    cisKey: "additionalNotes",      after: cus.newAdditionalNotes },
+      { label: "Credit Terms",        cisKey: "financeCreditTerms",   after: humanize(cus.financeCreditTerms) },
+      { label: "Credit Limit",        cisKey: "financeCreditLimit",   after: cus.financeCreditLimit },
     ];
     for (const { label, cisKey, after } of CHANGE_FIELDS) {
       if (after && cisKey in snap) {
@@ -318,18 +400,18 @@ export function CusDetailModal({
                   </div>
                   {approvedChangeRows.length > 0 ? (
                     <div className="divide-y divide-green-100">
-                      <div className="grid grid-cols-[1fr_2fr_auto_2fr] gap-x-4 px-5 py-2 bg-green-100/50">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">Field</p>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">Before</p>
-                        <span />
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">After</p>
+                      <div className="grid grid-cols-[1fr_2fr_24px_2fr]">
+                        <div className="px-5 py-2 bg-green-100/50"><p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">Field</p></div>
+                        <div className="px-5 py-2 bg-green-100/50"><p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">Before</p></div>
+                        <div className="bg-green-100/50" />
+                        <div className="px-5 py-2 bg-green-100"><p className="text-[11px] font-semibold uppercase tracking-wide text-green-700/70">After</p></div>
                       </div>
                       {approvedChangeRows.map((row) => (
-                        <div key={row.label} className="grid grid-cols-[1fr_2fr_auto_2fr] gap-x-4 items-start px-5 py-3">
-                          <p className="text-xs font-semibold text-zinc-500">{row.label}</p>
-                          <p className="text-sm text-zinc-500 line-through decoration-zinc-400">{row.before ?? "—"}</p>
-                          <ArrowRight className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
-                          <p className="text-sm font-semibold text-green-900">{row.after}</p>
+                        <div key={row.label} className="grid grid-cols-[1fr_2fr_24px_2fr] items-start">
+                          <div className="px-5 py-3"><p className="text-xs font-semibold text-zinc-500">{row.label}</p></div>
+                          <div className="px-5 py-3"><p className="text-sm text-zinc-500 line-through decoration-zinc-400">{row.before ?? "—"}</p></div>
+                          <div className="flex items-start justify-center pt-3.5 bg-green-50/60"><ArrowRight className="h-3.5 w-3.5 text-green-500 shrink-0" /></div>
+                          <div className="px-5 py-3 bg-green-50/60"><p className="text-sm font-semibold text-green-900">{row.after}</p></div>
                         </div>
                       ))}
                     </div>
@@ -398,43 +480,50 @@ export function CusDetailModal({
                       </div>
                     </div>
 
-                    {/* Requested Changes */}
-                    {requestedChanges.length > 0 && (
-                      <div className="mx-4 mb-3 rounded-lg border border-amber-200 bg-amber-50 overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-3 py-2 border-b border-amber-200">
-                          <RefreshCw className="h-3 w-3 text-amber-600" />
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">
-                            Requested Changes
-                          </p>
-                          <span className="ml-auto rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-                            {requestedChanges.length}
-                          </span>
+                    {/* Requested Changes — comparison table */}
+                    {compRows.length > 0 && (
+                      <div className="mx-4 mb-3 rounded-lg border border-zinc-200 overflow-hidden">
+                        {/* Table header */}
+                        <div className="grid grid-cols-[100px_1fr_1fr] border-b border-zinc-200 bg-zinc-50">
+                          <div className="px-3 py-2 border-r border-zinc-200">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Field</p>
+                          </div>
+                          <div className="px-3 py-2 border-r border-zinc-200 flex items-center gap-1">
+                            <Building2 className="h-3 w-3 text-zinc-400 shrink-0" />
+                            <p className="text-[10px] font-semibold text-zinc-500">Current</p>
+                          </div>
+                          <div className="px-3 py-2 flex items-center gap-1 bg-amber-50">
+                            <RefreshCw className="h-3 w-3 text-amber-500 shrink-0" />
+                            <p className="text-[10px] font-semibold text-amber-600">Requested</p>
+                          </div>
                         </div>
-                        <div className="divide-y divide-amber-100">
-                          {([
-                            { l: "Trade Name",       newVal: cus.newTradeName,        oldVal: cis?.tradeName },
-                            { l: "Customer Type",    newVal: cus.newCustomerType?.replace(/_/g, " "), oldVal: cis?.customerType?.replace(/_/g, " ") },
-                            { l: "Contact Person",   newVal: cus.newContactPerson,    oldVal: cis?.contactPerson },
-                            { l: "Mobile",           newVal: cus.newContactNumber,    oldVal: cis?.contactNumber },
-                            { l: "Telephone",        newVal: cus.newTelephoneNumber,  oldVal: cis?.telephoneNumber },
-                            { l: "Email",            newVal: cus.newEmailAddress,     oldVal: cis?.emailAddress },
-                            { l: "Website",          newVal: cus.newWebsite,          oldVal: cis?.website },
-                            { l: "Employees",        newVal: cus.newNumberOfEmployees,oldVal: cis?.numberOfEmployees },
-                            { l: "Business Address", newVal: cus.newBusinessAddress,  oldVal: cis?.businessAddress },
-                            { l: "City",             newVal: cus.newCityMunicipality, oldVal: cis?.cityMunicipality },
-                            { l: "Landmarks",        newVal: cus.newLandmarks,        oldVal: cis?.landmarks },
-                            { l: "Delivery Address", newVal: cus.newDeliveryAddress,  oldVal: cis?.deliveryAddress },
-                            { l: "Delivery Mobile",  newVal: cus.newDeliveryMobile,   oldVal: cis?.deliveryMobile },
-                            { l: "Delivery Tel",     newVal: cus.newDeliveryTelephone,oldVal: cis?.deliveryTelephone },
-                          ].filter(({ newVal }) => newVal)).map(({ l, newVal, oldVal }) => (
-                            <div key={l} className="px-3 py-2 space-y-0.5">
-                              <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide">{l}</span>
-                              {oldVal && (
-                                <p className="text-[11px] text-amber-700/40 line-through">{oldVal}</p>
-                              )}
-                              <p className="text-[11px] font-semibold text-amber-900">{newVal}</p>
-                            </div>
-                          ))}
+                        {/* Rows */}
+                        <div className="divide-y divide-zinc-100">
+                          {compRows.map(({ label, current, requested: req }) => {
+                            const hasChange = !!req && req !== current;
+                            return (
+                              <div key={label} className={`grid grid-cols-[100px_1fr_1fr] ${hasChange ? "bg-amber-50/50" : ""}`}>
+                                <div className="px-3 py-2 border-r border-zinc-100 flex items-start">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 leading-snug mt-0.5">{label}</p>
+                                </div>
+                                <div className="px-3 py-2 border-r border-zinc-100">
+                                  <p className={`text-xs break-words leading-snug ${current ? (hasChange ? "text-zinc-400" : "text-zinc-700") : "text-zinc-300 italic"}`}>
+                                    {current ?? "—"}
+                                  </p>
+                                </div>
+                                <div className="px-3 py-2">
+                                  {hasChange ? (
+                                    <div className="flex items-start gap-1">
+                                      <ArrowRight className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                                      <p className="text-xs font-semibold text-amber-900 break-words leading-snug">{req}</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-zinc-300 italic">no change</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

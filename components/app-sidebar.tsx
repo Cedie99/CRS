@@ -19,7 +19,7 @@ import {
   X,
   Database,
   Network,
-  GitMerge,
+  List,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, humanizeDisplayValue } from "@/lib/utils";
@@ -35,14 +35,14 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   sales_agent: [
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
+    { label: "All Records", href: "/agent/records", icon: List },
     { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
-    { label: "Type Reclassification", href: "/agent/ctr", icon: GitMerge },
   ],
   rsr: [
     { label: "My Submissions", href: "/agent", icon: LayoutDashboard, exact: true },
     { label: "New Customer", href: "/agent/new", icon: Plus },
+    { label: "All Records", href: "/agent/records", icon: List },
     { label: "Customer Updates", href: "/agent/cus", icon: RefreshCw },
-    { label: "Type Reclassification", href: "/agent/ctr", icon: GitMerge },
   ],
   sales_manager: [
     { label: "My Team", href: "/manager", icon: ClipboardCheck, exact: true },
@@ -55,16 +55,13 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   finance_reviewer: [
     { label: "Finance Review", href: "/finance", icon: DollarSign, exact: true },
     { label: "Customer Updates", href: "/finance/cus", icon: RefreshCw },
-    { label: "Type Reclassification", href: "/finance/ctr", icon: GitMerge },
   ],
   legal_approver: [
     { label: "Legal Review", href: "/legal", icon: Scale, exact: true },
     { label: "Customer Updates", href: "/legal/cus", icon: RefreshCw },
-    { label: "Type Reclassification", href: "/legal/ctr", icon: GitMerge },
   ],
   senior_approver: [
     { label: "Approval Queue", href: "/approver", icon: BadgeCheck },
-    { label: "CTR Approvals", href: "/approver/ctr", icon: GitMerge },
   ],
   sales_support: [
     { label: "Sales Support", href: "/support", icon: Inbox },
@@ -104,7 +101,13 @@ function useSidebarBadges(role: string) {
   const [badges, setBadges] = useState<Record<string, number>>({});
 
   const fetchBadges = useCallback(async () => {
-    if (role !== "finance_reviewer" && role !== "legal_approver" && role !== "admin") return;
+    if (
+      role !== "finance_reviewer" &&
+      role !== "legal_approver" &&
+      role !== "admin" &&
+      role !== "sales_agent" &&
+      role !== "rsr"
+    ) return;
     try {
       const res = await fetch("/api/sidebar-badges");
       if (res.ok) setBadges(await res.json());

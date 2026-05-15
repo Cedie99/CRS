@@ -2,8 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, BellRing, CheckCheck, CircleSlash, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
-import { sileo as toast } from "sileo";
+import {
+  ArrowRightCircle,
+  BadgeCheck,
+  Bell,
+  CheckCheck,
+  CircleDot,
+  ClipboardList,
+  Database,
+  PartyPopper,
+  RotateCcw,
+  Sparkles,
+  UserPlus,
+  XCircle,
+} from "lucide-react";
+import { toast } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,15 +72,60 @@ interface DashboardNotificationBellProps {
   role: string;
 }
 
-function getNotificationIcon(message: string) {
+type NotificationMeta = {
+  icon: React.ReactNode;
+  bg: string;
+};
+
+function getNotificationMeta(message: string): NotificationMeta {
   const lower = message.toLowerCase();
-  if (lower.includes("denied") || lower.includes("returned")) {
-    return <CircleSlash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />;
+
+  if (lower.includes("denied")) {
+    return {
+      icon: <XCircle className="h-3.5 w-3.5 text-red-500" />,
+      bg: "bg-red-50 ring-1 ring-red-100",
+    };
   }
-  if (lower.includes("approved") || lower.includes("onboard") || lower.includes("erp")) {
-    return <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />;
+  if (lower.includes("returned") || lower.includes("revision")) {
+    return {
+      icon: <RotateCcw className="h-3.5 w-3.5 text-orange-500" />,
+      bg: "bg-orange-50 ring-1 ring-orange-100",
+    };
   }
-  return <BellRing className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />;
+  if (lower.includes("onboard") || lower.includes("complete") || lower.includes("erp encoded")) {
+    return {
+      icon: <PartyPopper className="h-3.5 w-3.5 text-violet-500" />,
+      bg: "bg-violet-50 ring-1 ring-violet-100",
+    };
+  }
+  if (lower.includes("erp") || lower.includes("encoding")) {
+    return {
+      icon: <Database className="h-3.5 w-3.5 text-indigo-500" />,
+      bg: "bg-indigo-50 ring-1 ring-indigo-100",
+    };
+  }
+  if (lower.includes("approved")) {
+    return {
+      icon: <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" />,
+      bg: "bg-emerald-50 ring-1 ring-emerald-100",
+    };
+  }
+  if (lower.includes("forward") || lower.includes("sent to")) {
+    return {
+      icon: <ArrowRightCircle className="h-3.5 w-3.5 text-sky-500" />,
+      bg: "bg-sky-50 ring-1 ring-sky-100",
+    };
+  }
+  if (lower.includes("submitted") || lower.includes("action needed") || lower.includes("review")) {
+    return {
+      icon: <ClipboardList className="h-3.5 w-3.5 text-amber-500" />,
+      bg: "bg-amber-50 ring-1 ring-amber-100",
+    };
+  }
+  return {
+    icon: <CircleDot className="h-3.5 w-3.5 text-zinc-400" />,
+    bg: "bg-zinc-100 ring-1 ring-zinc-200",
+  };
 }
 
 export function DashboardNotificationBell({ role }: DashboardNotificationBellProps) {
@@ -195,26 +253,31 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
                   Pending Activation
                 </span>
               </div>
-              {pendingRegistrations.map((u) => (
-                <DropdownMenuItem
-                  key={u.id}
-                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
-                  onClick={() => {
-                    setNotifOpen(false);
-                    router.push("/admin/users");
-                  }}
-                >
-                  <div className="flex w-full items-start gap-2">
-                    <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                    <p className="flex-1 text-xs font-medium leading-relaxed text-zinc-900">
-                      {u.fullName} registered and needs activation
-                    </p>
-                  </div>
-                  <span className="pl-3.5 text-[10px] text-zinc-400">
-                    {formatDistanceToNow(new Date(u.createdAt))}
-                  </span>
-                </DropdownMenuItem>
-              ))}
+              <div className="divide-y divide-zinc-100">
+                {pendingRegistrations.map((u) => (
+                  <DropdownMenuItem
+                    key={u.id}
+                    className="flex cursor-pointer items-start gap-3 bg-amber-50/50 px-4 py-3 hover:bg-amber-50 transition-colors"
+                    onClick={() => {
+                      setNotifOpen(false);
+                      router.push("/admin/users");
+                    }}
+                  >
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 ring-1 ring-amber-100">
+                      <UserPlus className="h-3.5 w-3.5 text-amber-600" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold leading-snug text-zinc-900">
+                        {u.fullName} registered and needs activation
+                      </p>
+                      <span className="mt-1 block text-[10px] font-medium text-zinc-400">
+                        {formatDistanceToNow(new Date(u.createdAt))}
+                      </span>
+                    </div>
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                  </DropdownMenuItem>
+                ))}
+              </div>
               {notifications.length > 0 && <DropdownMenuSeparator />}
             </>
           ) : null}
@@ -225,28 +288,36 @@ export function DashboardNotificationBell({ role }: DashboardNotificationBellPro
               <p className="text-sm text-zinc-400">No notifications yet</p>
             </div>
           ) : !isInitialLoading && notifications.length > 0 ? (
-            <>
-              {notifications.map((n) => (
-                <DropdownMenuItem
-                  key={n.id}
-                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl px-3 py-2.5"
-                  onClick={() => {
-                    setNotifOpen(false);
-                    router.push(n.cusId ? `${homeHref}/cus/${n.cusId}` : `${homeHref}/${n.cisId}`);
-                  }}
-                >
-                  <div className="flex w-full items-start gap-2">
-                    {getNotificationIcon(n.message)}
-                    <p className={`flex-1 text-xs leading-relaxed ${!n.isRead ? "font-medium text-zinc-900" : "text-zinc-900"}`}>
-                      {n.message}
-                    </p>
-                  </div>
-                  <span className="pl-3.5 text-[10px] text-zinc-400">
-                    {formatDistanceToNow(new Date(n.sentAt))}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-            </>
+            <div className="divide-y divide-zinc-100">
+              {notifications.map((n) => {
+                const meta = getNotificationMeta(n.message);
+                return (
+                  <DropdownMenuItem
+                    key={n.id}
+                    className={`flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors first:pt-3 last:pb-3 ${!n.isRead ? "bg-emerald-50/50 hover:bg-emerald-50" : "hover:bg-zinc-50"}`}
+                    onClick={() => {
+                      setNotifOpen(false);
+                      router.push(n.cusId ? `${homeHref}/cus/${n.cusId}` : `${homeHref}/${n.cisId}`);
+                    }}
+                  >
+                    <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
+                      {meta.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs leading-snug ${!n.isRead ? "font-semibold text-zinc-900" : "font-normal text-zinc-600"}`}>
+                        {n.message}
+                      </p>
+                      <span className="mt-1 block text-[10px] font-medium text-zinc-400">
+                        {formatDistanceToNow(new Date(n.sentAt))}
+                      </span>
+                    </div>
+                    {!n.isRead && (
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </div>
           ) : null}
         </div>
 

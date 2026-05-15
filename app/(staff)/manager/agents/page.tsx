@@ -8,7 +8,6 @@ import Image from "next/image";
 import { Users, ArrowRight, Mail, Calendar, Clock } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 export const metadata = { title: "My Agents — CRS" };
 
@@ -149,7 +148,6 @@ export default async function ManagerAgentsPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Team Submissions", href: "/manager" }, { label: "My Agents" }]} className="mb-1" />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-blue-50 p-2.5">

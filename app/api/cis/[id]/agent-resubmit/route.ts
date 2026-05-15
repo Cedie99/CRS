@@ -128,6 +128,7 @@ export async function PATCH(
     actorId: userId,
     managerId: agent?.managerId ?? null,
     isDealer: cis.customerType === "dealer",
+    isResubmission: true,
   });
 
   return NextResponse.json({ success: true });

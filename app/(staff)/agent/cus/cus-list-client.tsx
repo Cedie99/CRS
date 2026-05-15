@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, RefreshCw, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
@@ -11,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CusNewForm } from "./new/cus-new-form";
-import { CusDetailModal } from "./cus-detail-modal";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -56,14 +56,11 @@ interface ApprovedCis {
 export function CusListClient({
   cusList,
   approvedCisList,
-  initialOpenId,
 }: {
   cusList: CusRow[];
   approvedCisList: ApprovedCis[];
-  initialOpenId?: string | null;
 }) {
   const [newOpen, setNewOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(initialOpenId ?? null);
 
   return (
     <>
@@ -104,10 +101,9 @@ export function CusListClient({
           <ul className="divide-y divide-zinc-100">
             {cusList.map((cus) => (
               <li key={cus.id}>
-                <button
-                  type="button"
-                  onClick={() => setDetailId(cus.id)}
-                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-50 transition-colors text-left"
+                <Link
+                  href={`/agent/cus/${cus.id}`}
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-50 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2.5 flex-wrap">
@@ -139,7 +135,7 @@ export function CusListClient({
                     </span>
                     <ChevronRight className="h-4 w-4 text-zinc-400" />
                   </div>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -164,12 +160,6 @@ export function CusListClient({
         </DialogContent>
       </Dialog>
 
-      {/* CUS detail modal */}
-      <CusDetailModal
-        cusId={detailId}
-        open={!!detailId}
-        onClose={() => setDetailId(null)}
-      />
     </>
   );
 }
