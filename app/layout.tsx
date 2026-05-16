@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { Toaster } from "sileo";
 import { Providers } from "@/components/providers";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -24,6 +26,8 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <Providers>{children}</Providers>
+        <Analytics />
+        <SpeedInsights />
         <Toaster
           position="top-center"
           theme="system"
