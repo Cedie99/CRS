@@ -262,6 +262,7 @@ export const cisSubmissions = pgTable("cis_submissions", {
   index("cis_status_updated_at_idx").on(t.status, t.updatedAt.desc()),
   index("cis_status_created_at_idx").on(t.status, t.createdAt.desc()),
   index("cis_customer_type_idx").on(t.customerType),
+  index("cis_is_archived_idx").on(t.isArchived),
 ]);
 
 export const workflowEvents = pgTable("workflow_events", {

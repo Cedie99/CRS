@@ -1,0 +1,1 @@
+CREATE INDEX "cis_is_archived_idx" ON "cis_submissions" USING btree ("is_archived");
