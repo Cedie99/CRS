@@ -71,6 +71,7 @@ export default async function AgentDashboard({
   let agentCompletionTotal = 0;
   let returnedRows: Submission[] = [];
   let returnedTotal = 0;
+  let customerTypeCounts: Record<string, number> | undefined = undefined;
 
   try {
     const conditions = [
@@ -93,7 +94,7 @@ export default async function AgentDashboard({
     }
 
     // Run all queries in parallel — cached stats (10s) + fresh list data
-    const [filteredCountRow, submissionRows, cachedStats, archivedRows, acRows, acCountRow, returnedRowsResult, returnedCountRow] = await Promise.all([
+    const [filteredCountRow, submissionRows, cachedStats, archivedRows, acRows, acCountRow, returnedRowsResult, returnedCountRow, typeCountRows] = await Promise.all([
       db
         .select({ total: count() })
         .from(cisSubmissions)
@@ -117,7 +118,7 @@ export default async function AgentDashboard({
             .from(cisSubmissions)
             .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "submitted")))
             .orderBy(desc(cisSubmissions.createdAt))
-            .limit(6),
+            .limit(30),
       showArchived
         ? Promise.resolve([{ total: 0 }])
         : db
@@ -131,13 +132,18 @@ export default async function AgentDashboard({
             .from(cisSubmissions)
             .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "returned"), ne(cisSubmissions.isArchived, true)))
             .orderBy(desc(cisSubmissions.updatedAt))
-            .limit(6),
+            .limit(30),
       showArchived
         ? Promise.resolve([{ total: 0 }])
         : db
             .select({ total: count() })
             .from(cisSubmissions)
             .where(and(eq(cisSubmissions.agentId, session!.user.id), eq(cisSubmissions.status, "returned"), ne(cisSubmissions.isArchived, true))),
+      db
+        .select({ customerType: cisSubmissions.customerType, total: count() })
+        .from(cisSubmissions)
+        .where(and(...conditions))
+        .groupBy(cisSubmissions.customerType),
     ]);
 
     filteredCount = Number(filteredCountRow[0]?.total ?? 0);
@@ -148,6 +154,11 @@ export default async function AgentDashboard({
     agentCompletionTotal = Number((acCountRow as { total: number | string }[])[0]?.total ?? 0);
     returnedRows = returnedRowsResult as Submission[];
     returnedTotal = Number((returnedCountRow as { total: number | string }[])[0]?.total ?? 0);
+    customerTypeCounts = Object.fromEntries(
+      (typeCountRows as { customerType: string | null; total: number | string }[])
+        .filter((r) => r.customerType)
+        .map((r) => [r.customerType!, Number(r.total)])
+    );
   } catch (error) {
     if (!isMissingArchivedColumnError(error)) {
       throw error;
@@ -318,6 +329,7 @@ export default async function AgentDashboard({
         basePath="/agent"
         searchParams={{ q, status, archived }}
         submissions={submissions}
+        customerTypeCounts={customerTypeCounts}
       />
 
       {submissions.length === 0 ? (

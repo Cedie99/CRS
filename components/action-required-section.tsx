@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { AlertCircle, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { CisCard } from "@/components/cis-card";
 import type { CisStatus } from "@/components/status-badge";
@@ -26,6 +27,7 @@ interface ActionRequiredSectionProps {
   accentClass?: string;
   badgeClass?: string;
   icon?: "alert" | "return";
+  viewAllHref?: string;
 }
 
 function getPerPage(): number {
@@ -46,6 +48,7 @@ export function ActionRequiredSection({
   accentClass = "border-red-200 bg-red-50/50",
   badgeClass = "bg-red-100 text-red-800",
   icon = "alert",
+  viewAllHref,
 }: ActionRequiredSectionProps) {
   const Icon = icon === "return" ? RotateCcw : AlertCircle;
   const [page, setPage] = useState(0);
@@ -195,11 +198,15 @@ export function ActionRequiredSection({
             <span />
           )}
 
-          {overflow > 0 && (
+          {overflow > 0 && viewAllHref ? (
+            <Link href={viewAllHref} className="text-xs font-medium text-zinc-500 underline-offset-2 hover:underline">
+              +{overflow} more — view all
+            </Link>
+          ) : overflow > 0 ? (
             <p className="text-xs text-zinc-400">
               +{overflow} more — browse by customer type below.
             </p>
-          )}
+          ) : null}
         </div>
       )}
     </section>

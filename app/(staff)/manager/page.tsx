@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray, ilike, or, count, ne } from "drizzle-orm";
+import { eq, desc, and, inArray, ilike, or, count, ne, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users } from "@/lib/db/schema";
@@ -120,7 +120,7 @@ export default async function ManagerDashboard({
     eq(cisSubmissions.status, "pending_endorsement" as CisStatus),
   ];
 
-  const [managerStats, actionQueue, actionCountRow, pendingEndorsementRows, pendingEndorsementCountRow] = await Promise.all([
+  const [managerStats, actionQueue, actionCountRow, pendingEndorsementRows, pendingEndorsementCountRow, typeCountRows] = await Promise.all([
     getManagerStats(agentIds),
     db
       .select(SUBMISSION_COLS)
@@ -140,11 +140,16 @@ export default async function ManagerDashboard({
       .innerJoin(users, eq(cisSubmissions.agentId, users.id))
       .where(and(...pendingEndorsementConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
-      .limit(6),
+      .limit(30),
     db
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...pendingEndorsementConditions)),
+    db
+      .select({ customerType: cisSubmissions.customerType, total: count() })
+      .from(cisSubmissions)
+      .where(and(...actionConditions))
+      .groupBy(cisSubmissions.customerType),
   ]);
 
   const pendingEndorsementTotal = Number(pendingEndorsementCountRow[0]?.total ?? 0);
@@ -200,6 +205,11 @@ export default async function ManagerDashboard({
   ];
 
   const actionTotal = Number(actionCountRow[0]?.total ?? 0);
+  const customerTypeCounts = Object.fromEntries(
+    (typeCountRows as { customerType: string | null; total: number | string }[])
+      .filter((r) => r.customerType)
+      .map((r) => [r.customerType!, Number(r.total)])
+  );
 
   // Clear-agent-filter URL (preserves q and status)
   const clearAgentParams = new URLSearchParams();
@@ -272,12 +282,14 @@ export default async function ManagerDashboard({
         sublabel="Your agents have submitted these forms. Review and endorse them to move the workflow forward."
         accentClass="border-amber-300 bg-amber-50/60"
         badgeClass="bg-amber-100 text-amber-800"
+        viewAllHref="/manager?status=pending_endorsement"
       />
 
       <CustomerTypeNavCards
         basePath="/manager"
         searchParams={{ q, status, agentId }}
         submissions={actionQueue}
+        customerTypeCounts={customerTypeCounts}
       />
 
       {/* Agent filter banner */}

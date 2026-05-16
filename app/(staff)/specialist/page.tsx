@@ -83,7 +83,7 @@ export default async function SpecialistDashboard({
     ...searchConditions,
   ];
 
-  const [rows, visibleCountRow, pendingCountRow, encodedCountRow, closedCountRow] = await Promise.all([
+  const [rows, visibleCountRow, pendingCountRow, encodedCountRow, closedCountRow, pendingCarouselRows, typeCountRows] = await Promise.all([
     db
       .select(SUBMISSION_COLS)
       .from(cisSubmissions)
@@ -108,6 +108,20 @@ export default async function SpecialistDashboard({
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...closedConditions)),
+    isAllView
+      ? Promise.resolve([])
+      : db
+          .select(SUBMISSION_COLS)
+          .from(cisSubmissions)
+          .innerJoin(users, eq(cisSubmissions.agentId, users.id))
+          .where(and(...pendingConditions))
+          .orderBy(desc(cisSubmissions.createdAt))
+          .limit(30),
+    db
+      .select({ customerType: cisSubmissions.customerType, total: count() })
+      .from(cisSubmissions)
+      .where(and(...visibleConditions))
+      .groupBy(cisSubmissions.customerType),
   ]);
 
   const visibleTotal = Number(visibleCountRow[0]?.total ?? 0);
@@ -115,6 +129,11 @@ export default async function SpecialistDashboard({
   const encodedTotal = Number(encodedCountRow[0]?.total ?? 0);
   const closedTotal = Number(closedCountRow[0]?.total ?? 0);
   const total = isAllView ? visibleTotal : pendingTotal + encodedTotal + closedTotal;
+  const customerTypeCounts = Object.fromEntries(
+    (typeCountRows as { customerType: string | null; total: number | string }[])
+      .filter((r) => r.customerType)
+      .map((r) => [r.customerType!, Number(r.total)])
+  );
 
   const buildModeHref = (mode: "queue" | "all") => {
     const params = new URLSearchParams();
@@ -228,9 +247,7 @@ export default async function SpecialistDashboard({
 
       {!isAllView && (
         <ActionRequiredSection
-          submissions={rows
-            .filter((r) => r.status === "pending_erp_encoding")
-            .map((r) => ({ ...r, status: r.status as CisStatus }))}
+          submissions={(pendingCarouselRows as typeof rows).map((r) => ({ ...r, status: r.status as CisStatus }))}
           totalCount={pendingTotal}
           hrefPrefix="specialist"
           label="Forms You Need to Encode to ERP"
@@ -244,6 +261,7 @@ export default async function SpecialistDashboard({
         basePath="/specialist"
         searchParams={{ q, status, view: isAllView ? "all" : undefined }}
         submissions={rows}
+        customerTypeCounts={customerTypeCounts}
       />
 
       {total === 0 ? (
