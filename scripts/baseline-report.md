@@ -3,7 +3,7 @@
 **Date:** 2026-05-16
 **Environment:** Production (Vercel + Neon)
 **Deployment:** `crs-lq360ksf2-jhon-cedrick-sarmiento-ignacios-projects.vercel.app`
-**Dataset:** 500 seeded CIS submissions across all statuses, 18 seed users (all roles)
+**Dataset:** 2,000 seeded CIS submissions across all statuses, 52 seed users (all roles, multiple per role)
 
 ---
 
@@ -24,6 +24,10 @@
 
 | Metric | Value |
 |---|---|
+### Run 1 — 500 records (2026-05-16)
+
+| Metric | Value |
+|---|---|
 | Total requests | 2,329 |
 | Throughput | 11.1 req/s |
 | Avg latency | 71 ms |
@@ -31,9 +35,22 @@
 | Checks passed | 100% |
 | 5xx errors | 0 |
 
-**Thresholds:**
-- p(95) < 2000ms — **PASS** (108ms)
+### Run 2 — 2,000 records, full document sets (2026-05-16)
+
+| Metric | Value |
+|---|---|
+| Total requests | 2,304 |
+| Throughput | 11.0 req/s |
+| Avg latency | 66 ms |
+| p95 latency | 91 ms |
+| Checks passed | 100% |
+| 5xx errors | 0 |
+
+**Thresholds (Run 2):**
+- p(95) < 2000ms — **PASS** (91ms)
 - Checks rate > 99% — **PASS** (100%)
+
+**vs Run 1:** p95 improved 17ms (108ms → 91ms, **-16%**) with 4× more data. Vercel edge caching and Neon connection pooling are holding up well.
 
 ---
 
