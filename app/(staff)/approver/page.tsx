@@ -1,4 +1,4 @@
-import { eq, desc, and, ilike, or, inArray, count } from "drizzle-orm";
+import { eq, desc, and, ilike, or, inArray, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
@@ -75,7 +75,7 @@ export default async function ApproverDashboard({
     conditions.push(eq(cisSubmissions.status, status as CisStatus));
   }
 
-  const [submissions, filteredCountRow, actionRows, actionCountRow] = await Promise.all([
+  const [submissions, filteredCountRow, actionRows, actionCountRow, typeCountRows] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -94,16 +94,26 @@ export default async function ApproverDashboard({
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_approval"))
           .orderBy(desc(cisSubmissions.createdAt))
-          .limit(6),
+          .limit(30),
     isAllView
       ? Promise.resolve([{ total: 0 }])
       : db
           .select({ total: count() })
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_approval")),
+    db
+      .select({ customerType: cisSubmissions.customerType, total: count() })
+      .from(cisSubmissions)
+      .where(and(...conditions))
+      .groupBy(cisSubmissions.customerType),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);
   const actionTotal = Number((actionCountRow as { total: number | string }[])[0]?.total ?? 0);
+  const customerTypeCounts = Object.fromEntries(
+    (typeCountRows as { customerType: string | null; total: number | string }[])
+      .filter((r) => r.customerType)
+      .map((r) => [r.customerType!, Number(r.total)])
+  );
 
   const approved = history.filter((e) => e.action === "approved").length;
   const denied = history.filter((e) => e.action === "denied").length;
@@ -207,6 +217,7 @@ export default async function ApproverDashboard({
         basePath="/approver"
         searchParams={{ q, status, view: isAllView ? "all" : undefined }}
         submissions={submissions}
+        customerTypeCounts={customerTypeCounts}
       />
 
       {filteredCount === 0 ? (

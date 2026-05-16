@@ -1,4 +1,4 @@
-import { desc, and, ilike, or, count, eq, inArray } from "drizzle-orm";
+import { desc, and, ilike, or, count, eq, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
@@ -78,7 +78,7 @@ export default async function SupportDashboard({
     updatedAt: cisSubmissions.updatedAt,
   };
 
-  const [pendingEncoding, pendingCountRow, encoded, encodedCountRow, denied, deniedCountRow] = await Promise.all([
+  const [pendingEncoding, pendingCountRow, encoded, encodedCountRow, denied, deniedCountRow, typeCountRows] = await Promise.all([
     db
       .select(cardSelect)
       .from(cisSubmissions)
@@ -95,7 +95,7 @@ export default async function SupportDashboard({
       .from(cisSubmissions)
       .where(and(...encodedConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
-      .limit(6),
+      .limit(30),
     db
       .select({ total: count() })
       .from(cisSubmissions)
@@ -105,17 +105,27 @@ export default async function SupportDashboard({
       .from(cisSubmissions)
       .where(and(...deniedConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
-      .limit(6),
+      .limit(30),
     db
       .select({ total: count() })
       .from(cisSubmissions)
       .where(and(...deniedConditions)),
+    db
+      .select({ customerType: cisSubmissions.customerType, total: count() })
+      .from(cisSubmissions)
+      .where(and(...pendingConditions))
+      .groupBy(cisSubmissions.customerType),
   ]);
 
   const pendingTotal = Number(pendingCountRow[0]?.total ?? 0);
   const encodedTotal = Number(encodedCountRow[0]?.total ?? 0);
   const deniedTotal = Number(deniedCountRow[0]?.total ?? 0);
   const total = isAllView ? pendingTotal : pendingTotal + encodedTotal + deniedTotal;
+  const customerTypeCounts = Object.fromEntries(
+    (typeCountRows as { customerType: string | null; total: number | string }[])
+      .filter((r) => r.customerType)
+      .map((r) => [r.customerType!, Number(r.total)])
+  );
   const buildModeHref = (mode: "queue" | "all") => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -227,6 +237,7 @@ export default async function SupportDashboard({
         basePath="/support"
         searchParams={{ q, status, view: isAllView ? "all" : undefined }}
         submissions={isAllView ? pendingEncoding : [...pendingEncoding, ...encoded, ...denied]}
+        customerTypeCounts={customerTypeCounts}
       />
 
       {total === 0 && (

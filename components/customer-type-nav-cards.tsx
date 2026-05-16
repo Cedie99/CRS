@@ -16,6 +16,8 @@ interface CustomerTypeNavCardsProps {
   searchParams?: Record<string, QueryValue>;
   activeType?: DashboardCustomerType;
   submissions?: Array<{ customerType?: string | null; status?: string }>;
+  /** Pre-computed per-type counts from the DB. When provided, overrides counting from submissions. */
+  customerTypeCounts?: Partial<Record<DashboardCustomerType, number>>;
 }
 
 const CUSTOMER_TYPE_ACCENTS: Record<DashboardCustomerType, string> = {
@@ -73,7 +75,7 @@ function buildHref(
   return `${basePath}/customer-type/${customerType}${suffix ? `?${suffix}` : ""}`;
 }
 
-export function CustomerTypeNavCards({ basePath, searchParams, activeType, submissions }: CustomerTypeNavCardsProps) {
+export function CustomerTypeNavCards({ basePath, searchParams, activeType, submissions, customerTypeCounts }: CustomerTypeNavCardsProps) {
   const counts: Record<DashboardCustomerType, number> = {
     dealer: 0,
     distributor: 0,
@@ -82,15 +84,20 @@ export function CustomerTypeNavCards({ basePath, searchParams, activeType, submi
     end_user: 0,
   };
 
-  for (const row of submissions ?? []) {
-    // Exclude drafts — customer type is not finalized until agent fill-out.
-    if (row.status === "draft") continue;
-    // Exclude customer-submitted rows — agent has not finalized type yet.
-    if (row.status === "submitted") continue;
-    // Exclude rows without a confirmed type.
-    if (!row.customerType) continue;
-    const key = normalizeDashboardCustomerType(row.customerType);
-    counts[key] += 1;
+  if (customerTypeCounts) {
+    // Use pre-computed DB counts when available — accurate regardless of pagination.
+    for (const [type, n] of Object.entries(customerTypeCounts)) {
+      const key = normalizeDashboardCustomerType(type);
+      counts[key] = n ?? 0;
+    }
+  } else {
+    for (const row of submissions ?? []) {
+      if (row.status === "draft") continue;
+      if (row.status === "submitted") continue;
+      if (!row.customerType) continue;
+      const key = normalizeDashboardCustomerType(row.customerType);
+      counts[key] += 1;
+    }
   }
 
   const total = Object.values(counts).reduce((sum, current) => sum + current, 0);
