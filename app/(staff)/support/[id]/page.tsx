@@ -81,7 +81,7 @@ export default async function SupportCisDetailPage({
       />
 
       <div className="grid gap-5 xl:grid-cols-5">
-        <div className="space-y-5 xl:col-span-3 print:col-span-full">
+        <div className="min-w-0 space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             fieldHistory={fieldHistory ?? undefined}
             printEnabled={canPrint}
@@ -186,7 +186,7 @@ export default async function SupportCisDetailPage({
           />
         </div>
 
-        <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
+        <div className="print:hidden min-w-0 space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} agentType={cis.agentType} />
           <Card>

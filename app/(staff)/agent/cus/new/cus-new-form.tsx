@@ -603,31 +603,33 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           ) : (
             <div className="space-y-2">
               {owners.map((row, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_80px_1fr_28px] gap-2 items-end">
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Name</p>}
-                    <Input value={row.name} onChange={e => updateOwner(i, "name", e.target.value)}
-                      placeholder="Full name" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Nationality</p>}
-                    <Input value={row.nationality} onChange={e => updateOwner(i, "nationality", e.target.value)}
-                      placeholder="Filipino" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Share %</p>}
-                    <Input type="number" min="0" max="100" value={row.percentage} onChange={e => updateOwner(i, "percentage", e.target.value)}
-                      placeholder="50" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>}
-                    <Input type="tel" value={row.contact} onChange={e => updateOwner(i, "contact", e.target.value)}
-                      placeholder="09xx-xxx-xxxx" className="bg-white text-xs h-8" />
-                  </div>
+                <div key={i} className="relative rounded-lg border border-zinc-200 bg-white/60 p-3">
                   <button type="button" onClick={() => setOwners(prev => prev.filter((_, idx) => idx !== i))}
-                    className="text-zinc-300 hover:text-red-500 transition-colors self-end pb-0.5">
+                    className="absolute right-2 top-2 text-zinc-300 hover:text-red-500 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 pr-6 sm:pr-0">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Name</p>
+                      <Input value={row.name} onChange={e => updateOwner(i, "name", e.target.value)}
+                        placeholder="Full name" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Nationality</p>
+                      <Input value={row.nationality} onChange={e => updateOwner(i, "nationality", e.target.value)}
+                        placeholder="Filipino" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Share %</p>
+                      <Input type="number" min="0" max="100" value={row.percentage} onChange={e => updateOwner(i, "percentage", e.target.value)}
+                        placeholder="50" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>
+                      <Input type="tel" value={row.contact} onChange={e => updateOwner(i, "contact", e.target.value)}
+                        placeholder="09xx-xxx-xxxx" className="bg-white text-xs h-8" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -649,26 +651,28 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           ) : (
             <div className="space-y-2">
               {officers.map((row, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_1fr_28px] gap-2 items-end">
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Name</p>}
-                    <Input value={row.name} onChange={e => updateOfficer(i, "name", e.target.value)}
-                      placeholder="Full name" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Position</p>}
-                    <Input value={row.position} onChange={e => updateOfficer(i, "position", e.target.value)}
-                      placeholder="e.g. CEO" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>}
-                    <Input type="tel" value={row.contact} onChange={e => updateOfficer(i, "contact", e.target.value)}
-                      placeholder="09xx-xxx-xxxx" className="bg-white text-xs h-8" />
-                  </div>
+                <div key={i} className="relative rounded-lg border border-zinc-200 bg-white/60 p-3">
                   <button type="button" onClick={() => setOfficers(prev => prev.filter((_, idx) => idx !== i))}
-                    className="text-zinc-300 hover:text-red-500 transition-colors self-end pb-0.5">
+                    className="absolute right-2 top-2 text-zinc-300 hover:text-red-500 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 pr-6 sm:pr-0">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Name</p>
+                      <Input value={row.name} onChange={e => updateOfficer(i, "name", e.target.value)}
+                        placeholder="Full name" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Position</p>
+                      <Input value={row.position} onChange={e => updateOfficer(i, "position", e.target.value)}
+                        placeholder="e.g. CEO" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>
+                      <Input type="tel" value={row.contact} onChange={e => updateOfficer(i, "contact", e.target.value)}
+                        placeholder="09xx-xxx-xxxx" className="bg-white text-xs h-8" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -717,31 +721,33 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           ) : (
             <div className="space-y-2">
               {tradeRefs.map((row, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_1fr_60px_28px] gap-2 items-end">
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Company</p>}
-                    <Input value={row.company} onChange={e => updateTradeRef(i, "company", e.target.value)}
-                      placeholder="Company name" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Address</p>}
-                    <Input value={row.address} onChange={e => updateTradeRef(i, "address", e.target.value)}
-                      placeholder="Address" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>}
-                    <Input type="tel" value={row.contact} onChange={e => updateTradeRef(i, "contact", e.target.value)}
-                      placeholder="Contact" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Years</p>}
-                    <Input type="number" min="0" value={row.years} onChange={e => updateTradeRef(i, "years", e.target.value)}
-                      placeholder="Yrs" className="bg-white text-xs h-8" />
-                  </div>
+                <div key={i} className="relative rounded-lg border border-zinc-200 bg-white/60 p-3">
                   <button type="button" onClick={() => setTradeRefs(prev => prev.filter((_, idx) => idx !== i))}
-                    className="text-zinc-300 hover:text-red-500 transition-colors self-end pb-0.5">
+                    className="absolute right-2 top-2 text-zinc-300 hover:text-red-500 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 pr-6 sm:pr-0">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Company</p>
+                      <Input value={row.company} onChange={e => updateTradeRef(i, "company", e.target.value)}
+                        placeholder="Company name" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Address</p>
+                      <Input value={row.address} onChange={e => updateTradeRef(i, "address", e.target.value)}
+                        placeholder="Address" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Contact</p>
+                      <Input type="tel" value={row.contact} onChange={e => updateTradeRef(i, "contact", e.target.value)}
+                        placeholder="Contact" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Years</p>
+                      <Input type="number" min="0" value={row.years} onChange={e => updateTradeRef(i, "years", e.target.value)}
+                        placeholder="Yrs" className="bg-white text-xs h-8" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -763,31 +769,33 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           ) : (
             <div className="space-y-2">
               {bankRefs.map((row, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_28px] gap-2 items-end">
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Bank</p>}
-                    <Input value={row.bank} onChange={e => updateBankRef(i, "bank", e.target.value)}
-                      placeholder="Bank name" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Branch</p>}
-                    <Input value={row.branch} onChange={e => updateBankRef(i, "branch", e.target.value)}
-                      placeholder="Branch" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Account Type</p>}
-                    <Input value={row.accountType} onChange={e => updateBankRef(i, "accountType", e.target.value)}
-                      placeholder="Savings / Checking" className="bg-white text-xs h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    {i === 0 && <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Account No.</p>}
-                    <Input value={row.accountNo} onChange={e => updateBankRef(i, "accountNo", e.target.value)}
-                      placeholder="Account number" className="bg-white text-xs h-8" />
-                  </div>
+                <div key={i} className="relative rounded-lg border border-zinc-200 bg-white/60 p-3">
                   <button type="button" onClick={() => setBankRefs(prev => prev.filter((_, idx) => idx !== i))}
-                    className="text-zinc-300 hover:text-red-500 transition-colors self-end pb-0.5">
+                    className="absolute right-2 top-2 text-zinc-300 hover:text-red-500 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 pr-6 sm:pr-0">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Bank</p>
+                      <Input value={row.bank} onChange={e => updateBankRef(i, "bank", e.target.value)}
+                        placeholder="Bank name" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Branch</p>
+                      <Input value={row.branch} onChange={e => updateBankRef(i, "branch", e.target.value)}
+                        placeholder="Branch" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Account Type</p>
+                      <Input value={row.accountType} onChange={e => updateBankRef(i, "accountType", e.target.value)}
+                        placeholder="Savings / Checking" className="bg-white text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Account No.</p>
+                      <Input value={row.accountNo} onChange={e => updateBankRef(i, "accountNo", e.target.value)}
+                        placeholder="Account number" className="bg-white text-xs h-8" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

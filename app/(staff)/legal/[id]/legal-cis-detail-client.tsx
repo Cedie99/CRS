@@ -111,7 +111,7 @@ export function LegalCisDetailClient({
   return (
     <>
       <div className="grid gap-5 xl:grid-cols-5">
-        <div className="space-y-5 xl:col-span-3 print:col-span-full">
+        <div className="min-w-0 space-y-5 xl:col-span-3 print:col-span-full">
           <DocReviewPanel
             initialDocReviewStatuses={initialDocReviewStatuses}
             canAct={canAct}
@@ -130,7 +130,7 @@ export function LegalCisDetailClient({
           />
         </div>
 
-        <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
+        <div className="print:hidden min-w-0 space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={status as any} customerType={customerType} events={events as any} cisCreatedAt={cisData.createdAt as any} />
           <WorkflowHandoff status={status as any} customerType={customerType} agentType={cisData.agentType as string | null} />
           <PointsBreakdownPanel

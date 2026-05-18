@@ -65,9 +65,9 @@ export function CusListClient({
   return (
     <>
       {/* Header */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-teal-50 p-2.5 shrink-0">
+          <div className="shrink-0 rounded-xl bg-teal-50 p-2.5">
             <RefreshCw className="h-5 w-5 text-teal-600" />
           </div>
           <div>
@@ -77,7 +77,7 @@ export function CusListClient({
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={() => setNewOpen(true)}>
+        <Button size="sm" className="self-start shrink-0 sm:mt-0.5" onClick={() => setNewOpen(true)}>
           <Plus className="h-4 w-4 mr-1.5" />
           New CUS
         </Button>

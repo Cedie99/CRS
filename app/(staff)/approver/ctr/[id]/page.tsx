@@ -165,7 +165,7 @@ export default async function ApproverCtrDetailPage({
 
       <div className="grid gap-5 xl:grid-cols-5">
         {/* Left */}
-        <div className="xl:col-span-3 space-y-5">
+        <div className="xl:col-span-3 min-w-0 space-y-5">
           {/* Customer info */}
           <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
             <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-3">
@@ -282,7 +282,7 @@ export default async function ApproverCtrDetailPage({
         </div>
 
         {/* Right */}
-        <div className="xl:col-span-2 space-y-5">
+        <div className="xl:col-span-2 min-w-0 space-y-5">
           {canAct && <CtrApproverActions ctrId={id} />}
 
           {events.length > 0 && (

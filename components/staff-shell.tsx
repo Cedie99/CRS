@@ -54,7 +54,7 @@ export function StaffShell({
             onMobileClose={() => setSidebarOpen(false)}
           />
         </div>
-        <main className="relative min-w-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50">
+        <main className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-zinc-50">
           <div aria-hidden className="pointer-events-none fixed bottom-0 left-0 right-0 z-0 h-120 overflow-hidden print:hidden lg:left-56">
             <div
               className="absolute inset-0 bg-bottom bg-no-repeat"

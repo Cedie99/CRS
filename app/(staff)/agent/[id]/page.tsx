@@ -353,7 +353,7 @@ export default async function AgentCisDetailPage({
       {/* Two-column layout */}
       <div className="grid gap-5 xl:grid-cols-5">
         {/* Main — second on mobile (status shows first), left column on xl */}
-        <div className="order-2 space-y-5 xl:order-1 xl:col-span-3 print:col-span-full print:order-1">
+        <div className="order-2 min-w-0 space-y-5 xl:order-1 xl:col-span-3 print:col-span-full print:order-1">
           <CisInfoCard
             fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
@@ -459,7 +459,7 @@ export default async function AgentCisDetailPage({
         </div>
 
         {/* Sidebar — first on mobile so status is seen immediately, right column on xl */}
-        <div className="print:hidden order-1 space-y-5 xl:order-2 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
+        <div className="print:hidden order-1 min-w-0 space-y-5 xl:order-2 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} agentType={cis.agentType} />
           {/* Activity — shown below on mobile, inside sticky sidebar on xl */}
