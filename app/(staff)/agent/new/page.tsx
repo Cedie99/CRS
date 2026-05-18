@@ -489,7 +489,7 @@ function NewCisContent() {
                   </CardContent>
                 </Card>
 
-                <Card className="overflow-hidden border-zinc-200/80 bg-white/95 shadow-lg shadow-zinc-200/60 lg:col-span-4 lg:row-span-1">
+                <Card className="hidden overflow-hidden border-zinc-200/80 bg-white/95 shadow-lg shadow-zinc-200/60 lg:col-span-4 lg:row-span-1 lg:block">
                   <CardContent className="space-y-3.5 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -537,7 +537,7 @@ function NewCisContent() {
                   </CardContent>
                 </Card>
 
-                <Card className="overflow-hidden border-zinc-200/80 bg-white/95 shadow-lg shadow-zinc-200/60 lg:col-span-4 lg:row-span-1">
+                <Card className="hidden overflow-hidden border-zinc-200/80 bg-white/95 shadow-lg shadow-zinc-200/60 lg:col-span-4 lg:row-span-1 lg:block">
                   <CardContent className="space-y-4 py-4">
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Mission Flow</p>
 

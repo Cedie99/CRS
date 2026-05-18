@@ -28,14 +28,20 @@ export function StaffShell({
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
       <div className="flex min-h-0 flex-1">
-        <div className="fixed left-3 top-3 z-50 print:hidden lg:hidden">
+        {/* Mobile top bar — hamburger + branding + notification bell */}
+        <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-emerald-900/30 bg-[#0f3f26] px-3 print:hidden lg:hidden">
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-emerald-900/30 bg-[#0f3f26] text-emerald-50 shadow-sm transition-colors hover:bg-[#145a34]"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-emerald-50 transition-colors hover:bg-white/10 active:bg-white/20"
             aria-label="Toggle menu"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-5 w-5" />
           </button>
+          <div className="flex flex-col items-center leading-none">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-emerald-100/60">Oracle Petroleum</p>
+            <p className="mt-0.5 text-xs font-bold tracking-wide text-white">Customer Request System</p>
+          </div>
+          <DashboardNotificationBell role={userRole} />
         </div>
 
         <div className="print:hidden">
@@ -60,8 +66,9 @@ export function StaffShell({
             />
           </div>
 
-          <div className="relative z-10 px-4 pb-6 pt-16 sm:px-6 sm:pt-8 lg:px-8 lg:pt-8 print:p-0">
-            <div className="absolute right-4 top-3 z-10 hidden print:hidden sm:flex lg:right-8">
+          <div className="relative z-10 px-4 pb-6 pt-14 sm:px-6 lg:px-8 lg:pt-8 print:p-0">
+            {/* Notification bell — desktop only (mobile sees it in the top bar) */}
+            <div className="absolute right-4 top-3 z-10 hidden print:hidden lg:flex lg:right-8">
               <DashboardNotificationBell role={userRole} />
             </div>
             <PageTransition>{children}</PageTransition>

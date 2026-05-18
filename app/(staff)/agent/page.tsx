@@ -8,7 +8,7 @@ import { CustomerTypeNavCards } from "@/components/customer-type-nav-cards";
 import { getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { buttonVariants } from "@/lib/button-variants";
-import { Plus, FileText, Link as LinkIcon, ChevronRight } from "lucide-react";
+import { Plus, Link as LinkIcon, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { ActionRequiredSection } from "@/components/action-required-section";
@@ -238,7 +238,7 @@ export default async function AgentDashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-zinc-900">My Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
@@ -250,6 +250,11 @@ export default async function AgentDashboard({
             )}
           </p>
         </div>
+        {/* Quick "New" button — mobile only; sidebar covers this on desktop */}
+        <Link href="/agent/new" className={`shrink-0 lg:hidden ${buttonVariants({ size: "sm" })}`}>
+          <Plus className="h-4 w-4" />
+          New
+        </Link>
       </div>
 
       <DashboardFilters

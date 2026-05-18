@@ -130,7 +130,7 @@ export function CustomerTypeNavCards({ basePath, searchParams, activeType, submi
       </div>
 
       {/* Cards grid */}
-      <div className="grid gap-2 p-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 p-3 xl:grid-cols-5">
         {sortedTypes.map((customerType) => {
           const active = customerType === activeType;
           const count = counts[customerType];

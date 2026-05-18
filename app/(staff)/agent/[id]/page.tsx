@@ -352,8 +352,8 @@ export default async function AgentCisDetailPage({
       />
       {/* Two-column layout */}
       <div className="grid gap-5 xl:grid-cols-5">
-        {/* Main */}
-        <div className="space-y-5 xl:col-span-3 print:col-span-full">
+        {/* Main — second on mobile (status shows first), left column on xl */}
+        <div className="order-2 space-y-5 xl:order-1 xl:col-span-3 print:col-span-full print:order-1">
           <CisInfoCard
             fieldHistory={fieldHistory ?? undefined}
             cisId={cis.id}
@@ -458,11 +458,12 @@ export default async function AgentCisDetailPage({
           />
         </div>
 
-        {/* Sidebar */}
-        <div className="print:hidden space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
+        {/* Sidebar — first on mobile so status is seen immediately, right column on xl */}
+        <div className="print:hidden order-1 space-y-5 xl:order-2 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
           <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
           <WorkflowHandoff status={cis.status as any} customerType={cis.customerType} agentType={cis.agentType} />
-          <Card>
+          {/* Activity — shown below on mobile, inside sticky sidebar on xl */}
+          <Card className="hidden xl:block">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">
                 <History className="h-4 w-4 text-zinc-400" />
@@ -484,6 +485,19 @@ export default async function AgentCisDetailPage({
           canResubmit={canResubmitReturnedForm}
         />
       )}
+
+      {/* Activity — mobile only (hidden on xl where it lives in the sticky sidebar) */}
+      <Card className="print:hidden xl:hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-bold text-zinc-700">
+            <History className="h-4 w-4 text-zinc-400" />
+            Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AuditTimeline events={events as any} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
