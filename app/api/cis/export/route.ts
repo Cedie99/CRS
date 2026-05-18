@@ -218,8 +218,8 @@ async function buildPdf(
 
   let rowIdx = 0;
   let pageNum = 0;
-  let page: PDFPage;
-  let tableDataY: number; // top-down Y of first data row on current page
+  let page!: PDFPage;
+  let tableDataY!: number;
 
   function newPage(isFirst: boolean) {
     pageNum++;
