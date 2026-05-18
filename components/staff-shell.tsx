@@ -66,7 +66,7 @@ export function StaffShell({
             />
           </div>
 
-          <div className="relative z-10 px-4 pb-6 pt-14 sm:px-6 lg:px-8 lg:pt-8 print:p-0">
+          <div className="relative z-10 px-4 pb-6 pt-20 sm:px-6 lg:px-8 lg:pt-8 print:p-0">
             {/* Notification bell — desktop only (mobile sees it in the top bar) */}
             <div className="absolute right-4 top-3 z-10 hidden print:hidden lg:flex lg:right-8">
               <DashboardNotificationBell role={userRole} />
