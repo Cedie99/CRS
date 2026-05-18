@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq, desc, inArray, and, sql } from "drizzle-orm";
+import { eq, desc, inArray, and, sql, ilike, notInArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users, workflowEvents, notifications } from "@/lib/db/schema";
@@ -125,6 +125,26 @@ export async function POST(req: Request) {
     const parsed = initiateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+
+    const [duplicate] = await db
+        .select({ id: cisSubmissions.id })
+        .from(cisSubmissions)
+        .where(
+          and(
+            ilike(cisSubmissions.tradeName, parsed.data.tradeName),
+            eq(cisSubmissions.customerType, parsed.data.customerType),
+            eq(cisSubmissions.isArchived, false),
+            notInArray(cisSubmissions.status, ["denied", "erp_encoded"])
+          )
+        )
+        .limit(1);
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: `A CIS for "${parsed.data.tradeName}" under this customer type is already in progress. Check your active submissions or contact your manager.` },
+        { status: 409 }
+      );
     }
 
     // Compatibility insert: only target core columns that exist in both older and newer schemas.

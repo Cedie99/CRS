@@ -67,7 +67,7 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
   const isDealer = initialCustomerType === "dealer";
   const missingRequiredCount = 3 - requiredFilledCount;
   const isReadyToSubmit = missingRequiredCount === 0;
-  const routeTargetLabel = isDealer ? "Legal Review (Maam Cha)" : "Finance Review (Maam Nida)";
+  const routeTargetLabel = isDealer ? "Legal Review" : "Finance Review";
 
   function setField<K extends keyof FormFields>(key: K, value: string | null) {
     setFields((f) => ({ ...f, [key]: value ?? "" }));
@@ -214,11 +214,11 @@ export function AgentFillOutForm({ cisId, initialCustomerType = "", initialOther
             <div className="mt-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/70 px-3 py-2.5 text-xs text-zinc-700">
               {isDealer ? (
                 <span className="font-medium text-purple-700">
-                  Dealer route: this submission will be sent to Legal Review (Maam Cha).
+                  Dealer route: this submission will be sent to Legal Review.
                 </span>
               ) : (
                 <span className="font-medium text-amber-700">
-                  Standard route ({CUSTOMER_TYPE_LABELS[initialCustomerType] ?? initialCustomerType}): this submission will be sent to Finance Review (Maam Nida).
+                  Standard route ({CUSTOMER_TYPE_LABELS[initialCustomerType] ?? initialCustomerType}): this submission will be sent to Finance Review.
                 </span>
               )}
             </div>

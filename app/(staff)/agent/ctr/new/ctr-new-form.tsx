@@ -53,7 +53,7 @@ export function CtrNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
   );
 
   const routingLabel =
-    targetCustomerType === "dealer" ? "Legal (Maam Cha)" : "Finance (Maam Nida)";
+    targetCustomerType === "dealer" ? "Legal Review" : "Finance Review";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

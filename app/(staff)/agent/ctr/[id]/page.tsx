@@ -166,7 +166,7 @@ export default async function AgentCtrDetailPage({
   const docsRequestedEvent = events.findLast((e) => e.action === "documents_requested");
 
   const reviewerLabel =
-    row.targetCustomerType === "dealer" ? "Legal (Maam Cha)" : "Finance (Maam Nida)";
+    row.targetCustomerType === "dealer" ? "Legal Review" : "Finance Review";
 
   const currentStep = getStepIndex(status);
   const fromTypeColor = CUSTOMER_TYPE_COLORS[row.cis.customerType ?? ""] ?? "bg-zinc-100 text-zinc-700 border-zinc-200";

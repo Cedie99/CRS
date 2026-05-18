@@ -30,7 +30,7 @@ type FieldErrors = Partial<Record<keyof z.infer<typeof cisFormSchema> | "_form" 
 interface OwnerRow { name: string; nationality: string; percentage: string; contact: string }
 interface OfficerRow { name: string; position: string; contact: string }
 interface TradeRefRow { company: string; address: string; contact: string; years: string }
-interface BankRefRow { bank: string; branch: string; accountType: string; accountNo: string }
+interface BankRefRow { bank: string; branch: string; accountType: string; accountNo: string; contactPerson: string; contactNumber: string }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -208,7 +208,7 @@ interface CustomerFormProps {
 const EMPTY_OWNER: OwnerRow   = { name: "", nationality: "", percentage: "", contact: "" };
 const EMPTY_OFFICER: OfficerRow = { name: "", position: "", contact: "" };
 const EMPTY_TRADE: TradeRefRow  = { company: "", address: "", contact: "", years: "" };
-const EMPTY_BANK: BankRefRow    = { bank: "", branch: "", accountType: "", accountNo: "" };
+const EMPTY_BANK: BankRefRow    = { bank: "", branch: "", accountType: "", accountNo: "", contactPerson: "", contactNumber: "" };
 
 function sanitizePhoneInput(value: string) {
   return value.replace(/[^0-9+()\-\s]/g, "");
@@ -1071,6 +1071,14 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                       pattern: "[0-9\\-\\s]*",
                       title: "Use digits, spaces, or hyphens only",
                       sanitize: sanitizeAccountNumberInput,
+                    },
+                    { key: "contactPerson", label: "Contact person", placeholder: "Juan Dela Cruz" },
+                    {
+                      key: "contactNumber",
+                      label: "Contact number",
+                      placeholder: "09XX-XXX-XXXX",
+                      inputMode: "tel",
+                      sanitize: sanitizePhoneInput,
                     },
                   ]}
                 />

@@ -62,7 +62,7 @@ export function DashboardFilters({
   showStatusFilter = true,
   showArchivedToggle = false,
   archivedCount = 0,
-  showExportButtons = true,
+  showExportButtons = false,
 }: DashboardFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();

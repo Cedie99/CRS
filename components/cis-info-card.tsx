@@ -127,7 +127,7 @@ const FINANCE_CREDIT_TERMS_LABELS: Record<string, string> = {
 type OwnerRow = { name: string; nationality: string; percentage: string; contact: string };
 type OfficerRow = { name: string; position: string; contact: string };
 type TradeRefRow = { company: string; address: string; contact: string; years: string };
-type BankRefRow = { bank: string; branch: string; accountType: string; accountNo: string };
+type BankRefRow = { bank: string; branch: string; accountType: string; accountNo: string; contactPerson?: string; contactNumber?: string };
 
 function isImageFile(file: FileEntry) {
   if (file.type?.toLowerCase().startsWith("image/")) return true;
@@ -1446,6 +1446,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Branch</th>
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Account Type</th>
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Account No.</th>
+                          <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Contact Person</th>
+                          <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Contact Number</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1455,6 +1457,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
                             <td className="px-3 py-2 text-zinc-700">{r.branch || "—"}</td>
                             <td className="px-3 py-2 text-zinc-700">{r.accountType || "—"}</td>
                             <td className="px-3 py-2 font-mono text-zinc-700">{r.accountNo || "—"}</td>
+                            <td className="px-3 py-2 text-zinc-700">{r.contactPerson || "—"}</td>
+                            <td className="px-3 py-2 text-zinc-700">{r.contactNumber || "—"}</td>
                           </tr>
                         ))}
                       </tbody>

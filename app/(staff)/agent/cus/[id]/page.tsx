@@ -219,7 +219,7 @@ export default async function AgentCusDetailPage({
   const isApproved   = cus.status === "approved";
   const isDenied     = cus.status === "denied";
   const currentStep  = stepIndex(cus.status);
-  const reviewerLabel = cis?.customerType === "dealer" ? "Legal (Maam Cha)" : "Finance (Maam Nida)";
+  const reviewerLabel = cis?.customerType === "dealer" ? "Legal Review" : "Finance Review";
   const deniedEvent  = events.findLast((e) => e.action === "denied");
 
   function humanize(v: string | null | undefined) {

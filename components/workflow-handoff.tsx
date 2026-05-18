@@ -53,7 +53,7 @@ const ROLES: Record<string, RoleInfo> = {
     borderColor: "border-amber-200",
   },
   legal_approver: {
-    label: "Legal Approver (Maam Cha)",
+    label: "Legal Approver",
     description: "Credit evaluation for dealer accounts",
     dotColor: "bg-purple-400",
     bgColor: "bg-purple-50",
@@ -61,7 +61,7 @@ const ROLES: Record<string, RoleInfo> = {
     borderColor: "border-purple-200",
   },
   finance_reviewer: {
-    label: "Finance Reviewer (Maam Nida)",
+    label: "Finance Reviewer",
     description: "Credit evaluation",
     dotColor: "bg-blue-400",
     bgColor: "bg-blue-50",
@@ -69,7 +69,7 @@ const ROLES: Record<string, RoleInfo> = {
     borderColor: "border-blue-200",
   },
   senior_approver: {
-    label: "Senior Approver (Sir Ed)",
+    label: "Senior Approver",
     description: "Final approval decision",
     dotColor: "bg-orange-400",
     bgColor: "bg-orange-50",

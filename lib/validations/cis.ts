@@ -58,7 +58,7 @@ export const SALES_CHANNEL_OPTIONS = [
 ] as const;
 
 export const initiateSchema = z.object({
-  tradeName: z.string().max(255).optional().or(z.literal("")),
+  tradeName: z.string().min(1, "Customer name is required").max(255),
   customerType: z.enum(CUSTOMER_TYPE_VALUES, { error: "Customer type is required" }),
   directFill: z.boolean().optional().default(false),
 });

@@ -345,7 +345,7 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
             <span className="text-xs text-zinc-600">
               Will route to{" "}
               <strong className="text-zinc-800">
-                {effectiveCustomerType === "dealer" ? "Legal (Maam Cha)" : "Finance (Maam Nida)"}
+                {effectiveCustomerType === "dealer" ? "Legal Review" : "Finance Review"}
               </strong>
               {newCustomerType !== NO_CHANGE && newCustomerType !== selected.customerType && (
                 <span className="ml-1 text-zinc-400">(reclassified)</span>

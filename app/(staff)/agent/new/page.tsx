@@ -199,6 +199,10 @@ function NewCisContent() {
   ].join("\n");
 
   async function handleFillDirectly() {
+    if (!customerName.trim()) {
+      setError("Please enter the customer name before continuing.");
+      return;
+    }
     if (!customerType) {
       setError("Please select a customer type before continuing.");
       return;
@@ -248,6 +252,10 @@ function NewCisContent() {
   }
 
   async function handleGenerate() {
+    if (!customerName.trim()) {
+      setError("Please enter the customer name before generating the link.");
+      return;
+    }
     if (!customerType) {
       setError("Please select a customer type before generating the link.");
       return;
@@ -382,7 +390,7 @@ function NewCisContent() {
                   <CardHeader className="border-b border-zinc-200/80 bg-linear-to-r from-zinc-900 to-emerald-900 pb-4 text-white">
                     <CardTitle className="pt-4 text-xl leading-tight sm:text-2xl">New Customer Submission</CardTitle>
                     <CardDescription className="text-sm text-emerald-100/90">
-                      Select customer type, optionally add a label, then choose link or direct fill.
+                      Select customer type and enter the customer name, then choose link or direct fill.
                     </CardDescription>
                   </CardHeader>
 
@@ -443,7 +451,7 @@ function NewCisContent() {
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-zinc-700">
-                        Customer / Trade Name <span className="font-normal text-zinc-400">(optional)</span>
+                        Trade/Business Name <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         placeholder="e.g. Dela Cruz Trading Co."
@@ -452,7 +460,6 @@ function NewCisContent() {
                         disabled={isLoading}
                         maxLength={255}
                       />
-                      <p className="text-xs text-zinc-500">This label helps you identify the draft before the customer submits.</p>
                     </div>
 
                     <AnimatePresence>

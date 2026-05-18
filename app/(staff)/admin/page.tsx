@@ -107,13 +107,11 @@ export default async function AdminDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">All Submissions</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Overview of all customer submissions across the entire system.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">All Submissions</h1>
+        <p className="mt-0.5 text-sm text-zinc-500">
+          Overview of all customer submissions across the entire system.
+        </p>
       </div>
 
       {/* Pending activations banner */}

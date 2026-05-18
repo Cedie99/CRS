@@ -197,7 +197,7 @@ export function CusDetailModal({
   const isApproved = cus?.status === "approved";
   const isDenied = cus?.status === "denied";
   const currentStep = cus ? stepIndex(cus.status) : -1;
-  const reviewerLabel = cis?.customerType === "dealer" ? "Legal (Maam Cha)" : "Finance (Maam Nida)";
+  const reviewerLabel = cis?.customerType === "dealer" ? "Legal Review" : "Finance Review";
   const deniedEvent = cus?.events.findLast((e) => e.action === "denied");
 
   const initialDocs = DOC_KEYS.reduce<Record<string, FileEntry[]>>((acc, k) => {
