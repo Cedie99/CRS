@@ -341,11 +341,12 @@ export function DocUploadSlot({
 
   return (
     <div className="space-y-2">
-      <div className={`flex items-center gap-3 ${hideLabel ? "justify-end" : "justify-between"}`}>
+      {/* Label row + buttons: stacks vertically on mobile, side-by-side on sm+ */}
+      <div className={`flex flex-col gap-2 sm:flex-row sm:items-center ${hideLabel ? "sm:justify-end" : "sm:justify-between"}`}>
         {!hideLabel && <div className="flex min-w-0 items-center gap-2">
           <p
             className={
-              "truncate " + (
+              "sm:truncate " + (
               reviewStatus === "rejected"
                 ? "text-sm font-medium text-red-600"
                 : hasAcceptedFiles
@@ -356,25 +357,25 @@ export function DocUploadSlot({
             {label}
           </p>
           {reviewStatus === "rejected" ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600">
               Rejected
             </span>
           ) : hasAcceptedFiles ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">
               <Check className="h-3 w-3" />
               Finished
             </span>
           ) : null}
         </div>}
         {!hideUploadButtons && (
-          <div className="flex shrink-0 overflow-hidden rounded-md border border-zinc-200">
+          <div className="flex w-full overflow-hidden rounded-md border border-zinc-200 sm:w-auto sm:shrink-0">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={disabled || uploading}
-              className="flex h-8 items-center gap-1.5 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 active:bg-zinc-100 disabled:opacity-50 sm:h-8 sm:flex-none sm:text-xs"
             >
-              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin sm:h-3 sm:w-3" /> : <Upload className="h-4 w-4 sm:h-3 sm:w-3" />}
               Upload
             </button>
             <div className="w-px self-stretch bg-zinc-200" />
@@ -382,9 +383,9 @@ export function DocUploadSlot({
               type="button"
               onClick={() => { void openCamera(); }}
               disabled={disabled || uploading}
-              className="flex h-8 items-center gap-1.5 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 active:bg-zinc-100 disabled:opacity-50 sm:h-8 sm:flex-none sm:text-xs"
             >
-              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin sm:h-3 sm:w-3" /> : <Camera className="h-4 w-4 sm:h-3 sm:w-3" />}
               Take Photo
             </button>
           </div>
