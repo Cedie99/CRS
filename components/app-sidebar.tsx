@@ -157,17 +157,6 @@ function SidebarContent({ role, userName, avatarUrl, isTopManager = false, onClo
         <h2 className="mt-1 text-sm font-semibold tracking-wide text-emerald-50">Customer Request System</h2>
       </div>
 
-      {/* Mobile close button */}
-      {onClose && (
-        <div className="relative flex items-center justify-end border-b border-white/15 px-3 py-2.5">
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-emerald-100/80 hover:bg-white/15 hover:text-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       {/* Nav items */}
       <nav className="relative flex-1 space-y-1 px-3 py-4">
