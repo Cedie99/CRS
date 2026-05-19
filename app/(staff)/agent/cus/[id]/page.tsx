@@ -384,24 +384,33 @@ export default async function AgentCusDetailPage({
       {/* ── Header card: title + stepper + actions ── */}
       <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
         {/* Top row: icon + title + badges + actions */}
-        <div className="px-5 py-4 flex items-start gap-4 border-b border-zinc-100">
-          <div className={`rounded-lg p-2 shrink-0 border
+        <div className="px-5 py-5 sm:px-6 flex items-start gap-4 border-b border-zinc-100">
+          <div className={`rounded-xl p-2.5 shrink-0 border mt-0.5
             ${isApproved ? "bg-green-50 border-green-200"
               : isDenied ? "bg-red-50 border-red-200"
               : isDraft ? "bg-zinc-50 border-zinc-200"
               : "bg-amber-50 border-amber-200"}`}>
-            <RefreshCw className={`h-5 w-5
+            <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5
               ${isApproved ? "text-green-500"
                 : isDenied ? "text-red-500"
                 : isDraft ? "text-zinc-400"
                 : "text-amber-500"}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-bold text-zinc-900 leading-tight">
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-base sm:text-lg font-bold text-zinc-900 leading-snug">
                 {cis?.tradeName ?? "Customer Update Sheet"}
               </h1>
-              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold
+              <Link
+                href={`/agent/${cus.cisId}`}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-white hover:text-zinc-900 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">View CIS</span>
+              </Link>
+            </div>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold
                 ${isApproved ? "bg-green-50 text-green-700 border-green-200"
                   : isDenied ? "bg-red-50 text-red-700 border-red-200"
                   : isDraft ? "bg-zinc-100 text-zinc-600 border-zinc-200"
@@ -415,12 +424,12 @@ export default async function AgentCusDetailPage({
                   : cus.status.replace(/_/g, " ")}
               </span>
               {changedCount > 0 && !isApproved && (
-                <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-semibold text-zinc-500">
+                <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                   {changedCount} field{changedCount !== 1 ? "s" : ""} changing
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-sm text-zinc-500">
+            <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
               {isApproved
                 ? "Changes have been applied to the customer record."
                 : isDenied
@@ -430,7 +439,7 @@ export default async function AgentCusDetailPage({
                 : `Under review by ${reviewerLabel} — no further action needed.`}
             </p>
             {/* Current credit terms — always visible */}
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Current Credit:</span>
               {cis?.financeCreditTerms ? (
                 <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
@@ -446,22 +455,13 @@ export default async function AgentCusDetailPage({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href={`/agent/${cus.cisId}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-white hover:text-zinc-900 transition-colors"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              View CIS
-            </Link>
-          </div>
         </div>
 
         {/* Stepper row */}
         {!isDenied && (
-          <div className="px-8 py-4 bg-zinc-50/50">
+          <div className="px-5 py-6 sm:px-8 sm:py-5 bg-zinc-50/50">
             <div className="flex items-start relative">
-              <div className="absolute top-4 left-0 right-0 h-px bg-zinc-200 z-0 mx-10" />
+              <div className="absolute top-4 left-0 right-0 h-px bg-zinc-200 z-0 mx-8 sm:mx-10" />
               {STEPS.map((step, i) => {
                 const isPast    = i < currentStep || (isApproved && i === currentStep);
                 const isCurrent = i === currentStep && !isApproved;
@@ -510,11 +510,25 @@ export default async function AgentCusDetailPage({
       )}
       {isApproved && approvedChangeRows.length > 0 && (
         <div className="rounded-xl border border-green-200 bg-green-50 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-green-200">
+          <div className="flex items-center gap-2 px-4 py-3 sm:px-5 border-b border-green-200">
             <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
             <p className="text-sm font-semibold text-green-800">Changes Applied to Customer Record</p>
           </div>
-          <div className="divide-y divide-green-100">
+          {/* Mobile layout */}
+          <div className="divide-y divide-green-100 sm:hidden">
+            {approvedChangeRows.map((row) => (
+              <div key={row.label} className="px-4 py-3 space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-green-700/60">{row.label}</p>
+                <div className="flex items-start gap-2">
+                  <p className="text-sm text-zinc-400 line-through decoration-zinc-300 flex-1">{row.before ?? "—"}</p>
+                  <ArrowRight className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-green-900 flex-1">{row.after}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop layout */}
+          <div className="hidden sm:block divide-y divide-green-100">
             <div className="grid grid-cols-[160px_1fr_20px_1fr] bg-green-100/50">
               <div className="px-4 py-2"><p className="text-[10px] font-bold uppercase tracking-wider text-green-700/60">Field</p></div>
               <div className="px-4 py-2"><p className="text-[10px] font-bold uppercase tracking-wider text-green-700/60">Before</p></div>
@@ -560,59 +574,93 @@ export default async function AgentCusDetailPage({
 
           {/* Customer information table — all fields */}
           <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-            <div className="grid grid-cols-[160px_1fr_1fr] border-b border-zinc-200 bg-zinc-50">
-              <div className="px-4 py-3 border-r border-zinc-200">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Field</p>
-              </div>
-              <div className="px-4 py-3 border-r border-zinc-200 flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <p className="text-xs font-semibold text-zinc-600">Current on File</p>
-              </div>
-              <div className="px-4 py-3 flex items-center gap-1.5 bg-amber-50/60">
-                <RefreshCw className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                <p className="text-xs font-semibold text-amber-600">Requested Change</p>
-              </div>
-            </div>
 
-            {sections.map((section) => {
-              const rows = allRows.filter((r) => r.section === section);
-              return (
-                <div key={section}>
-                  {/* Section heading row */}
-                  <div className="grid grid-cols-[160px_1fr_1fr] bg-zinc-50/60 border-t border-zinc-100">
-                    <div className="px-4 py-1.5 col-span-3">
+            {/* ── Mobile layout ── */}
+            <div className="sm:hidden">
+              {sections.map((section) => {
+                const rows = allRows.filter((r) => r.section === section);
+                return (
+                  <div key={section}>
+                    <div className="bg-zinc-50 border-t border-zinc-100 px-4 py-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{section}</p>
                     </div>
-                  </div>
-                  {/* Field rows */}
-                  {rows.map(({ label, current, requested: req }) => {
-                    const hasChange = !!req && req !== current;
-                    return (
-                      <div key={label} className={`grid grid-cols-[160px_1fr_1fr] border-t border-zinc-100 ${hasChange ? "bg-amber-50/40" : ""}`}>
-                        <div className="px-4 py-2.5 border-r border-zinc-100 flex items-start">
-                          <p className="text-[11px] font-semibold text-zinc-400 leading-snug mt-0.5">{label}</p>
-                        </div>
-                        <div className="px-4 py-2.5 border-r border-zinc-100">
-                          <p className={`text-sm break-words leading-snug ${current ? (hasChange ? "text-zinc-400" : "text-zinc-800") : "text-zinc-300 italic"}`}>
-                            {current ?? "—"}
-                          </p>
-                        </div>
-                        <div className="px-4 py-2.5">
+                    {rows.map(({ label, current, requested: req }) => {
+                      const hasChange = !!req && req !== current;
+                      return (
+                        <div key={label} className={`border-t border-zinc-100 px-4 py-3 ${hasChange ? "bg-amber-50/30" : ""}`}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">{label}</p>
                           {hasChange ? (
-                            <div className="flex items-start gap-1.5">
+                            <div className="flex items-start gap-2">
+                              <p className="text-sm text-zinc-400 line-through leading-snug flex-1 break-words">{current ?? "—"}</p>
                               <ArrowRight className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                              <p className="text-sm font-semibold text-amber-900 break-words leading-snug">{req}</p>
+                              <p className="text-sm font-semibold text-amber-900 leading-snug flex-1 break-words">{req}</p>
                             </div>
                           ) : (
-                            <p className="text-xs text-zinc-300 italic">—</p>
+                            <p className={`text-sm leading-snug break-words ${current ? "text-zinc-800" : "text-zinc-300 italic"}`}>
+                              {current ?? "—"}
+                            </p>
                           )}
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Desktop layout ── */}
+            <div className="hidden sm:block">
+              <div className="grid grid-cols-[160px_1fr_1fr] border-b border-zinc-200 bg-zinc-50">
+                <div className="px-4 py-3 border-r border-zinc-200">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Field</p>
                 </div>
-              );
-            })}
+                <div className="px-4 py-3 border-r border-zinc-200 flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <p className="text-xs font-semibold text-zinc-600">Current on File</p>
+                </div>
+                <div className="px-4 py-3 flex items-center gap-1.5 bg-amber-50/60">
+                  <RefreshCw className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  <p className="text-xs font-semibold text-amber-600">Requested Change</p>
+                </div>
+              </div>
+              {sections.map((section) => {
+                const rows = allRows.filter((r) => r.section === section);
+                return (
+                  <div key={section}>
+                    <div className="grid grid-cols-[160px_1fr_1fr] bg-zinc-50/60 border-t border-zinc-100">
+                      <div className="px-4 py-1.5 col-span-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{section}</p>
+                      </div>
+                    </div>
+                    {rows.map(({ label, current, requested: req }) => {
+                      const hasChange = !!req && req !== current;
+                      return (
+                        <div key={label} className={`grid grid-cols-[160px_1fr_1fr] border-t border-zinc-100 ${hasChange ? "bg-amber-50/40" : ""}`}>
+                          <div className="px-4 py-2.5 border-r border-zinc-100 flex items-start">
+                            <p className="text-[11px] font-semibold text-zinc-400 leading-snug mt-0.5">{label}</p>
+                          </div>
+                          <div className="px-4 py-2.5 border-r border-zinc-100">
+                            <p className={`text-sm break-words leading-snug ${current ? (hasChange ? "text-zinc-400" : "text-zinc-800") : "text-zinc-300 italic"}`}>
+                              {current ?? "—"}
+                            </p>
+                          </div>
+                          <div className="px-4 py-2.5">
+                            {hasChange ? (
+                              <div className="flex items-start gap-1.5">
+                                <ArrowRight className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                <p className="text-sm font-semibold text-amber-900 break-words leading-snug">{req}</p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-zinc-300 italic">—</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Documents — below the info table */}

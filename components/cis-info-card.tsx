@@ -689,7 +689,7 @@ function Field({
   oldValue?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-4 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-4">
+    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-4">
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[12px] print:tracking-[0.12em] print:text-zinc-500">
         {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
@@ -731,7 +731,7 @@ function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={`mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-5 print:border-zinc-400 print:border-b-2 print:pb-2.5 ${className}`}>
+    <div className={`mb-5 flex items-center gap-2 border-b border-zinc-200 pb-3 print:mb-5 print:border-zinc-400 print:border-b-2 print:pb-2.5 ${className}`}>
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
@@ -745,7 +745,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-6 print:mb-2 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-5 print:pb-4 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-2 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-5 print:pb-4 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -1213,7 +1213,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
       })()}
 
       {/* ── SCREEN HEADER BAND ── */}
-      <div className="print:hidden border-b border-zinc-100 bg-zinc-50 px-4 py-4 sm:px-6">
+      <div className="print:hidden border-b border-zinc-100 bg-zinc-50 px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-bold text-zinc-900">
@@ -1242,7 +1242,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         </div>
       </div>
 
-      <CardContent className="space-y-5 p-2 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
+      <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
 
         <div className="hidden print:block print:mb-1">
           <p className="text-sm font-bold text-zinc-900">
