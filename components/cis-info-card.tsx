@@ -689,13 +689,13 @@ function Field({
   oldValue?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white p-4 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-4">
-      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500 print:text-[12px] print:tracking-[0.12em] print:text-zinc-500">
+    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-4 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-4">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[12px] print:tracking-[0.12em] print:text-zinc-500">
         {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
       </p>
       {oldValue && (
-        <div className="mt-1.5 print:hidden">
+        <div className="mt-2 print:hidden">
           <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
             Updated
           </span>
@@ -704,7 +704,7 @@ function Field({
           </p>
         </div>
       )}
-      <p className={`mt-1.5 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-1.5 print:text-[17px] print:leading-[1.5] ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-1.5 print:text-[17px] print:leading-[1.5] ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
@@ -745,7 +745,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-2 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-5 print:pb-4 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-6 print:mb-2 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-5 print:pb-4 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -1242,7 +1242,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         </div>
       </div>
 
-      <CardContent className="space-y-6 p-4 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
+      <CardContent className="space-y-5 p-2 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
 
         <div className="hidden print:block print:mb-1">
           <p className="text-sm font-bold text-zinc-900">
@@ -1253,7 +1253,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Business Information ── */}
         <SectionCard>
           <SectionTitle icon={Briefcase} label="Business Information" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             {(corporateName || old("corporateName")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} oldValue={old("corporateName")} /></div>}
             <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} oldValue={old("tradeName")} />
             {(dateOfBusinessReg || old("dateOfBusinessReg")) && <Field label="Date of Registration" value={dateOfBusinessReg} oldValue={old("dateOfBusinessReg")} />}
@@ -1264,7 +1264,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Contact Details ── */}
         <SectionCard>
           <SectionTitle icon={User} label="Contact Details" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             <Field label="Contact Person" value={contactPerson} icon={User} oldValue={old("contactPerson")} />
             <Field label="Email Address" value={emailAddress} icon={Mail} oldValue={old("emailAddress")} />
             <Field label="Mobile Number" value={contactNumber} icon={Phone} oldValue={old("contactNumber")} />
@@ -1276,7 +1276,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Office Address ── */}
         <SectionCard>
           <SectionTitle icon={MapPin} label="Office Address" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
             <div className="sm:col-span-2 lg:col-span-3">
               <Field label="Street Address" value={businessAddress} icon={MapPin} oldValue={old("businessAddress")} />
             </div>
@@ -1289,7 +1289,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {(hasDelivery || old("deliveryAddress") || old("deliveryMobile") || old("deliveryTelephone")) && (
           <SectionCard>
               <SectionTitle icon={MapPin} label="Delivery Address" />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
                 {(deliveryAddress || old("deliveryAddress")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} oldValue={old("deliveryAddress")} /></div>}
                 {(deliveryLandmarks || old("deliveryLandmarks")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Landmarks" value={deliveryLandmarks} oldValue={old("deliveryLandmarks")} /></div>}
                 {(deliveryMobile || old("deliveryMobile")) && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} oldValue={old("deliveryMobile")} />}
@@ -1302,7 +1302,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasClassification && (
           <SectionCard>
               <SectionTitle icon={Briefcase} label="Business Classification" />
-              <div className="grid gap-3 sm:grid-cols-2 print:gap-2">
+              <div className="grid gap-4 sm:grid-cols-2 print:gap-2">
                 {(lobLabel || old("lineOfBusiness")) && <Field label="Line of Business" value={lobLabel} oldValue={old("lineOfBusiness") ? (LINE_OF_BUSINESS_LABELS[old("lineOfBusiness")!] ?? humanizeDisplayValue(old("lineOfBusiness"))) : undefined} />}
                 {(activityLabel || old("businessActivity")) && <Field label="Business Activity" value={activityLabel} oldValue={old("businessActivity") ? (BUSINESS_ACTIVITY_LABELS[old("businessActivity")!] ?? humanizeDisplayValue(old("businessActivity"))) : undefined} />}
                 <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} oldValue={old("businessType") ? (BUSINESS_TYPE_LABELS[old("businessType")!] ?? humanizeDisplayValue(old("businessType"))) : undefined} />
@@ -1314,7 +1314,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* If no classification section shown, still show type + TIN */}
         {!hasClassification && (
           <SectionCard>
-            <div className="grid gap-3 sm:grid-cols-2 print:gap-2">
+            <div className="grid gap-4 sm:grid-cols-2 print:gap-2">
               <Field label="Business Type" value={businessType ? (BUSINESS_TYPE_LABELS[businessType] ?? humanizeDisplayValue(businessType)) : null} icon={Building2} oldValue={old("businessType") ? (BUSINESS_TYPE_LABELS[old("businessType")!] ?? humanizeDisplayValue(old("businessType"))) : undefined} />
               <Field label="TIN Number" value={tinNumber} icon={Hash} mono oldValue={old("tinNumber")} />
             </div>

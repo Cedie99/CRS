@@ -93,8 +93,7 @@ export default async function ApproverDashboard({
           .select(cardSelect)
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_approval"))
-          .orderBy(desc(cisSubmissions.createdAt))
-          .limit(30),
+          .orderBy(desc(cisSubmissions.createdAt)),
     isAllView
       ? Promise.resolve([{ total: 0 }])
       : db

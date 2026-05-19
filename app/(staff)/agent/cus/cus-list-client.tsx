@@ -65,7 +65,7 @@ export function CusListClient({
   return (
     <>
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between pr-12 sm:pr-14">
         <div className="flex items-center gap-3">
           <div className="shrink-0 rounded-xl bg-teal-50 p-2.5">
             <RefreshCw className="h-5 w-5 text-teal-600" />

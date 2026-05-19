@@ -27,7 +27,14 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { numberToWords } from "@/lib/utils";
 import type { FileEntry, DocReviewStatuses } from "@/lib/doc-types";
+
+function fmtCreditLimit(raw: string): string {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("en-US");
+}
 
 interface FinanceActionsProps {
   cisId: string;
@@ -56,6 +63,8 @@ interface FinanceActionsProps {
 
 interface FieldErrors {
   sirRestyFiles?: string;
+  creditTerms?: string;
+  creditLimit?: string;
 }
 
 export function FinanceActions({
@@ -76,9 +85,9 @@ export function FinanceActions({
   const [sirRestyFiles, setSirRestyFiles] =
     useState<FileEntry[]>(initialSirRestyFiles);
   const [creditTerms, setCreditTerms] = useState(initialCreditTerms);
-  const [creditLimit, setCreditLimit] = useState(initialCreditLimit);
+  const [creditLimit, setCreditLimit] = useState(fmtCreditLimit(initialCreditLimit));
   const [savedCreditTerms, setSavedCreditTerms] = useState(initialCreditTerms);
-  const [savedCreditLimit, setSavedCreditLimit] = useState(initialCreditLimit);
+  const [savedCreditLimit, setSavedCreditLimit] = useState(fmtCreditLimit(initialCreditLimit));
   const [savingCredit, setSavingCredit] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -117,14 +126,23 @@ export function FinanceActions({
 
   const uploadComplete = sirRestyFiles.length > 0;
   const hasRejectedDocs = hasUnresolvedRejections ?? Object.values(docReviewStatuses).some((s) => s?.status === "rejected");
-  const canForward = uploadComplete && !hasRejectedDocs && !hasUnreviewedDocs;
+  const creditFilled = !!creditTerms.trim() && !!creditLimit.trim();
+  const creditSaved = creditFilled && !creditDirty;
+  const canForward = uploadComplete && !hasRejectedDocs && !hasUnreviewedDocs && creditSaved;
   const canReturn = hasRejectedDocs;
 
   function validateFields(): boolean {
     const errors: FieldErrors = {};
     if (sirRestyFiles.length === 0)
-      errors.sirRestyFiles =
-        "Please attach the approved CIS signed by CFO";
+      errors.sirRestyFiles = "Please attach the approved CIS signed by CFO";
+    if (!creditTerms.trim())
+      errors.creditTerms = "Credit terms are required before forwarding";
+    if (!creditLimit.trim())
+      errors.creditLimit = "Credit limit is required before forwarding";
+    if (creditFilled && creditDirty) {
+      errors.creditTerms = errors.creditTerms ?? "Save credit details before forwarding";
+      errors.creditLimit = errors.creditLimit ?? "Save credit details before forwarding";
+    }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -238,7 +256,7 @@ export function FinanceActions({
               ) : (
                 <AlertCircle className={`h-3.5 w-3.5 ${hasRejectedDocs ? "text-red-600" : "text-blue-600"}`} />
               )}
-              {hasRejectedDocs ? "Rejected docs pending" : hasUnreviewedDocs ? "Documents not reviewed" : uploadComplete ? "Ready to forward" : "Upload required"}
+              {hasRejectedDocs ? "Rejected docs pending" : hasUnreviewedDocs ? "Documents not reviewed" : !uploadComplete ? "Upload required" : !creditFilled ? "Credit details required" : creditDirty ? "Credit details unsaved" : "Ready to forward"}
             </span>
           </div>
         </CardHeader>
@@ -356,26 +374,40 @@ export function FinanceActions({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <Label htmlFor="creditTerms" className="text-xs font-medium text-zinc-600">Credit Terms</Label>
+                  <Label htmlFor="creditTerms" className="text-xs font-medium text-zinc-600">
+                    Credit Terms <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="creditTerms"
                     value={creditTerms}
-                    onChange={(e) => setCreditTerms(e.target.value)}
+                    onChange={(e) => { setCreditTerms(e.target.value); setFieldErrors((p) => ({ ...p, creditTerms: undefined })); }}
                     placeholder="e.g. 30 days"
-                    className={`h-8 text-sm ${creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
+                    className={`h-8 text-sm ${fieldErrors.creditTerms ? "border-red-400 focus-visible:ring-red-300" : creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
                     disabled={isLoading || savingCredit}
                   />
+                  {fieldErrors.creditTerms && (
+                    <p className="text-[11px] text-red-500">{fieldErrors.creditTerms}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="creditLimit" className="text-xs font-medium text-zinc-600">Credit Limit</Label>
+                  <Label htmlFor="creditLimit" className="text-xs font-medium text-zinc-600">
+                    Credit Limit <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="creditLimit"
                     value={creditLimit}
-                    onChange={(e) => setCreditLimit(e.target.value)}
+                    onChange={(e) => { setCreditLimit(fmtCreditLimit(e.target.value)); setFieldErrors((p) => ({ ...p, creditLimit: undefined })); }}
                     placeholder="e.g. 500,000"
-                    className={`h-8 text-sm ${creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
+                    className={`h-8 text-sm ${fieldErrors.creditLimit ? "border-red-400 focus-visible:ring-red-300" : creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
                     disabled={isLoading || savingCredit}
                   />
+                  {fieldErrors.creditLimit ? (
+                    <p className="text-[11px] text-red-500">{fieldErrors.creditLimit}</p>
+                  ) : creditLimit ? (
+                    <p className="text-[11px] text-zinc-400 italic">
+                      {numberToWords(parseInt(creditLimit.replace(/[^\d]/g, ""), 10))}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <Button

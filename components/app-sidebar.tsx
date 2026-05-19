@@ -21,6 +21,7 @@ import {
   Network,
   List,
   Download,
+  BarChart2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, humanizeDisplayValue } from "@/lib/utils";
@@ -74,6 +75,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "All Submissions", href: "/admin", icon: FileText, exact: true },
     { label: "Manage Users", href: "/admin/users", icon: Users, exact: true },
     { label: "Create User", href: "/admin/users/new", icon: Plus },
+    { label: "Analytics", href: "/admin/analytics", icon: BarChart2, exact: true },
     { label: "Export Report", href: "/admin/export", icon: Download, exact: true },
   ],
 };

@@ -42,6 +42,9 @@ export default async function SupportDashboard({
   const currentPage = getPageNumber(page);
   const pageSize = 12;
   const offset = (currentPage - 1) * pageSize;
+  // In queue mode fetch all actionable items; pagination only applies to the all-submissions view
+  const queueLimit = isAllView ? pageSize : 2000;
+  const queueOffset = isAllView ? offset : 0;
 
   const searchConditions: any[] = [];
 
@@ -84,8 +87,8 @@ export default async function SupportDashboard({
       .from(cisSubmissions)
       .where(and(...pendingConditions))
       .orderBy(desc(cisSubmissions.updatedAt))
-      .limit(pageSize)
-      .offset(offset),
+      .limit(queueLimit)
+      .offset(queueOffset),
     db
       .select({ total: count() })
       .from(cisSubmissions)

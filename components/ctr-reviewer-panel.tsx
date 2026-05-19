@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
 import { SCORING_DOC_SLOTS } from "@/lib/doc-types";
+import { numberToWords } from "@/lib/utils";
+
+function fmtCreditLimit(raw: string): string {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("en-US");
+}
 
 const CREDIT_TERMS_OPTIONS = [
   { value: "prepaid_cod", label: "Prepaid / COD" },
@@ -40,7 +47,7 @@ export function CtrReviewerPanel({
   isLegal?: boolean;
 }) {
   const router = useRouter();
-  const [creditLimit, setCreditLimit] = useState(initialCreditLimit);
+  const [creditLimit, setCreditLimit] = useState(fmtCreditLimit(initialCreditLimit));
   const [creditTerms, setCreditTerms] = useState(initialCreditTerms);
   const [saving, setSaving] = useState(false);
   const [forwarding, setForwarding] = useState(false);
@@ -178,9 +185,14 @@ export function CtrReviewerPanel({
                 id="creditLimit"
                 placeholder="₱0.00"
                 value={creditLimit}
-                onChange={(e) => setCreditLimit(e.target.value)}
+                onChange={(e) => setCreditLimit(fmtCreditLimit(e.target.value))}
                 className="font-medium h-9 text-sm"
               />
+              {creditLimit && (
+                <p className="text-[11px] text-zinc-400 italic">
+                  {numberToWords(parseInt(creditLimit.replace(/[^\d]/g, ""), 10))}
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="creditTerms" className="text-[11px] font-medium text-zinc-500">Credit Terms</Label>

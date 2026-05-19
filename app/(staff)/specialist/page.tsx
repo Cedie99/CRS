@@ -115,8 +115,7 @@ export default async function SpecialistDashboard({
           .from(cisSubmissions)
           .innerJoin(users, eq(cisSubmissions.agentId, users.id))
           .where(and(...pendingConditions))
-          .orderBy(desc(cisSubmissions.createdAt))
-          .limit(30),
+          .orderBy(desc(cisSubmissions.createdAt)),
     db
       .select({ customerType: cisSubmissions.customerType, total: count() })
       .from(cisSubmissions)

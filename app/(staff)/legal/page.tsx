@@ -100,8 +100,7 @@ export default async function LegalDashboard({
           .select(cardSelect)
           .from(cisSubmissions)
           .where(eq(cisSubmissions.status, "pending_legal_review"))
-          .orderBy(desc(cisSubmissions.updatedAt))
-          .limit(30),
+          .orderBy(desc(cisSubmissions.updatedAt)),
     isAllView
       ? Promise.resolve([{ total: 0 }])
       : db
@@ -111,7 +110,13 @@ export default async function LegalDashboard({
     db
       .select({ customerType: cisSubmissions.customerType, total: count() })
       .from(cisSubmissions)
-      .where(and(...conditions))
+      .where(and(
+        isAllView
+          ? inArray(cisSubmissions.status, ALL_VISIBLE_STATUSES)
+          : eq(cisSubmissions.status, "pending_legal_review"),
+        ...(q ? [or(ilike(cisSubmissions.tradeName, `%${q}%`), ilike(cisSubmissions.contactPerson, `%${q}%`))!] : []),
+        ...(status ? [eq(cisSubmissions.status, status as CisStatus)] : []),
+      ))
       .groupBy(cisSubmissions.customerType),
   ]);
   const filteredCount = Number(filteredCountRow[0]?.total ?? 0);

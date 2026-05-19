@@ -175,10 +175,11 @@ export function ActionRequiredSection({
         </div>
       </div>
 
-      {/* Footer: dot indicators + overflow hint */}
+      {/* Footer: dot indicators (small counts) + overflow hint */}
       {(totalPages > 1 || overflow > 0) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/5 px-4 py-2.5">
-          {totalPages > 1 ? (
+          {/* Dots only when page count is manageable; otherwise the header counter is enough */}
+          {totalPages > 1 && totalPages <= 10 ? (
             <div className="flex items-center gap-1.5">
               {Array.from({ length: totalPages }).map((_, i) => (
                 <button
