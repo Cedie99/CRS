@@ -6,7 +6,7 @@ import { cisSubmissions } from "@/lib/db/schema";
 import { transitionCis } from "@/lib/workflow";
 
 export async function PATCH(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -20,6 +20,13 @@ export async function PATCH(
 
   const { id } = await params;
 
+  const body = await req.json().catch(() => ({}));
+  const customerCode = typeof body.customerCode === "string" ? body.customerCode.trim() : "";
+
+  if (!customerCode) {
+    return NextResponse.json({ error: "Customer code is required." }, { status: 400 });
+  }
+
   const [cis] = await db
     .select({ status: cisSubmissions.status })
     .from(cisSubmissions)
@@ -31,12 +38,17 @@ export async function PATCH(
     return NextResponse.json({ error: "CIS is not pending ERP encoding" }, { status: 409 });
   }
 
+  await db
+    .update(cisSubmissions)
+    .set({ customerCode })
+    .where(eq(cisSubmissions.id, id));
+
   await transitionCis({
     cisId: id,
     toStatus: "erp_encoded",
     action: "erp_encoded",
     actorId: session.user.id,
-    note: "Customer encoded in ERP system",
+    note: `Customer encoded in ERP system. Customer code: ${customerCode}`,
   });
 
   return NextResponse.json({ success: true });

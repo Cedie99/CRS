@@ -72,6 +72,7 @@ interface CisCardProps {
   createdAt: Date;
   updatedAt?: Date;
   href: string;
+  mobileCta?: string;
 }
 
 export function CisCard({
@@ -85,6 +86,7 @@ export function CisCard({
   createdAt,
   updatedAt,
   href,
+  mobileCta,
 }: CisCardProps) {
   const currentStep = getWorkflowStep(status, customerType);
   const totalSteps = 7;
@@ -203,6 +205,15 @@ export function CisCard({
               )}
             </span>
           </div>
+
+          {mobileCta && (
+            <div className="mt-3 -mx-3.5 border-t border-[#2d6e1e]/15 sm:hidden">
+              <div className="flex items-center justify-between bg-[#2d6e1e]/6 px-4 py-2.5">
+                <span className="text-xs font-semibold text-[#2d6e1e]">{mobileCta}</span>
+                <ChevronRight className="h-3.5 w-3.5 text-[#2d6e1e]" />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

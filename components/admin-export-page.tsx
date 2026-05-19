@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, FileText, Table2, BookOpen, RefreshCw } from "lucide-react";
+import { Download, FileText, Table2, BookOpen, RefreshCw, FolderArchive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,6 +76,7 @@ export function AdminExportPage() {
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [blobExporting, setBlobExporting] = useState(false);
 
   async function fetchPreview(opts?: {
     dateFrom?: string;
@@ -116,6 +117,25 @@ export function AdminExportPage() {
     window.location.href = `/api/cis/export?${params.toString()}`;
   }
 
+  async function handleBlobExport() {
+    setBlobExporting(true);
+    try {
+      const res = await fetch("/api/admin/blob-export");
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `crs-blob-export-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Export failed: " + err);
+    } finally {
+      setBlobExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,6 +144,34 @@ export function AdminExportPage() {
         <p className="mt-0.5 text-sm text-zinc-500">
           Preview and download filtered submission records.
         </p>
+      </div>
+
+      {/* Blob export card */}
+      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-zinc-100 p-2">
+              <FolderArchive className="h-4 w-4 text-zinc-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-800">Download All Uploaded Files</p>
+              <p className="text-xs text-zinc-400">Exports every document in Vercel Blob storage as a .zip archive.</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleBlobExport}
+            disabled={blobExporting}
+            className="shrink-0"
+          >
+            {blobExporting ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            {blobExporting ? "Preparing zip…" : "Export as .zip"}
+          </Button>
+        </div>
       </div>
 
       {/* Filter bar */}

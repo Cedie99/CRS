@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq, desc, and, ilike, or, ne, count, sql } from "drizzle-orm";
+import { eq, desc, and, ilike, or, ne, count, sql, notInArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
@@ -142,7 +142,7 @@ export default async function AgentDashboard({
       db
         .select({ customerType: cisSubmissions.customerType, total: count() })
         .from(cisSubmissions)
-        .where(and(...conditions))
+        .where(and(...conditions, notInArray(cisSubmissions.status, ["draft", "submitted"])))
         .groupBy(cisSubmissions.customerType),
     ]);
 
@@ -315,6 +315,7 @@ export default async function AgentDashboard({
           accentClass="border-rose-300 bg-rose-50/70"
           badgeClass="bg-rose-100 text-rose-800"
           icon="return"
+          cardMobileCta="Tap to resubmit"
         />
       )}
 
@@ -327,6 +328,7 @@ export default async function AgentDashboard({
           sublabel="Your customers have submitted their forms. Complete your section to move these forward."
           accentClass="border-blue-300 bg-blue-50/60"
           badgeClass="bg-blue-100 text-blue-800"
+          cardMobileCta="Tap to fill out"
         />
       )}
 

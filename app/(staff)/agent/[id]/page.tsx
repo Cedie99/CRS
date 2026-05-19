@@ -11,10 +11,11 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { AgentFillOutForm } from "@/components/actions/agent-fill-out-form";
 import { AgentResubmitForm } from "@/components/actions/agent-resubmit-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, History } from "lucide-react";
+import { AlertTriangle, Database, History } from "lucide-react";
 import { CusApprovedBanner } from "@/components/cus-approved-banner";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { RejectedDocsSummary } from "@/components/rejected-docs-summary";
+import { FloatingWorkflowButton } from "@/components/floating-workflow-button";
 import type { DocReviewStatuses, DocType, FileEntry } from "@/lib/doc-types";
 import { getCusFieldHistory } from "@/lib/cus-field-history";
 
@@ -147,6 +148,7 @@ export default async function AgentCisDetailPage({
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
         docReviewStatuses: cisSubmissions.docReviewStatuses,
         financeMetricPoints: cisSubmissions.financeMetricPoints,
+        customerCode: cisSubmissions.customerCode,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.id, id))
@@ -245,6 +247,13 @@ export default async function AgentCisDetailPage({
 
   const fieldHistory = await getCusFieldHistory(cis.id);
 
+  const isLegalPath = cis.customerType === "dealer";
+  const TOTAL_STEPS = 6;
+  const STATUS_STEP: Partial<Record<string, number>> = isLegalPath
+    ? { submitted: 1, pending_legal_review: 2, pending_approval: 3, approved: 4, pending_erp_encoding: 5, erp_encoded: 6 }
+    : { submitted: 1, pending_finance_review: 2, pending_approval: 3, approved: 4, pending_erp_encoding: 5, erp_encoded: 6 };
+  const currentStep = STATUS_STEP[cis.status] ?? 1;
+
   return (
     <div className="space-y-5">
       <Breadcrumbs
@@ -327,6 +336,21 @@ export default async function AgentCisDetailPage({
                 This submission has been permanently denied and cannot be resubmitted. You may archive it to remove it from your active view.
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Customer code — shown when fully onboarded */}
+      {cis.status === "erp_encoded" && cis.customerCode && (
+        <div className="print:hidden overflow-hidden rounded-xl border border-green-200">
+          <div className="flex items-center gap-3 px-4 py-3 sm:px-5 bg-green-600">
+            <Database className="h-4 w-4 shrink-0 text-white" />
+            <p className="text-sm font-bold text-white">Onboarding Complete</p>
+          </div>
+          <div className="px-4 py-4 sm:px-5 bg-green-50/40">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Customer Code</p>
+            <p className="text-lg font-bold text-green-800 tracking-wide">{cis.customerCode}</p>
+            <p className="mt-1 text-xs text-zinc-500">This is the customer&apos;s assigned code in the ERP system.</p>
           </div>
         </div>
       )}
@@ -498,6 +522,11 @@ export default async function AgentCisDetailPage({
           <AuditTimeline events={events as any} />
         </CardContent>
       </Card>
+
+      {/* Floating workflow progress button — mobile only */}
+      <FloatingWorkflowButton step={currentStep} totalSteps={TOTAL_STEPS}>
+        <WorkflowStepper status={cis.status as any} customerType={cis.customerType} events={events as any} cisCreatedAt={cis.createdAt} />
+      </FloatingWorkflowButton>
     </div>
   );
 }

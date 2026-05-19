@@ -254,6 +254,9 @@ export const cisSubmissions = pgTable("cis_submissions", {
   // Fill mode — true when agent fills the form on behalf of the customer
   directFill: boolean("direct_fill").notNull().default(false),
 
+  // ERP customer code assigned during encoding
+  customerCode: varchar("customer_code", { length: 100 }),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Database } from "lucide-react";
 import { toast } from "@/lib/toast";
 
@@ -14,6 +16,7 @@ interface ErpEncodeActionsProps {
 
 export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
   const router = useRouter();
+  const [customerCode, setCustomerCode] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +27,8 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
     try {
       const res = await fetch(`/api/cis/${cisId}/erp-encode`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerCode }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -51,13 +56,30 @@ export function ErpEncodeActions({ cisId, backHref }: ErpEncodeActionsProps) {
           Complete Onboarding
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         <p className="text-sm text-zinc-600">
-          Once the customer has been entered into the system, mark this submission as fully onboarded.
+          Enter the customer code assigned in the ERP system, then mark this submission as fully onboarded.
         </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="customer-code" className="text-sm font-medium">
+            Customer Code <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="customer-code"
+            value={customerCode}
+            onChange={(e) => setCustomerCode(e.target.value)}
+            placeholder="e.g. C-00123"
+            className="max-w-xs"
+            disabled={isLoading}
+          />
+        </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {!confirming ? (
-          <Button onClick={() => setConfirming(true)} className="w-full gap-2 sm:w-auto">
+          <Button
+            onClick={() => setConfirming(true)}
+            disabled={!customerCode.trim()}
+            className="w-full gap-2 sm:w-auto"
+          >
             <Database className="h-4 w-4" />
             Mark as Onboarded
           </Button>

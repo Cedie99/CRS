@@ -28,6 +28,7 @@ interface ActionRequiredSectionProps {
   badgeClass?: string;
   icon?: "alert" | "return";
   viewAllHref?: string;
+  cardMobileCta?: string;
 }
 
 function getPerPage(): number {
@@ -49,6 +50,7 @@ export function ActionRequiredSection({
   badgeClass = "bg-red-100 text-red-800",
   icon = "alert",
   viewAllHref,
+  cardMobileCta,
 }: ActionRequiredSectionProps) {
   const Icon = icon === "return" ? RotateCcw : AlertCircle;
   const [page, setPage] = useState(0);
@@ -169,6 +171,7 @@ export function ActionRequiredSection({
                 createdAt={s.createdAt}
                 updatedAt={s.updatedAt ?? undefined}
                 href={`/${hrefPrefix}/${s.id}`}
+                mobileCta={cardMobileCta}
               />
             </div>
           ))}
