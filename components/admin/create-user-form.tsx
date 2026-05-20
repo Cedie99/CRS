@@ -127,7 +127,7 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
         description: "The user will be prompted to set their own password on first login.",
       });
 
-      setForm({ fullName: "", email: "", password: "", role: "", agentType: "", managerId: "", agentCode: "", isTopManager: false });
+      setForm({ fullName: "", email: "", password: "", role: "", managerId: "", agentCode: "", isTopManager: false });
       setCodeMode("select");
       router.refresh();
     } catch {
