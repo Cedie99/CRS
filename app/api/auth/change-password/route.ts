@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
   await db
     .update(users)
-    .set({ passwordHash, mustChangePassword: false })
+    .set({ passwordHash, mustChangePassword: false, sessionVersion: sql`${users.sessionVersion} + 1` })
     .where(eq(users.id, session.user.id));
 
   return NextResponse.json({ success: true });

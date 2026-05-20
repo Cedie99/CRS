@@ -80,6 +80,7 @@ export default async function AdminDashboard({
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         agentCode: cisSubmissions.agentCode,
+        customerCode: cisSubmissions.customerCode,
         createdAt: cisSubmissions.createdAt,
       })
       .from(cisSubmissions)
@@ -225,6 +226,9 @@ export default async function AdminDashboard({
                   Agent
                 </th>
                 <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Customer Code
+                </th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   Type
                 </th>
                 <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
@@ -239,7 +243,7 @@ export default async function AdminDashboard({
             <tbody className="divide-y divide-zinc-50">
               {submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center text-sm text-zinc-400">
+                  <td colSpan={7} className="px-5 py-16 text-center text-sm text-zinc-400">
                     No submissions yet.
                   </td>
                 </tr>
@@ -256,6 +260,15 @@ export default async function AdminDashboard({
                       <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-600">
                         {s.agentCode}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {s.customerCode ? (
+                        <span className="rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-green-700">
+                          {s.customerCode}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-300">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       <span

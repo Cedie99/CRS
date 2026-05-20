@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import type { NextAuthConfig } from "next-auth";
 
+const SESSION_CHECK_INTERVAL_MS = 30_000; // re-validate against DB at most once per 30s
+
 export const STAFF_ROUTES: Record<string, string> = {
   sales_agent: "/agent",
   rsr: "/agent",
@@ -27,8 +29,9 @@ export const authConfig: NextAuthConfig = {
     sessionToken: { name: "cis.session-token" },
   },
   callbacks: {
-    jwt({ token, user, trigger, session }: any) {
+    async jwt({ token, user, trigger, session }: any) {
       if (user) {
+        // Fresh login — stamp everything including sessionVersion from DB
         token.id = user.id;
         token.name = user.name ?? token.name;
         token.email = user.email ?? token.email;
@@ -38,7 +41,10 @@ export const authConfig: NextAuthConfig = {
         token.avatarUrl = user.avatarUrl ?? null;
         token.mustChangePassword = user.mustChangePassword ?? false;
         token.isTopManager = user.isTopManager ?? false;
+        token.sessionVersion = user.sessionVersion ?? 1;
+        token._checkedAt = Date.now();
       }
+
       // Called from client via useSession().update({ ... })
       if (trigger === "update") {
         if (session?.name !== undefined) token.name = session.name;
@@ -46,6 +52,23 @@ export const authConfig: NextAuthConfig = {
         if (session?.avatarUrl !== undefined) token.avatarUrl = session.avatarUrl;
         if (session?.mustChangePassword !== undefined) token.mustChangePassword = session.mustChangePassword;
       }
+
+      // Periodic DB check — validate isActive + sessionVersion (throttled to avoid a DB hit on every request)
+      const now = Date.now();
+      const lastChecked = (token._checkedAt as number) ?? 0;
+      if (now - lastChecked > SESSION_CHECK_INTERVAL_MS) {
+        const [row] = await db
+          .select({ isActive: users.isActive, sessionVersion: users.sessionVersion })
+          .from(users)
+          .where(eq(users.id, token.id as string))
+          .limit(1);
+
+        if (!row || !row.isActive || row.sessionVersion !== token.sessionVersion) {
+          return null; // invalidates the JWT — user is logged out on next request
+        }
+        token._checkedAt = now;
+      }
+
       return token;
     },
     session({ session, token }: any) {
@@ -128,6 +151,7 @@ export const authConfig: NextAuthConfig = {
           avatarUrl: user.avatarUrl ?? null,
           mustChangePassword: user.mustChangePassword,
           isTopManager: user.isTopManager,
+          sessionVersion: user.sessionVersion,
         };
       },
     }),

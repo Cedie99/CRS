@@ -31,6 +31,7 @@ type CardSubmission = {
   customerType?: string | null;
   agentCode: string;
   agentName?: string | null;
+  customerCode?: string | null;
   status: CisStatus;
   createdAt: Date;
   updatedAt?: Date | null;
@@ -98,6 +99,7 @@ export function CustomerTypeColumns({ submissions, hrefPrefix }: CustomerTypeCol
                     customerType={s.customerType}
                     agentCode={s.agentCode}
                     agentName={s.agentName ?? undefined}
+                    customerCode={s.customerCode ?? undefined}
                     status={s.status}
                     createdAt={s.createdAt}
                     updatedAt={s.updatedAt ?? undefined}

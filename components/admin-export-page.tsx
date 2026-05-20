@@ -18,6 +18,7 @@ interface PreviewRow {
   customerType: string;
   status: string;
   agentCode: string;
+  customerCode: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -338,6 +339,7 @@ export function AdminExportPage() {
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Type</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Status</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Agent</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Customer Code</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Submitted</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Updated</th>
                 </tr>
@@ -367,6 +369,15 @@ export function AdminExportPage() {
                       <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-600">
                         {row.agentCode}
                       </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {row.customerCode ? (
+                        <span className="rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-green-700">
+                          {row.customerCode}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-xs text-zinc-400">{row.createdAt}</td>
                     <td className="px-4 py-3.5 text-xs text-zinc-400">{row.updatedAt}</td>

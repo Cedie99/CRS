@@ -334,6 +334,7 @@ interface CisInfoCardProps {
   salesChannel?: string | null;
   agentCode: string;
   agentType: string | null;
+  customerCode?: string | null;
   status: CisStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -689,8 +690,8 @@ function Field({
   oldValue?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-4">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[12px] print:tracking-[0.12em] print:text-zinc-500">
+    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-2">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[10px] print:tracking-[0.1em] print:text-zinc-500">
         {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
       </p>
@@ -704,14 +705,14 @@ function Field({
           </p>
         </div>
       )}
-      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-1.5 print:text-[17px] print:leading-[1.5] ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[12px] print:leading-snug ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
             ? (
               <>
                 <span className="text-zinc-300 print:hidden">—</span>
-                <span className="hidden print:inline-block print:w-full print:border-b-2 print:border-zinc-400 print:pb-2">&nbsp;</span>
+                <span className="hidden print:inline-block print:w-full print:border-b print:border-zinc-400 print:pb-1">&nbsp;</span>
               </>
             )
             : <span className="text-zinc-300 print:text-zinc-400">—</span>
@@ -731,11 +732,11 @@ function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={`mb-5 flex items-center gap-2 border-b border-zinc-200 pb-3 print:mb-5 print:border-zinc-400 print:border-b-2 print:pb-2.5 ${className}`}>
+    <div className={`mb-5 flex items-center gap-2 border-b border-zinc-200 pb-3 print:mb-2 print:border-zinc-300 print:border-b print:pb-1 ${className}`}>
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[14px] print:font-black print:text-zinc-800">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[11px] print:font-black print:text-zinc-800">
         {label}
       </p>
     </div>
@@ -745,7 +746,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-2 print:break-inside-avoid print:rounded-none print:border-0 print:border-t-2 print:border-zinc-300 print:bg-white print:px-0 print:pt-5 print:pb-4 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-0 print:break-inside-avoid print:rounded-none print:border-0 print:border-t print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-2 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -842,6 +843,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     salesChannel,
     agentCode,
     agentType,
+    customerCode,
     status,
     createdAt,
     updatedAt,
@@ -1137,13 +1139,13 @@ export function CisInfoCard(props: CisInfoCardProps) {
           : [];
 
         return (
-          <div className="hidden print:block px-0 pt-0 pb-5">
+          <div className="hidden print:block px-0 pt-0 pb-2">
             {/* Company name — centered */}
-            <div className="text-center border-b-2 border-zinc-900 pb-3 mb-3">
-              <p className="text-[17px] font-black uppercase tracking-[0.22em] text-zinc-900">
+            <div className="text-center border-b-2 border-zinc-900 pb-1.5 mb-2">
+              <p className="text-[13px] font-black uppercase tracking-[0.22em] text-zinc-900">
                 Oracle Petroleum Corporation
               </p>
-              <p className="text-[11px] text-zinc-500 tracking-widest uppercase mt-0.5">
+              <p className="text-[9px] text-zinc-500 tracking-widest uppercase mt-0.5">
                 Toll Blend Division
               </p>
             </div>
@@ -1151,17 +1153,20 @@ export function CisInfoCard(props: CisInfoCardProps) {
             {/* Title row */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-lg font-bold uppercase tracking-wide text-zinc-900">
+                <p className="text-sm font-bold uppercase tracking-wide text-zinc-900">
                   Customer Registration Sheet
                 </p>
-                <div className="flex flex-wrap gap-4 mt-1.5 text-[12px] text-zinc-600">
+                <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-zinc-600">
                   <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? humanizeDisplayValue(status)}</strong></span>
                   <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "—"}</strong></span>
 
                   <span>Agent: <strong className="font-mono text-zinc-900">{agentCode}</strong>{agentType && <span className="ml-1 text-zinc-500">({agentType === "sales_agent" ? "Sales" : "RSR"})</span>}</span>
+                  {customerCode && (
+                    <span>Customer Code: <strong className="font-mono text-zinc-900">{customerCode}</strong></span>
+                  )}
                 </div>
               </div>
-              <div className="shrink-0 text-right text-[11px] text-zinc-400">
+              <div className="shrink-0 text-right text-[10px] text-zinc-400">
                 <p>Form No.: <span className="font-mono font-semibold text-zinc-600">{cisId.slice(0, 8)}</span></p>
                 <p>Submitted: {new Date(createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 <p>Updated: {new Date(updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
@@ -1170,8 +1175,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
             {/* CUS changes table — only if fieldHistory has tracked changes */}
             {cusChangedFields.length > 0 && (
-              <div className="mt-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-700 mb-1.5">
+              <div className="mt-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-700 mb-1">
                   Customer Information Updated via CUS
                 </p>
                 <table className="w-full border-collapse text-[12px]">
@@ -1207,7 +1212,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </div>
             )}
 
-            <div className="border-b border-zinc-300 mt-4" />
+            <div className="border-b border-zinc-300 mt-2" />
           </div>
         );
       })()}
@@ -1229,6 +1234,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   {agentType === "sales_agent" ? "Sales" : "RSR"}
                 </span>
               )}
+              {customerCode && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 font-mono font-semibold text-green-700">
+                  {customerCode}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-end">
@@ -1242,7 +1252,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         </div>
       </div>
 
-      <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6 print:space-y-5 print:px-0 print:pt-4">
+      <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6 print:space-y-2 print:px-0 print:pt-2">
 
         <div className="hidden print:block print:mb-1">
           <p className="text-sm font-bold text-zinc-900">
@@ -1253,8 +1263,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Business Information ── */}
         <SectionCard>
           <SectionTitle icon={Briefcase} label="Business Information" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
-            {(corporateName || old("corporateName")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} oldValue={old("corporateName")} /></div>}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-2">
+            {(corporateName || old("corporateName")) && <div className="sm:col-span-2 lg:col-span-3 print:col-span-2"><Field label="Registered Corporate Name" value={corporateName} icon={Building2} oldValue={old("corporateName")} /></div>}
             <Field label="Trade / Business Name" value={tradeName} icon={Briefcase} oldValue={old("tradeName")} />
             {(dateOfBusinessReg || old("dateOfBusinessReg")) && <Field label="Date of Registration" value={dateOfBusinessReg} oldValue={old("dateOfBusinessReg")} />}
             {(numberOfEmployees || old("numberOfEmployees")) && <Field label="No. of Employees" value={numberOfEmployees} icon={Users} oldValue={old("numberOfEmployees")} />}
@@ -1264,7 +1274,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Contact Details ── */}
         <SectionCard>
           <SectionTitle icon={User} label="Contact Details" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-2">
             <Field label="Contact Person" value={contactPerson} icon={User} oldValue={old("contactPerson")} />
             <Field label="Email Address" value={emailAddress} icon={Mail} oldValue={old("emailAddress")} />
             <Field label="Mobile Number" value={contactNumber} icon={Phone} oldValue={old("contactNumber")} />
@@ -1276,8 +1286,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Office Address ── */}
         <SectionCard>
           <SectionTitle icon={MapPin} label="Office Address" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
-            <div className="sm:col-span-2 lg:col-span-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-2">
+            <div className="sm:col-span-2 lg:col-span-3 print:col-span-2">
               <Field label="Street Address" value={businessAddress} icon={MapPin} oldValue={old("businessAddress")} />
             </div>
             <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} oldValue={old("cityMunicipality")} />
@@ -1289,9 +1299,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {(hasDelivery || old("deliveryAddress") || old("deliveryMobile") || old("deliveryTelephone")) && (
           <SectionCard>
               <SectionTitle icon={MapPin} label="Delivery Address" />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-3">
-                {(deliveryAddress || old("deliveryAddress")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} oldValue={old("deliveryAddress")} /></div>}
-                {(deliveryLandmarks || old("deliveryLandmarks")) && <div className="sm:col-span-2 lg:col-span-3"><Field label="Delivery Landmarks" value={deliveryLandmarks} oldValue={old("deliveryLandmarks")} /></div>}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-2">
+                {(deliveryAddress || old("deliveryAddress")) && <div className="sm:col-span-2 lg:col-span-3 print:col-span-2"><Field label="Delivery Address" value={deliveryAddress} icon={MapPin} oldValue={old("deliveryAddress")} /></div>}
+                {(deliveryLandmarks || old("deliveryLandmarks")) && <div className="sm:col-span-2 lg:col-span-3 print:col-span-2"><Field label="Delivery Landmarks" value={deliveryLandmarks} oldValue={old("deliveryLandmarks")} /></div>}
                 {(deliveryMobile || old("deliveryMobile")) && <Field label="Delivery Mobile" value={deliveryMobile} icon={Phone} oldValue={old("deliveryMobile")} />}
                 {(deliveryTelephone || old("deliveryTelephone")) && <Field label="Delivery Telephone" value={deliveryTelephone} icon={Phone} oldValue={old("deliveryTelephone")} />}
               </div>
@@ -1329,7 +1339,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[20px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[10px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1356,7 +1366,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div>
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[20px]">
+                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[10px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1378,7 +1388,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 </div>
               )}
               {(paymentTerms || old("paymentTerms")) && (
-                <div className="mt-4">
+                <div className="mt-2">
                   <Field label="Payment Terms" value={paymentTerms ? (PAYMENT_TERMS_LABELS[paymentTerms] ?? humanizeDisplayValue(paymentTerms)) : null} oldValue={old("paymentTerms") ? (PAYMENT_TERMS_LABELS[old("paymentTerms")!] ?? humanizeDisplayValue(old("paymentTerms"))) : undefined} />
                 </div>
               )}
@@ -1389,7 +1399,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasBackground && (
           <SectionCard>
               <SectionTitle icon={BookOpen} label="Business Background" />
-              <div className="grid gap-5 sm:grid-cols-3 print:gap-3 mb-4">
+              <div className="grid gap-5 sm:grid-cols-3 print:gap-2 mb-2">
                 {(businessLife || old("businessLife")) && <Field label="Years in Business" value={businessLife} oldValue={old("businessLife")} />}
                 {(howLongAtAddress || old("howLongAtAddress")) && <Field label="Years at Address" value={howLongAtAddress} oldValue={old("howLongAtAddress")} />}
                 {(numberOfBranches || old("numberOfBranches")) && <Field label="No. of Branches" value={numberOfBranches} oldValue={old("numberOfBranches")} />}
@@ -1412,7 +1422,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[20px]">
+                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[10px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Company</th>
@@ -1439,7 +1449,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[20px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[10px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Bank</th>
@@ -1466,7 +1476,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   </div>
                 </div>
               )}
-              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              <div className="grid gap-5 sm:grid-cols-2 print:gap-2">
                 {(achievements || old("achievements")) && <Field label="Awards / Achievements" value={achievements} oldValue={old("achievements")} />}
                 {(otherMerits || old("otherMerits")) && <Field label="Other Merits" value={otherMerits} oldValue={old("otherMerits")} />}
               </div>
@@ -1485,7 +1495,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionCard>
             <SectionTitle icon={User} label="Agent Information" />
             {(agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast) && (
-              <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+              <div className="grid gap-5 sm:grid-cols-2 print:gap-2">
                 {(agentAccountSpecialistFirst || agentAccountSpecialistLast) && (
                   <Field label="Account Specialist" value={[agentAccountSpecialistFirst, agentAccountSpecialistLast].filter(Boolean).join(" ")} icon={User} />
                 )}
@@ -1763,7 +1773,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <FileText className="h-3.5 w-3.5 print:hidden" />
                 Additional Notes
               </p>
-              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-2 print:text-[20px] print:border-l-2 print:border-zinc-300 print:pl-3">
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-1 print:text-[12px] print:border-l print:border-zinc-300 print:pl-2">
                 {additionalNotes}
               </p>
           </SectionCard>
@@ -1775,7 +1785,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionCard className={!hasFinanceData && printCreditFields ? "hidden print:block" : ""}>
               <SectionTitle icon={FileText} label="Finance Credit Evaluation" />
               {(financeEu || financeDl || financeDr) && (
-                <div className="mb-5 grid gap-5 sm:grid-cols-3 print:gap-3">
+                <div className="mb-2 grid gap-3 sm:grid-cols-3 print:gap-2">
                   {financeEu && <Field label="EU" value={financeEu} />}
                   {financeDl && <Field label="DL" value={financeDl} />}
                   {financeDr && <Field label="DR" value={financeDr} />}
@@ -1783,23 +1793,23 @@ export function CisInfoCard(props: CisInfoCardProps) {
               )}
               {/* Credit decision — blank sign-off boxes before CFO signs; prominent display once filled */}
               {(!hasCfoSigned || financeCreditLimit || financeCreditTerms) && (
-                <div className={`rounded-xl border-2 p-4 print:rounded-none print:border print:p-3 ${
+                <div className={`rounded-xl border-2 p-4 print:rounded-none print:border print:p-2 ${
                   financeCreditLimit || financeCreditTerms
                     ? "border-emerald-200 bg-emerald-50"
                     : "border-dashed border-zinc-200 bg-zinc-50"
                 }`}>
-                  <p className={`mb-3 text-[10px] font-bold uppercase tracking-widest print:text-[11px] ${
+                  <p className={`mb-1 text-[10px] font-bold uppercase tracking-widest print:text-[9px] ${
                     financeCreditLimit || financeCreditTerms ? "text-emerald-700" : "text-zinc-400"
                   }`}>
                     CFO Credit Decision
                   </p>
-                  <div className="grid gap-4 sm:grid-cols-2 print:gap-3">
+                  <div className="grid gap-4 sm:grid-cols-2 print:gap-2">
                     <div className="space-y-1">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-zinc-600">Credit Limit</p>
                       {financeCreditLimit ? (
-                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-lg print:text-zinc-900">{financeCreditLimit}</p>
+                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-base print:text-zinc-900">{financeCreditLimit}</p>
                       ) : (
-                        <div className="h-8 rounded border border-dashed border-zinc-300 bg-white print:h-7" />
+                        <div className="h-8 rounded border border-dashed border-zinc-300 bg-white print:h-5" />
                       )}
                       {old("financeCreditLimit") && (
                         <p className="text-[10px] text-zinc-400 line-through">{old("financeCreditLimit")}</p>
@@ -1808,11 +1818,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
                     <div className="space-y-1">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-zinc-600">Credit Terms</p>
                       {financeCreditTerms ? (
-                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-lg print:text-zinc-900">
+                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-base print:text-zinc-900">
                           {FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)}
                         </p>
                       ) : (
-                        <div className="h-8 rounded border border-dashed border-zinc-300 bg-white print:h-7" />
+                        <div className="h-8 rounded border border-dashed border-zinc-300 bg-white print:h-5" />
                       )}
                       {old("financeCreditTerms") && (
                         <p className="text-[10px] text-zinc-400 line-through">{old("financeCreditTerms")}</p>
@@ -1843,7 +1853,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <PenLine className="h-3.5 w-3.5 print:hidden" />
                 Signatures
               </p>
-              <div className="grid gap-8 sm:grid-cols-2 print:gap-6">
+              <div className="grid gap-8 sm:grid-cols-2 print:gap-4">
                 {customerSignature && (
                   <SignatureBlock
                     label="Customer Signature"
@@ -1872,11 +1882,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* ── Physical Sign-off — shown only after finance review starts and before CFO doc is uploaded ── */}
         {showCfoSignatureBox && <SectionCard className="print:break-inside-avoid">
             {/* Section title — same pattern as SectionTitle component */}
-            <div className="mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-5 print:border-zinc-400 print:border-b-2 print:pb-2.5">
+            <div className="mb-4 flex items-center gap-2 border-b border-zinc-200 pb-2.5 print:mb-2 print:border-zinc-300 print:border-b print:pb-1">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
                 <PenLine className="h-3.5 w-3.5" />
               </span>
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[14px] print:font-black print:text-zinc-800">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[11px] print:font-black print:text-zinc-800">
                 CFO Approval
               </p>
             </div>
@@ -1898,16 +1908,16 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
             {/* Print layout — mirrors SignatureBlock style */}
             <div className="hidden print:block">
-              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-3">
                 Reviewed &amp; Approved by (Chief Finance Officer)
               </p>
 
               {/* Signature line */}
-              <div className="border-b border-zinc-500 mb-1.5" />
-              <p className="text-[11px] text-zinc-600 mb-5">Signature over Printed Name</p>
+              <div className="border-b border-zinc-500 mb-1" />
+              <p className="text-[10px] text-zinc-600 mb-2">Signature over Printed Name</p>
 
               {/* Date + Position row */}
-              <div className="flex gap-8">
+              <div className="flex gap-4">
                 <div className="flex-1">
                   <div className="border-b border-zinc-500 mb-1.5" />
                   <p className="text-[11px] text-zinc-600">Date</p>
@@ -1924,7 +1934,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasSalesSupportData && (
           <SectionCard>
             <SectionTitle icon={Users} label="Sales Support Evaluation" />
-            <div className="grid gap-5 sm:grid-cols-2 print:gap-3">
+            <div className="grid gap-5 sm:grid-cols-2 print:gap-2">
               {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} />}
               {salesSupportPriceList1 && <Field label="Price List 1" value={salesSupportPriceList1} />}
               {salesSupportPriceList2 && <Field label="Price List 2" value={salesSupportPriceList2} />}
@@ -1989,7 +1999,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         </div>
 
         {/* Print footer */}
-        <div className="hidden print:block border-t-2 border-zinc-900 pt-3 mt-6">
+        <div className="hidden print:block border-t border-zinc-900 pt-2 mt-3">
           <div className="flex justify-between items-center">
             <p className="text-[9px] uppercase tracking-widest text-zinc-400">Oracle Petroleum Corporation — Confidential</p>
             <p className="text-[9px] text-zinc-400 font-mono">{cisId}</p>

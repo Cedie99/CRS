@@ -34,6 +34,7 @@ const cardSelect = {
   contactPerson: cisSubmissions.contactPerson,
   customerType: cisSubmissions.customerType,
   agentCode: cisSubmissions.agentCode,
+  customerCode: cisSubmissions.customerCode,
   status: cisSubmissions.status,
   createdAt: cisSubmissions.createdAt,
   updatedAt: cisSubmissions.updatedAt,

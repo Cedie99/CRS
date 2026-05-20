@@ -482,7 +482,7 @@ function NewCisContent() {
                       </Button>
                       <Button variant="outline" className="min-w-40" onClick={handleFillDirectly} disabled={isLoading}>
                         <PenLine className="h-4 w-4" />
-                        {isLoading && fillMode === "direct" ? "Creating…" : "Fill Up Directly"}
+                        {isLoading && fillMode === "direct" ? "Creating…" : "Fill Out Directly"}
                       </Button>
                       <Button variant="ghost" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
                     </div>
@@ -568,7 +568,7 @@ function NewCisContent() {
                             <div className="rounded-lg bg-amber-100 p-1.5 ring-1 ring-amber-200/70">
                               <PenLine className="h-3.5 w-3.5 text-amber-600" />
                             </div>
-                            <p className="text-xs font-bold text-amber-800">Fill Up Directly</p>
+                            <p className="text-xs font-bold text-amber-800">Fill Out Directly</p>
                           </div>
                           <ol className="space-y-1.5">
                             {HOW_IT_WORKS_DIRECT.map((step, i) => (

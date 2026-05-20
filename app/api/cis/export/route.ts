@@ -100,14 +100,15 @@ const C_MUTED      = rgb(0.580, 0.580, 0.580);
 interface ColDef { label: string; x: number; w: number; align: "left" | "right" | "center" }
 
 const PDF_COLS: ColDef[] = [
-  { label: "#",              x: MX,        w: 28,  align: "right"  },
-  { label: "Trade Name",     x: MX + 28,   w: 205, align: "left"   },
-  { label: "Contact Person", x: MX + 233,  w: 145, align: "left"   },
-  { label: "Customer Type",  x: MX + 378,  w: 95,  align: "left"   },
-  { label: "Status",         x: MX + 473,  w: 145, align: "left"   },
-  { label: "Agent Code",     x: MX + 618,  w: 72,  align: "center" },
-  { label: "Submitted",      x: MX + 690,  w: 96,  align: "left"   },
-  // right edge: 28 + 690 + 96 = 814 ✓ (matches PAGE_W - MX)
+  { label: "#",               x: MX,        w: 28,  align: "right"  },
+  { label: "Trade Name",      x: MX + 28,   w: 180, align: "left"   },
+  { label: "Contact Person",  x: MX + 208,  w: 130, align: "left"   },
+  { label: "Customer Type",   x: MX + 338,  w: 90,  align: "left"   },
+  { label: "Status",          x: MX + 428,  w: 130, align: "left"   },
+  { label: "Agent Code",      x: MX + 558,  w: 60,  align: "center" },
+  { label: "Customer Code",   x: MX + 618,  w: 70,  align: "center" },
+  { label: "Submitted",       x: MX + 688,  w: 98,  align: "left"   },
+  // right edge: 28 + 688 + 98 = 814 ✓ (matches PAGE_W - MX)
 ];
 
 const TH_H = 22;   // table header row height
@@ -192,7 +193,7 @@ function drawFooter(page: PDFPage, pageNum: number, totalPages: number, font: PD
 }
 
 async function buildPdf(
-  rows: { no: string; tradeName: string; contactPerson: string; customerType: string; status: string; agentCode: string; createdAt: string }[],
+  rows: { no: string; tradeName: string; contactPerson: string; customerType: string; status: string; agentCode: string; customerCode: string; createdAt: string }[],
   meta: { scope: string; generatedAt: Date; dateFrom?: string; dateTo?: string },
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
@@ -319,7 +320,7 @@ async function buildPdf(
     newPage(true);
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const cells = [r.no, r.tradeName, r.contactPerson, r.customerType, r.status, r.agentCode, r.createdAt];
+      const cells = [r.no, r.tradeName, r.contactPerson, r.customerType, r.status, r.agentCode, r.customerCode, r.createdAt];
 
       // Check if we need a new page
       const isFirstPage = pageNum === 1;
@@ -409,7 +410,7 @@ export async function GET(req: Request) {
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
   const query = db
-    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt })
+    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, customerCode: cisSubmissions.customerCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt })
     .from(cisSubmissions)
     .orderBy(desc(cisSubmissions.createdAt))
     .limit(EXPORT_LIMIT);
@@ -426,6 +427,7 @@ export async function GET(req: Request) {
         customerType: r.customerType ?? "end_user",
         status: r.status,
         agentCode: r.agentCode ?? "—",
+        customerCode: r.customerCode ?? "",
         createdAt: fmtDate(r.createdAt),
         updatedAt: fmtDate(r.updatedAt),
       })),
@@ -443,7 +445,7 @@ export async function GET(req: Request) {
 
   // ── CSV ──────────────────────────────────────────────────────────────────
   if (format === "csv") {
-    const headers = ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Date Submitted", "Last Updated"];
+    const headers = ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"];
     const lines = [
       `# CIS Export Report — ${scope.toUpperCase()}`,
       `# Generated: ${fmtDateTime(generatedAt)}`,
@@ -460,6 +462,7 @@ export async function GET(req: Request) {
           CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
           STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
           r.agentCode ?? "",
+          r.customerCode ?? "",
           fmtDate(r.createdAt),
           fmtDate(r.updatedAt),
         ].map(escapeCsv).join(",");
@@ -487,7 +490,7 @@ export async function GET(req: Request) {
       [`Period: ${periodStr}`],
       [`Total Records: ${rows.length}`],
       [],  // spacer
-      ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Date Submitted", "Last Updated"],
+      ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"],
       ...rows.map((r, i) => {
         const ct = r.customerType ?? "end_user";
         return [
@@ -497,6 +500,7 @@ export async function GET(req: Request) {
           CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
           STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
           r.agentCode ?? "",
+          r.customerCode ?? "",
           fmtDate(r.createdAt),
           fmtDate(r.updatedAt),
         ];
@@ -513,12 +517,13 @@ export async function GET(req: Request) {
       { wch: 16 },  // Customer Type
       { wch: 24 },  // Status
       { wch: 13 },  // Agent Code
+      { wch: 16 },  // Customer Code
       { wch: 18 },  // Date Submitted
       { wch: 18 },  // Last Updated
     ];
 
     // Merge title cell across all columns
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
 
     // Freeze at row 8 (data header row is row index 6, data starts at 7)
     ws["!freeze"] = { xSplit: 0, ySplit: 7 };
@@ -543,6 +548,7 @@ export async function GET(req: Request) {
       customerType: CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
       status: STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
       agentCode: r.agentCode ?? "—",
+      customerCode: r.customerCode ?? "—",
       createdAt: fmtDate(r.createdAt),
     };
   });

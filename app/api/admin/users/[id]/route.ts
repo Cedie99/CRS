@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
@@ -53,6 +53,8 @@ export async function PATCH(
     updateData.passwordHash = await bcrypt.hash(password, 12);
     updateData.mustChangePassword = true;
     delete updateData.password;
+    // Bump sessionVersion to invalidate any existing sessions for this user
+    updateData.sessionVersion = sql`${users.sessionVersion} + 1`;
   }
 
   const finalRole = parsed.data.role ?? existing.role;
@@ -79,6 +81,11 @@ export async function PATCH(
     updateData.agentCode = null;
   }
 
+  // Bump sessionVersion when security-sensitive fields change (role, active state)
+  if (parsed.data.role !== undefined || parsed.data.isActive !== undefined) {
+    updateData.sessionVersion = sql`${users.sessionVersion} + 1`;
+  }
+
   await db.update(users).set(updateData).where(eq(users.id, id));
 
   return NextResponse.json({ success: true, agentCode: (updateData.agentCode ?? existing.agentCode) ?? null });
@@ -100,7 +107,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Cannot deactivate your own account" }, { status: 400 });
   }
 
-  await db.update(users).set({ isActive: false }).where(eq(users.id, id));
+  await db.update(users).set({
+    isActive: false,
+    sessionVersion: sql`${users.sessionVersion} + 1`,
+  }).where(eq(users.id, id));
 
   return NextResponse.json({ success: true });
 }

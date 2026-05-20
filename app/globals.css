@@ -224,12 +224,12 @@
 
 @media print {
   @page {
-    margin: 1.4cm 1.6cm;
+    margin: 1cm 1.2cm;
     size: A4 portrait;
   }
 
   html {
-    font-size: 19px !important;
+    font-size: 13px !important;
   }
 
   /* Fix SPA fixed-shell layout so all content flows onto the page */
@@ -309,7 +309,7 @@
   [data-print-root] table th,
   [data-print-root] table td {
     border: 1px solid #d4d4d8 !important;
-    padding: 0.45rem 0.55rem !important;
+    padding: 0.28rem 0.38rem !important;
     word-break: normal;
     overflow-wrap: break-word;
     vertical-align: top;

@@ -31,6 +31,7 @@ async function getCis(token: string) {
       docStorePhoto: cisSubmissions.docStorePhoto,
       docSupplierInvoice: cisSubmissions.docSupplierInvoice,
       docSocialMedia: cisSubmissions.docSocialMedia,
+      docCompanyWebsite: cisSubmissions.docCompanyWebsite,
       docIsoCertification: cisSubmissions.docIsoCertification,
       docHalalCertificate: cisSubmissions.docHalalCertificate,
       docCertifications: cisSubmissions.docCertifications,

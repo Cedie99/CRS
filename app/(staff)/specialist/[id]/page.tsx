@@ -107,6 +107,7 @@ export default async function SpecialistCisDetailPage({
             salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
+            customerCode={cis.customerCode}
             status={cis.status as CisStatus}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
@@ -162,6 +163,7 @@ export default async function SpecialistCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docCompanyWebsite={cis.docCompanyWebsite}
             docIsoCertification={cis.docIsoCertification}
             docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}

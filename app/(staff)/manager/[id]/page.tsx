@@ -95,6 +95,7 @@ export default async function ManagerCisDetailPage({
       docStorePhoto: cisSubmissions.docStorePhoto,
       docSupplierInvoice: cisSubmissions.docSupplierInvoice,
       docSocialMedia: cisSubmissions.docSocialMedia,
+      docCompanyWebsite: cisSubmissions.docCompanyWebsite,
       docIsoCertification: cisSubmissions.docIsoCertification,
       docHalalCertificate: cisSubmissions.docHalalCertificate,
       docCertifications: cisSubmissions.docCertifications,
@@ -123,6 +124,7 @@ export default async function ManagerCisDetailPage({
       salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
       docReviewStatuses: cisSubmissions.docReviewStatuses,
       financeMetricPoints: cisSubmissions.financeMetricPoints,
+      customerCode: cisSubmissions.customerCode,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, id))
@@ -192,6 +194,7 @@ export default async function ManagerCisDetailPage({
             salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
+            customerCode={cis.customerCode}
             status={cis.status as any}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
@@ -247,6 +250,7 @@ export default async function ManagerCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docCompanyWebsite={cis.docCompanyWebsite}
             docIsoCertification={cis.docIsoCertification}
             docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}

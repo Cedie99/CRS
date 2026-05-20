@@ -33,6 +33,7 @@ async function getCis(id: string) {
       docStorePhoto: cisSubmissions.docStorePhoto,
       docSupplierInvoice: cisSubmissions.docSupplierInvoice,
       docSocialMedia: cisSubmissions.docSocialMedia,
+      docCompanyWebsite: cisSubmissions.docCompanyWebsite,
       docCertifications: cisSubmissions.docCertifications,
       docGovCertifications: cisSubmissions.docGovCertifications,
       docOther: cisSubmissions.docOther,

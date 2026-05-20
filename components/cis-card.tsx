@@ -68,6 +68,7 @@ interface CisCardProps {
   customerType?: string | null;
   agentCode: string;
   agentName?: string;
+  customerCode?: string | null;
   status: CisStatus;
   createdAt: Date;
   updatedAt?: Date;
@@ -82,6 +83,7 @@ export function CisCard({
   customerType,
   agentCode,
   agentName,
+  customerCode,
   status,
   createdAt,
   updatedAt,
@@ -129,6 +131,12 @@ export function CisCard({
               <p className="mt-0.5 truncate text-xs text-zinc-500">
                 <span className="font-semibold text-zinc-600">Agent Code:</span> {assignedAgent}
               </p>
+              {customerCode && (
+                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                  <span className="font-semibold text-zinc-600">Customer Code:</span>{" "}
+                  <span className="font-mono font-semibold text-green-700">{customerCode}</span>
+                </p>
+              )}
             </div>
             <StatusBadge status={status} className="shrink-0" />
           </div>

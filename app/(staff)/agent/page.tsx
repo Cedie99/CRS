@@ -47,6 +47,7 @@ export default async function AgentDashboard({
     contactPerson: cisSubmissions.contactPerson,
     customerType: cisSubmissions.customerType,
     agentCode: cisSubmissions.agentCode,
+    customerCode: cisSubmissions.customerCode,
     status: cisSubmissions.status,
     createdAt: cisSubmissions.createdAt,
     updatedAt: cisSubmissions.updatedAt,
@@ -324,7 +325,7 @@ export default async function AgentDashboard({
           submissions={agentCompletionRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
           totalCount={agentCompletionTotal}
           hrefPrefix="agent"
-          label="Forms You Need to Fill Up"
+          label="Forms You Need to Fill Out"
           sublabel="Your customers have submitted their forms. Complete your section to move these forward."
           accentClass="border-blue-300 bg-blue-50/60"
           badgeClass="bg-blue-100 text-blue-800"

@@ -84,6 +84,7 @@ export default async function AdminCisDetailPage({
             salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
+            customerCode={cis.customerCode}
             status={cis.status as any}
             createdAt={cis.createdAt}
             updatedAt={cis.updatedAt}
@@ -139,6 +140,7 @@ export default async function AdminCisDetailPage({
             docStorePhoto={cis.docStorePhoto}
             docSupplierInvoice={cis.docSupplierInvoice}
             docSocialMedia={cis.docSocialMedia}
+            docCompanyWebsite={cis.docCompanyWebsite}
             docIsoCertification={cis.docIsoCertification}
             docHalalCertificate={cis.docHalalCertificate}
             docCertifications={cis.docCertifications}
