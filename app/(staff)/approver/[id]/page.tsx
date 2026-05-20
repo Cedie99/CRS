@@ -88,7 +88,6 @@ export default async function ApproverCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        hrefPrefix="approver"
       />
 
       <div className="grid gap-5 xl:grid-cols-5">

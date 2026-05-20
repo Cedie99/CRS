@@ -69,7 +69,8 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "Sales Support", href: "/support", icon: Inbox },
   ],
   project_development_specialist: [
-    { label: "ERP Encoding Queue", href: "/specialist", icon: Database },
+    { label: "ERP Encoding Queue", href: "/specialist", icon: Database, exact: true },
+    { label: "All Submissions", href: "/specialist/all", icon: List },
   ],
   admin: [
     { label: "All Submissions", href: "/admin", icon: FileText, exact: true },

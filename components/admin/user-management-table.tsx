@@ -19,7 +19,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { UserCheck, UserX, Pencil, KeyRound } from "lucide-react";
+import { UserCheck, UserX, Pencil, KeyRound, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
@@ -71,14 +71,21 @@ export function UserManagementTable({
 
   // Edit / Activate dialog state
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [form, setForm] = useState({ role: "", agentType: "", managerId: "", agentCode: "", isTopManager: false });
+  const [form, setForm] = useState({ role: "", managerId: "", agentCode: "", isTopManager: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [codeMode, setCodeMode] = useState<"select" | "generate">("select");
+  const [generatingCode, setGeneratingCode] = useState(false);
 
   // Reset password dialog state
   const [resetUser, setResetUser] = useState<UserRow | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
+
+  // Delete dialog state
+  const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const TEMP_PASSWORD = "Opc1985!";
 
@@ -86,15 +93,34 @@ export function UserManagementTable({
     setUsers(initialUsers);
   }, [initialUsers]);
 
+  async function fetchGeneratedCode() {
+    setGeneratingCode(true);
+    try {
+      const res = await fetch("/api/admin/agent-code/generate");
+      if (res.ok) {
+        const { code } = await res.json();
+        setForm((f) => ({ ...f, agentCode: code }));
+      }
+    } finally {
+      setGeneratingCode(false);
+    }
+  }
+
+  async function switchCodeMode(mode: "select" | "generate") {
+    setCodeMode(mode);
+    setForm((f) => ({ ...f, agentCode: "" }));
+    if (mode === "generate") fetchGeneratedCode();
+  }
+
   function openEdit(user: UserRow) {
     setEditingUser(user);
     setForm({
       role: user.role,
-      agentType: user.agentType ?? "",
       managerId: user.managerId ?? "",
       agentCode: user.agentCode ?? "",
       isTopManager: user.isTopManager ?? false,
     });
+    setCodeMode("select");
     setError("");
   }
 
@@ -103,9 +129,10 @@ export function UserManagementTable({
     setIsLoading(true);
     setError("");
     try {
+      const isAgent = isAgentRole(form.role);
       const body: Record<string, unknown> = {
         role: form.role || undefined,
-        agentType: (form.agentType || null) as "sales_agent" | "rsr" | null,
+        agentType: isAgent ? (form.role as "sales_agent" | "rsr") : null,
         managerId: form.managerId || null,
         agentCode: form.agentCode || null,
         isActive: true,
@@ -130,7 +157,7 @@ export function UserManagementTable({
                 ...u,
                 role: form.role || u.role,
                 agentCode: json.agentCode ?? u.agentCode,
-                agentType: (form.agentType || null) as any,
+                agentType: isAgent ? (form.role as "sales_agent" | "rsr") : null,
                 managerId: form.managerId || null,
                 isActive: true,
                 isTopManager: form.isTopManager,
@@ -152,7 +179,11 @@ export function UserManagementTable({
     if (userId === currentUserId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: false }),
+      });
       if (!res.ok) {
         toast.error({ title: "Failed to deactivate user.", description: "Please try again or refresh the page." });
         return;
@@ -164,6 +195,28 @@ export function UserManagementTable({
       toast.error({ title: "Something went wrong.", description: "Please try again in a moment." });
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteUser) return;
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/admin/users/${deleteUser.id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) {
+        setDeleteError(typeof json.error === "string" ? json.error : "Failed to delete user.");
+        return;
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
+      toast.success({ title: "User deleted.", description: `${deleteUser.fullName}'s account has been permanently removed.` });
+      setDeleteUser(null);
+      router.refresh();
+    } catch {
+      setDeleteError("Something went wrong. Please try again.");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -309,6 +362,18 @@ export function UserManagementTable({
                       Deactivate
                     </Button>
                   )}
+                  {user.id !== currentUserId && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 justify-center gap-1.5 rounded-lg border border-red-300 px-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => { setDeleteUser(user); setDeleteError(""); }}
+                      disabled={isLoading}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -385,6 +450,18 @@ export function UserManagementTable({
                           Deactivate
                         </Button>
                       )}
+                      {user.id !== currentUserId && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 gap-1 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => { setDeleteUser(user); setDeleteError(""); }}
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -445,38 +522,62 @@ export function UserManagementTable({
               <>
                 <div className="min-w-0 space-y-1.5">
                   <Label>Agent code</Label>
-                  {/* Show current code + available unassigned codes */}
-                  <Select
-                    value={form.agentCode}
-                    onValueChange={(v) => setForm((f) => ({ ...f, agentCode: v ?? "" }))}
-                  >
-                    <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden font-mono [&>span]:truncate">
-                      <SelectValue placeholder="Select agent code…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {/* Keep the current code in the list even if "taken" by this same user */}
-                      {editingUser?.agentCode && (
-                        <SelectItem value={editingUser.agentCode}>{editingUser.agentCode} (current)</SelectItem>
-                      )}
-                      {availableCodes
-                        .filter((c) => c !== editingUser?.agentCode)
-                        .map((code) => (
-                          <SelectItem key={code} value={code} className="font-mono">{code}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0 space-y-1.5">
-                  <Label>Agent type</Label>
-                  <Select value={form.agentType} onValueChange={(v) => setForm((f) => ({ ...f, agentType: v ?? "" }))}>
-                    <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden [&>span]:truncate">
-                      <SelectValue className="min-w-0 truncate" placeholder="Select agent type…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sales_agent">Sales Agent</SelectItem>
-                      <SelectItem value="rsr">RSR</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  {/* Mode toggle */}
+                  <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => switchCodeMode("select")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "select" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
+                    >
+                      Select from list
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => switchCodeMode("generate")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "generate" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
+                    >
+                      Auto-generate
+                    </button>
+                  </div>
+
+                  {codeMode === "select" ? (
+                    <Select
+                      value={form.agentCode}
+                      onValueChange={(v) => setForm((f) => ({ ...f, agentCode: v ?? "" }))}
+                    >
+                      <SelectTrigger className="box-border w-full min-w-0 max-w-full overflow-hidden font-mono [&>span]:truncate">
+                        <SelectValue placeholder="Select agent code…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {editingUser?.agentCode && (
+                          <SelectItem value={editingUser.agentCode}>{editingUser.agentCode} (current)</SelectItem>
+                        )}
+                        {availableCodes
+                          .filter((c) => c !== editingUser?.agentCode)
+                          .map((code) => (
+                            <SelectItem key={code} value={code} className="font-mono">{code}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 flex-1 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 font-mono text-sm text-zinc-700">
+                        {generatingCode ? <span className="text-zinc-400">Generating…</span> : (form.agentCode || <span className="text-zinc-400">—</span>)}
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-9 gap-1.5"
+                        onClick={fetchGeneratedCode}
+                        disabled={generatingCode}
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${generatingCode ? "animate-spin" : ""}`} />
+                        Regenerate
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 space-y-1.5">
                   <Label>Manager</Label>
@@ -544,6 +645,41 @@ export function UserManagementTable({
                 {resetLoading ? "Resetting…" : "Reset to Temporary Password"}
               </Button>
               <Button variant="ghost" onClick={() => setResetUser(null)} disabled={resetLoading} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteUser} onOpenChange={(open) => !open && setDeleteUser(null)}>
+        <DialogContent className="box-border w-[calc(100vw-2.5rem)] max-w-sm overflow-x-hidden p-3.5 sm:w-full sm:max-w-md sm:p-4">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Delete User</DialogTitle>
+            <DialogDescription className="wrap-break-word">
+              This will permanently remove <strong>{deleteUser?.fullName}</strong>'s account. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p className="font-semibold">Permanent deletion</p>
+              <p className="mt-0.5 text-xs">If this user has existing CIS submissions, deletion will be blocked. Use <strong>Deactivate</strong> instead to preserve their records.</p>
+            </div>
+
+            {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+              <Button
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="w-full gap-2 bg-red-600 text-white hover:bg-red-700 sm:w-auto"
+              >
+                <Trash2 className="h-4 w-4" />
+                {deleteLoading ? "Deleting…" : "Yes, Delete Permanently"}
+              </Button>
+              <Button variant="ghost" onClick={() => setDeleteUser(null)} disabled={deleteLoading} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>

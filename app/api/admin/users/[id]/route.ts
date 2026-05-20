@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { eq, and, ne, sql } from "drizzle-orm";
+import { eq, and, ne, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { PREDEFINED_AGENT_CODES } from "@/lib/agent-codes";
+import {
+  users, cisSubmissions, workflowEvents, notifications,
+  cusSubmissions, cusEvents, ctrSubmissions, ctrEvents,
+} from "@/lib/db/schema";
 
 const updateUserSchema = z.object({
   role: z.enum([
@@ -60,12 +62,9 @@ export async function PATCH(
   const finalRole = parsed.data.role ?? existing.role;
   const isAgentRole = finalRole === "sales_agent" || finalRole === "rsr";
 
-  // Validate predefined agent code if provided
+  // Validate agent code uniqueness if provided
   if (parsed.data.agentCode) {
     const code = parsed.data.agentCode;
-    if (!(PREDEFINED_AGENT_CODES as readonly string[]).includes(code)) {
-      return NextResponse.json({ error: "Invalid agent code" }, { status: 400 });
-    }
     // Check not already assigned to a different user
     const [taken] = await db
       .select({ id: users.id })
@@ -91,7 +90,7 @@ export async function PATCH(
   return NextResponse.json({ success: true, agentCode: (updateData.agentCode ?? existing.agentCode) ?? null });
 }
 
-// DELETE /api/admin/users/[id] — deactivate a user
+// DELETE /api/admin/users/[id] — permanently delete a user
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -102,15 +101,47 @@ export async function DELETE(
 
   const { id } = await params;
 
-  // Prevent self-deactivation
   if (id === session.user.id) {
-    return NextResponse.json({ error: "Cannot deactivate your own account" }, { status: 400 });
+    return NextResponse.json({ error: "Cannot delete your own account." }, { status: 400 });
   }
 
-  await db.update(users).set({
-    isActive: false,
-    sessionVersion: sql`${users.sessionVersion} + 1`,
-  }).where(eq(users.id, id));
+  // Block if the user has any submissions or audit trail records that would
+  // orphan meaningful data — check all three submission types and event tables.
+  const [cisCount, cusCount, ctrCount, wfCount, cusEvCount, ctrEvCount] = await Promise.all([
+    db.select({ total: count() }).from(cisSubmissions).where(eq(cisSubmissions.agentId, id)),
+    db.select({ total: count() }).from(cusSubmissions).where(eq(cusSubmissions.agentId, id)),
+    db.select({ total: count() }).from(ctrSubmissions).where(eq(ctrSubmissions.agentId, id)),
+    db.select({ total: count() }).from(workflowEvents).where(eq(workflowEvents.actorId, id)),
+    db.select({ total: count() }).from(cusEvents).where(eq(cusEvents.actorId, id)),
+    db.select({ total: count() }).from(ctrEvents).where(eq(ctrEvents.actorId, id)),
+  ]);
+
+  const submissionTotal =
+    Number(cisCount[0].total) + Number(cusCount[0].total) + Number(ctrCount[0].total);
+  const eventTotal =
+    Number(wfCount[0].total) + Number(cusEvCount[0].total) + Number(ctrEvCount[0].total);
+
+  if (submissionTotal > 0) {
+    return NextResponse.json(
+      { error: `This user has ${submissionTotal} submission(s) on record. Deactivate them instead of deleting.` },
+      { status: 409 }
+    );
+  }
+
+  if (eventTotal > 0) {
+    return NextResponse.json(
+      { error: `This user has ${eventTotal} workflow action(s) in the audit trail. Deactivate them instead of deleting.` },
+      { status: 409 }
+    );
+  }
+
+  // Safe to delete — clean up dependent rows that carry no meaningful business data.
+  // 1. Unassign any agents whose manager is this user.
+  // 2. Delete their notifications.
+  // 3. Delete the user.
+  await db.update(users).set({ managerId: null }).where(eq(users.managerId, id));
+  await db.delete(notifications).where(eq(notifications.recipientId, id));
+  await db.delete(users).where(eq(users.id, id));
 
   return NextResponse.json({ success: true });
 }

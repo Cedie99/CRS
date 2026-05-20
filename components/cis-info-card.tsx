@@ -691,7 +691,7 @@ function Field({
 }) {
   return (
     <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-2">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[10px] print:tracking-[0.1em] print:text-zinc-500">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[11px] print:tracking-[0.1em] print:text-zinc-500">
         {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
       </p>
@@ -705,7 +705,7 @@ function Field({
           </p>
         </div>
       )}
-      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[12px] print:leading-snug ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[11px] print:leading-snug ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
@@ -805,14 +805,14 @@ function SignatureBlock({
       </div>
 
       <div className="hidden print:block">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
         <div className="border border-zinc-300 bg-white p-1 inline-block mb-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={dataUrl} alt={label} className="h-20 w-auto max-w-45 object-contain" />
         </div>
         <div className="border-t border-zinc-400 pt-1 mt-1">
           {signedAt && (
-            <p className="text-[9px] text-zinc-600">
+            <p className="text-[10px] text-zinc-600">
               Signed:{" "}
               {new Date(signedAt).toLocaleString("en-US", {
                 month: "short", day: "numeric", year: "numeric",
@@ -820,7 +820,7 @@ function SignatureBlock({
               })}
             </p>
           )}
-          <p className="font-mono text-[8px] text-zinc-400 mt-0.5 break-all">{fp}</p>
+          <p className="font-mono text-[9px] text-zinc-400 mt-0.5 break-all">{fp}</p>
         </div>
       </div>
     </div>
@@ -1179,7 +1179,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-700 mb-1">
                   Customer Information Updated via CUS
                 </p>
-                <table className="w-full border-collapse text-[12px]">
+                <table className="w-full border-collapse text-[11px]">
                   <thead>
                     <tr className="bg-zinc-100">
                       <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500 w-[30%]">
@@ -1339,7 +1339,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[10px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[11px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1366,7 +1366,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div>
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[10px]">
+                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[11px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1422,7 +1422,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[10px]">
+                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[11px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Company</th>
@@ -1449,7 +1449,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[10px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[11px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Bank</th>
@@ -1773,7 +1773,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <FileText className="h-3.5 w-3.5 print:hidden" />
                 Additional Notes
               </p>
-              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-1 print:text-[12px] print:border-l print:border-zinc-300 print:pl-2">
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-1 print:text-[11px] print:border-l print:border-zinc-300 print:pl-2">
                 {additionalNotes}
               </p>
           </SectionCard>
@@ -1798,7 +1798,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                     ? "border-emerald-200 bg-emerald-50"
                     : "border-dashed border-zinc-200 bg-zinc-50"
                 }`}>
-                  <p className={`mb-1 text-[10px] font-bold uppercase tracking-widest print:text-[9px] ${
+                  <p className={`mb-1 text-[10px] font-bold uppercase tracking-widest print:text-[11px] ${
                     financeCreditLimit || financeCreditTerms ? "text-emerald-700" : "text-zinc-400"
                   }`}>
                     CFO Credit Decision
@@ -1906,25 +1906,30 @@ export function CisInfoCard(props: CisInfoCardProps) {
               </div>
             </div>
 
-            {/* Print layout — mirrors SignatureBlock style */}
+            {/* Print layout */}
             <div className="hidden print:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-4">
                 Reviewed &amp; Approved by (Chief Finance Officer)
               </p>
 
-              {/* Signature line */}
-              <div className="border-b border-zinc-500 mb-1" />
-              <p className="text-[10px] text-zinc-600 mb-2">Signature over Printed Name</p>
+              {/* Signature area — tall blank space then line */}
+              <div className="mb-6">
+                <div className="h-14 border border-dashed border-zinc-300 rounded mb-1" />
+                <div className="border-b-2 border-zinc-700 mb-1" />
+                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Signature over Printed Name</p>
+              </div>
 
-              {/* Date + Position row */}
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <div className="border-b border-zinc-500 mb-1.5" />
-                  <p className="text-[11px] text-zinc-600">Date</p>
+              {/* Date + Position row — each with its own tall writing area */}
+              <div className="flex gap-6">
+                <div className="w-2/5">
+                  <div className="h-8 border border-dashed border-zinc-300 rounded mb-1" />
+                  <div className="border-b-2 border-zinc-700 mb-1" />
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Date</p>
                 </div>
                 <div className="flex-1">
-                  <div className="border-b border-zinc-500 mb-1.5" />
-                  <p className="text-[11px] text-zinc-600">Position / Title</p>
+                  <div className="h-8 border border-dashed border-zinc-300 rounded mb-1" />
+                  <div className="border-b-2 border-zinc-700 mb-1" />
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Position / Title</p>
                 </div>
               </div>
             </div>
@@ -2001,8 +2006,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* Print footer */}
         <div className="hidden print:block border-t border-zinc-900 pt-2 mt-3">
           <div className="flex justify-between items-center">
-            <p className="text-[9px] uppercase tracking-widest text-zinc-400">Oracle Petroleum Corporation — Confidential</p>
-            <p className="text-[9px] text-zinc-400 font-mono">{cisId}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400">Oracle Petroleum Corporation — Confidential</p>
+            <p className="text-[10px] text-zinc-400 font-mono">{cisId}</p>
           </div>
         </div>
 

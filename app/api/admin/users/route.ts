@@ -86,9 +86,6 @@ export async function POST(req: Request) {
     if (!agentCode) {
       return NextResponse.json({ error: { agentCode: ["Agent code is required for agent roles"] } }, { status: 400 });
     }
-    if (!(PREDEFINED_AGENT_CODES as readonly string[]).includes(agentCode)) {
-      return NextResponse.json({ error: { agentCode: ["Invalid agent code"] } }, { status: 400 });
-    }
     // Check code is not already assigned
     const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.agentCode, agentCode)).limit(1);
     if (taken) {

@@ -85,7 +85,6 @@ export default async function SpecialistCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        hrefPrefix="specialist"
       />
 
       <div className="grid gap-5 xl:grid-cols-5">

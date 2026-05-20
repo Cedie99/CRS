@@ -93,7 +93,7 @@ export async function CusApprovedBanner({
   hrefPrefix,
 }: {
   cisId: string;
-  hrefPrefix: string;
+  hrefPrefix?: string;
 }) {
   const rows = await db
     .select({
@@ -225,12 +225,14 @@ export async function CusApprovedBanner({
               <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">
                 Update #{idx + 1} &mdash; {dateLabel}
               </span>
-              <Link
-                href={`/${hrefPrefix}/cus/${cus.id}`}
-                className="shrink-0 text-[11px] font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900"
-              >
-                View CUS →
-              </Link>
+              {hrefPrefix && (
+                <Link
+                  href={`/${hrefPrefix}/cus/${cus.id}`}
+                  className="shrink-0 text-[11px] font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                >
+                  View CUS →
+                </Link>
+              )}
             </div>
 
             {/* Field rows */}

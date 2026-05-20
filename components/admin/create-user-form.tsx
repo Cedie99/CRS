@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus } from "lucide-react";
+import { UserPlus, RefreshCw } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { humanizeDisplayValue } from "@/lib/utils";
 
@@ -45,15 +45,35 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
     email: "",
     password: "",
     role: "",
-    agentType: "",
     managerId: "",
     agentCode: "",
     isTopManager: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [codeMode, setCodeMode] = useState<"select" | "generate">("select");
+  const [generatingCode, setGeneratingCode] = useState(false);
 
   const isAgentRole = form.role === "sales_agent" || form.role === "rsr";
+
+  async function fetchGeneratedCode() {
+    setGeneratingCode(true);
+    try {
+      const res = await fetch("/api/admin/agent-code/generate");
+      if (res.ok) {
+        const { code } = await res.json();
+        setForm((f) => ({ ...f, agentCode: code }));
+      }
+    } finally {
+      setGeneratingCode(false);
+    }
+  }
+
+  async function switchCodeMode(mode: "select" | "generate") {
+    setCodeMode(mode);
+    setForm((f) => ({ ...f, agentCode: "" }));
+    if (mode === "generate") fetchGeneratedCode();
+  }
   const isManagerRole = form.role === "sales_manager" || form.role === "rsr_manager";
 
   const managerOptions = managers.map((m) => ({
@@ -85,7 +105,7 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
           email: form.email.trim(),
           password: form.password,
           role: form.role,
-          agentType: form.agentType || null,
+          agentType: isAgentRole ? form.role : null,
           managerId: form.managerId || null,
           agentCode: form.agentCode || null,
           isTopManager: form.isTopManager,
@@ -107,7 +127,8 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
         description: "The user will be prompted to set their own password on first login.",
       });
 
-      router.push("/admin/users");
+      setForm({ fullName: "", email: "", password: "", role: "", agentType: "", managerId: "", agentCode: "", isTopManager: false });
+      setCodeMode("select");
       router.refresh();
     } catch {
       setErrors({ _form: "Something went wrong. Please try again." });
@@ -180,7 +201,7 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
           <Select
             value={form.role}
             onValueChange={(v) =>
-              setForm((f) => ({ ...f, role: v ?? "", agentType: "", managerId: "", agentCode: "", isTopManager: false }))
+              setForm((f) => ({ ...f, role: v ?? "", managerId: "", agentCode: "", isTopManager: false }))
             }
           >
             <SelectTrigger className="w-full">
@@ -218,42 +239,64 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
           <>
             <div className="col-span-full space-y-1.5">
               <Label>Agent code</Label>
-              {availableCodes.length === 0 ? (
-                <div className="flex h-9 items-center rounded-md border border-dashed bg-zinc-50 px-3 text-sm text-zinc-400 italic">
-                  No available agent codes — all are assigned
-                </div>
-              ) : (
-                <Select
-                  value={form.agentCode}
-                  onValueChange={(v) => setForm((f) => ({ ...f, agentCode: v ?? "" }))}
+
+              {/* Mode toggle */}
+              <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => switchCodeMode("select")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "select" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select agent code…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCodes.map((code) => (
-                      <SelectItem key={code} value={code}>{code}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Select from list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchCodeMode("generate")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "generate" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
+                >
+                  Auto-generate
+                </button>
+              </div>
+
+              {codeMode === "select" ? (
+                availableCodes.length === 0 ? (
+                  <div className="flex h-9 items-center rounded-md border border-dashed bg-zinc-50 px-3 text-sm text-zinc-400 italic">
+                    No available predefined codes — use Auto-generate
+                  </div>
+                ) : (
+                  <Select
+                    value={form.agentCode}
+                    onValueChange={(v) => setForm((f) => ({ ...f, agentCode: v ?? "" }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select agent code…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCodes.map((code) => (
+                        <SelectItem key={code} value={code}>{code}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 flex-1 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 font-mono text-sm text-zinc-700">
+                    {generatingCode ? <span className="text-zinc-400">Generating…</span> : (form.agentCode || <span className="text-zinc-400">—</span>)}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-9 gap-1.5"
+                    onClick={fetchGeneratedCode}
+                    disabled={generatingCode}
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${generatingCode ? "animate-spin" : ""}`} />
+                    Regenerate
+                  </Button>
+                </div>
               )}
               {errors.agentCode && <p className="text-xs text-red-600">{errors.agentCode}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Agent type</Label>
-              <Select
-                value={form.agentType}
-                onValueChange={(v) => setForm((f) => ({ ...f, agentType: v ?? "" }))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select type…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sales_agent">Sales Agent</SelectItem>
-                  <SelectItem value="rsr">RSR</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-1.5">

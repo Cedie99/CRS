@@ -23,7 +23,7 @@ export function FloatingWorkflowButton({ step, totalSteps, children }: FloatingW
         <button
           onClick={() => setOpen(true)}
           aria-label="View workflow progress"
-          className="relative h-10 w-10 rounded-full bg-[#2d6e1e] shadow-lg shadow-[#2d6e1e]/40 ring-2 ring-white/30 transition-transform active:scale-95"
+          className="relative h-12 w-12 rounded-full bg-[#2d6e1e] shadow-lg shadow-[#2d6e1e]/40 ring-2 ring-white/30 transition-transform active:scale-95"
         >
           <Milestone className="mx-auto h-4 w-4 text-white" />
           <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold tabular-nums text-[#2d6e1e] shadow">

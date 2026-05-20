@@ -77,7 +77,6 @@ export default async function SupportCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        hrefPrefix="support"
       />
 
       <div className="grid gap-5 xl:grid-cols-5">

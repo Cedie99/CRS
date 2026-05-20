@@ -171,7 +171,6 @@ export default async function ManagerCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        hrefPrefix="manager"
       />
 
       <div className="grid gap-5 xl:grid-cols-5">

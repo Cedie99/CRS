@@ -12,6 +12,47 @@ const EXPORT_LIMIT = 5000;
 type Scope = "agent" | "manager" | "approver" | "finance" | "legal" | "support" | "admin";
 type Format = "csv" | "excel" | "pdf";
 
+// Customer-facing document slots — matches the 16 SCORING_DOC_KEYS shown on the CIS form,
+// in the same order the form renders them.
+const CUSTOMER_DOC_EXPORT: Array<{ key: string; label: string }> = [
+  { key: "docMayorsPermit",       label: "Mayor's Permit" },
+  { key: "docSecDti",             label: "SEC / DTI" },
+  { key: "docBirCertificate",     label: "BIR Cert." },
+  { key: "docValidId",            label: "Valid ID" },
+  { key: "docLocationMap",        label: "Location Map" },
+  { key: "docFinancialStatement", label: "Financial Statement" },
+  { key: "docBankStatement",      label: "Bank Statement" },
+  { key: "docProofOfBilling",     label: "Proof of Billing" },
+  { key: "docLeaseContract",      label: "Lease Contract" },
+  { key: "docProofOfOwnership",   label: "Proof of Ownership" },
+  { key: "docStorePhoto",         label: "Store / Office Photo" },
+  { key: "docSupplierInvoice",    label: "Supplier Invoice" },
+  { key: "docSocialMedia",        label: "Social Media" },
+  { key: "docCompanyWebsite",     label: "Company Website" },
+  { key: "docIsoCertification",   label: "ISO Cert." },
+  { key: "docHalalCertificate",   label: "Halal Cert." },
+];
+
+function docStatusValue(statuses: unknown, key: string): string {
+  if (!statuses || typeof statuses !== "object") return "";
+  const entry = (statuses as Record<string, { status?: string }>)[key];
+  if (!entry) return "";
+  switch (entry.status) {
+    case "approved":     return "✓";
+    case "rejected":     return "✗";
+    case "needs_review": return "~";
+    default:             return "";
+  }
+}
+
+function docsApprovedSummary(statuses: unknown): string {
+  if (!statuses || typeof statuses !== "object") return "—";
+  const entries = Object.values(statuses as Record<string, { status?: string }>);
+  if (entries.length === 0) return "—";
+  const approved = entries.filter((e) => e.status === "approved").length;
+  return `${approved}/${entries.length}`;
+}
+
 const ROLE_SCOPES: Record<string, Scope[]> = {
   sales_agent: ["agent"],
   rsr: ["agent"],
@@ -99,7 +140,8 @@ const C_MUTED      = rgb(0.580, 0.580, 0.580);
 
 interface ColDef { label: string; x: number; w: number; align: "left" | "right" | "center" }
 
-const PDF_COLS: ColDef[] = [
+// Standard columns (non-admin)
+const PDF_COLS_BASE: ColDef[] = [
   { label: "#",               x: MX,        w: 28,  align: "right"  },
   { label: "Trade Name",      x: MX + 28,   w: 180, align: "left"   },
   { label: "Contact Person",  x: MX + 208,  w: 130, align: "left"   },
@@ -109,6 +151,20 @@ const PDF_COLS: ColDef[] = [
   { label: "Customer Code",   x: MX + 618,  w: 70,  align: "center" },
   { label: "Submitted",       x: MX + 688,  w: 98,  align: "left"   },
   // right edge: 28 + 688 + 98 = 814 ✓ (matches PAGE_W - MX)
+];
+
+// Admin columns — compressed to fit a "Docs OK" summary column (9 cols, total TW=786)
+const PDF_COLS_ADMIN: ColDef[] = [
+  { label: "#",               x: MX,        w: 24,  align: "right"  },
+  { label: "Trade Name",      x: MX + 24,   w: 165, align: "left"   },
+  { label: "Contact Person",  x: MX + 189,  w: 110, align: "left"   },
+  { label: "Customer Type",   x: MX + 299,  w: 85,  align: "left"   },
+  { label: "Status",          x: MX + 384,  w: 118, align: "left"   },
+  { label: "Agent Code",      x: MX + 502,  w: 55,  align: "center" },
+  { label: "Customer Code",   x: MX + 557,  w: 65,  align: "center" },
+  { label: "Submitted",       x: MX + 622,  w: 90,  align: "left"   },
+  { label: "Docs OK",         x: MX + 712,  w: 74,  align: "center" },
+  // right edge: 28 + 712 + 74 = 814 ✓
 ];
 
 const TH_H = 22;   // table header row height
@@ -143,17 +199,14 @@ function drawHRule(page: PDFPage, topDownY: number) {
   });
 }
 
-function drawTableHeader(page: PDFPage, topDownY: number, boldFont: PDFFont) {
-  // Header background
+function drawTableHeader(page: PDFPage, topDownY: number, boldFont: PDFFont, cols: ColDef[]) {
   page.drawRectangle({ x: MX, y: py(topDownY + TH_H), width: TW, height: TH_H, color: C_GREEN_HEAD });
-  // Column labels
-  for (const col of PDF_COLS) {
+  for (const col of cols) {
     const label = clamp(col.label, boldFont, col.w - 6, HEAD_S);
     const tx = cellTextX(col, label, boldFont, HEAD_S);
     const ty = py(topDownY + TH_H - (TH_H - HEAD_S) / 2 - HEAD_S * 0.2);
     page.drawText(label, { x: tx, y: ty, size: HEAD_S, font: boldFont, color: C_WHITE });
   }
-  // Bottom border of header
   drawHRule(page, topDownY + TH_H);
 }
 
@@ -163,12 +216,13 @@ function drawDataRow(
   cells: string[],
   rowIdx: number,
   font: PDFFont,
+  cols: ColDef[],
 ) {
   const bg = rowIdx % 2 === 0 ? C_WHITE : C_STRIPE;
   page.drawRectangle({ x: MX, y: py(topDownY + ROW_H), width: TW, height: ROW_H, color: bg });
   const ty = py(topDownY + ROW_H - (ROW_H - FONT_S) / 2 - FONT_S * 0.2);
-  for (let i = 0; i < PDF_COLS.length; i++) {
-    const col = PDF_COLS[i];
+  for (let i = 0; i < cols.length; i++) {
+    const col = cols[i];
     const raw = cells[i] ?? "";
     const text = clamp(raw, font, col.w - 8, FONT_S);
     const tx = cellTextX(col, text, font, FONT_S);
@@ -193,9 +247,11 @@ function drawFooter(page: PDFPage, pageNum: number, totalPages: number, font: PD
 }
 
 async function buildPdf(
-  rows: { no: string; tradeName: string; contactPerson: string; customerType: string; status: string; agentCode: string; customerCode: string; createdAt: string }[],
+  rows: { no: string; tradeName: string; contactPerson: string; customerType: string; status: string; agentCode: string; customerCode: string; createdAt: string; docsOk?: string }[],
   meta: { scope: string; generatedAt: Date; dateFrom?: string; dateTo?: string },
 ): Promise<Uint8Array> {
+  const isAdmin = meta.scope === "admin";
+  const PDF_COLS = isAdmin ? PDF_COLS_ADMIN : PDF_COLS_BASE;
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -290,7 +346,7 @@ async function buildPdf(
       });
 
       const tableHeaderTop = PAGE1_TABLE_TOP;
-      drawTableHeader(page, tableHeaderTop, boldFont);
+      drawTableHeader(page, tableHeaderTop, boldFont, PDF_COLS);
       tableDataY = tableHeaderTop + TH_H;
     } else {
       // ── Mini banner ──
@@ -300,13 +356,13 @@ async function buildPdf(
       const pgW = font.widthOfTextAtSize(pgText, 8);
       page.drawText(pgText, { x: PW - MX - pgW, y: py(PAGEN_TABLE_TOP - 13), size: 8, font, color: C_WHITE });
 
-      drawTableHeader(page, PAGEN_TABLE_TOP, boldFont);
+      drawTableHeader(page, PAGEN_TABLE_TOP, boldFont, PDF_COLS);
       tableDataY = PAGEN_TABLE_TOP + TH_H;
     }
   }
 
   function addRow(cells: string[], dataRowIdx: number) {
-    drawDataRow(page, tableDataY, cells, dataRowIdx, font);
+    drawDataRow(page, tableDataY, cells, dataRowIdx, font, PDF_COLS);
     tableDataY += ROW_H;
   }
 
@@ -320,7 +376,9 @@ async function buildPdf(
     newPage(true);
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const cells = [r.no, r.tradeName, r.contactPerson, r.customerType, r.status, r.agentCode, r.customerCode, r.createdAt];
+      const cells = isAdmin
+        ? [r.no, r.tradeName, r.contactPerson, r.customerType, r.status, r.agentCode, r.customerCode, r.createdAt, r.docsOk ?? "—"]
+        : [r.no, r.tradeName, r.contactPerson, r.customerType, r.status, r.agentCode, r.customerCode, r.createdAt];
 
       // Check if we need a new page
       const isFirstPage = pageNum === 1;
@@ -410,7 +468,7 @@ export async function GET(req: Request) {
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
   const query = db
-    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, customerCode: cisSubmissions.customerCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt })
+    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, customerCode: cisSubmissions.customerCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt, docReviewStatuses: cisSubmissions.docReviewStatuses })
     .from(cisSubmissions)
     .orderBy(desc(cisSubmissions.createdAt))
     .limit(EXPORT_LIMIT);
@@ -445,7 +503,9 @@ export async function GET(req: Request) {
 
   // ── CSV ──────────────────────────────────────────────────────────────────
   if (format === "csv") {
-    const headers = ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"];
+    const baseHeaders = ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"];
+    const docHeaders = scope === "admin" ? CUSTOMER_DOC_EXPORT.map((d) => d.label) : [];
+    const headers = [...baseHeaders, ...docHeaders];
     const lines = [
       `# CIS Export Report — ${scope.toUpperCase()}`,
       `# Generated: ${fmtDateTime(generatedAt)}`,
@@ -455,7 +515,7 @@ export async function GET(req: Request) {
       headers.join(","),
       ...rows.map((r, i) => {
         const ct = r.customerType ?? "end_user";
-        return [
+        const baseValues: (string | number)[] = [
           i + 1,
           r.tradeName ?? "",
           r.contactPerson ?? "",
@@ -465,7 +525,11 @@ export async function GET(req: Request) {
           r.customerCode ?? "",
           fmtDate(r.createdAt),
           fmtDate(r.updatedAt),
-        ].map(escapeCsv).join(",");
+        ];
+        const docValues = scope === "admin"
+          ? CUSTOMER_DOC_EXPORT.map((d) => docStatusValue(r.docReviewStatuses, d.key))
+          : [];
+        return [...baseValues, ...docValues].map(escapeCsv).join(",");
       }),
     ];
     // UTF-8 BOM so Excel opens it correctly
@@ -482,18 +546,22 @@ export async function GET(req: Request) {
   if (format === "excel") {
     const wb = XLSX.utils.book_new();
 
-    // Build sheet data: metadata rows + header row + data rows
+    const baseColHeaders = ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"];
+    const docColHeaders = scope === "admin" ? CUSTOMER_DOC_EXPORT.map((d) => d.label) : [];
+    const colHeaders = [...baseColHeaders, ...docColHeaders];
+    const totalCols = colHeaders.length;
+
     const sheetData: (string | number)[][] = [
       ["CIS EXPORT REPORT"],
       [`Scope: ${scope.toUpperCase()}`],
       [`Generated: ${fmtDateTime(generatedAt)}`],
       [`Period: ${periodStr}`],
       [`Total Records: ${rows.length}`],
-      [],  // spacer
-      ["#", "Trade / Business Name", "Contact Person", "Customer Type", "Status", "Agent Code", "Customer Code", "Date Submitted", "Last Updated"],
+      [],
+      colHeaders,
       ...rows.map((r, i) => {
         const ct = r.customerType ?? "end_user";
-        return [
+        const baseValues: (string | number)[] = [
           i + 1,
           r.tradeName ?? "",
           r.contactPerson ?? "",
@@ -504,13 +572,16 @@ export async function GET(req: Request) {
           fmtDate(r.createdAt),
           fmtDate(r.updatedAt),
         ];
+        const docValues = scope === "admin"
+          ? CUSTOMER_DOC_EXPORT.map((d) => docStatusValue(r.docReviewStatuses, d.key))
+          : [];
+        return [...baseValues, ...docValues];
       }),
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-    // Column widths
-    ws["!cols"] = [
+    const baseCols = [
       { wch: 5  },  // #
       { wch: 35 },  // Trade Name
       { wch: 24 },  // Contact Person
@@ -521,11 +592,10 @@ export async function GET(req: Request) {
       { wch: 18 },  // Date Submitted
       { wch: 18 },  // Last Updated
     ];
+    const docCols = scope === "admin" ? CUSTOMER_DOC_EXPORT.map(() => ({ wch: 16 })) : [];
+    ws["!cols"] = [...baseCols, ...docCols];
 
-    // Merge title cell across all columns
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
-
-    // Freeze at row 8 (data header row is row index 6, data starts at 7)
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } }];
     ws["!freeze"] = { xSplit: 0, ySplit: 7 };
 
     XLSX.utils.book_append_sheet(wb, ws, "CIS Data");
@@ -550,6 +620,7 @@ export async function GET(req: Request) {
       agentCode: r.agentCode ?? "—",
       customerCode: r.customerCode ?? "—",
       createdAt: fmtDate(r.createdAt),
+      docsOk: scope === "admin" ? docsApprovedSummary(r.docReviewStatuses) : undefined,
     };
   });
 

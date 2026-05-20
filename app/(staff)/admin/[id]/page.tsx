@@ -62,7 +62,6 @@ export default async function AdminCisDetailPage({
 
       <CusApprovedBanner
         cisId={cis.id}
-        hrefPrefix="admin"
       />
 
       <div className="grid gap-5 xl:grid-cols-5">
@@ -171,7 +170,9 @@ export default async function AdminCisDetailPage({
             metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
           {canEncode && <ErpEncodeActions cisId={id} backHref="/admin" />}
-          <DeleteCisZone cisId={cis.id} tradeName={cis.tradeName} />
+          <div className="print:hidden">
+            <DeleteCisZone cisId={cis.id} tradeName={cis.tradeName} />
+          </div>
         </div>
 
         <div className="print:hidden min-w-0 space-y-5 xl:col-span-2 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
