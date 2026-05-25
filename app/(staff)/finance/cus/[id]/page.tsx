@@ -397,7 +397,7 @@ export default async function FinanceCusDetailPage({
             )}
             {cis?.financeCreditLimit && (
               <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                {cis.financeCreditLimit}
+                {Number(cis.financeCreditLimit.replace(/[^\d]/g, "")).toLocaleString("en-US")}
               </span>
             )}
           </div>

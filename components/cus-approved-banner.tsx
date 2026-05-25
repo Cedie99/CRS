@@ -80,6 +80,10 @@ function formatValue(field: string, val: any): string | null {
       [r.bank, r.branch].filter(Boolean).join(" - ")
     ).join(", ");
   }
+  if (field === "financeCreditLimit") {
+    const d = String(val).replace(/[^\d]/g, "");
+    return d ? Number(d).toLocaleString("en-US") : String(val);
+  }
   return String(val);
 }
 

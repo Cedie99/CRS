@@ -691,7 +691,7 @@ function Field({
 }) {
   return (
     <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-2">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[11px] print:tracking-[0.1em] print:text-zinc-500">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[13px] print:tracking-[0.1em] print:text-zinc-500">
         {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
         {label}
       </p>
@@ -705,7 +705,7 @@ function Field({
           </p>
         </div>
       )}
-      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[11px] print:leading-snug ${mono ? "font-mono" : ""}`}>
+      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[13px] print:leading-snug ${mono ? "font-mono" : ""}`}>
         {value
           ? value
           : printBlank
@@ -736,7 +736,7 @@ function SectionTitle({
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[11px] print:font-black print:text-zinc-800">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[13px] print:font-black print:text-zinc-800">
         {label}
       </p>
     </div>
@@ -805,14 +805,14 @@ function SignatureBlock({
       </div>
 
       <div className="hidden print:block">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
+        <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
         <div className="border border-zinc-300 bg-white p-1 inline-block mb-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={dataUrl} alt={label} className="h-20 w-auto max-w-45 object-contain" />
         </div>
         <div className="border-t border-zinc-400 pt-1 mt-1">
           {signedAt && (
-            <p className="text-[10px] text-zinc-600">
+            <p className="text-[12px] text-zinc-600">
               Signed:{" "}
               {new Date(signedAt).toLocaleString("en-US", {
                 month: "short", day: "numeric", year: "numeric",
@@ -820,7 +820,7 @@ function SignatureBlock({
               })}
             </p>
           )}
-          <p className="font-mono text-[9px] text-zinc-400 mt-0.5 break-all">{fp}</p>
+          <p className="font-mono text-[11px] text-zinc-400 mt-0.5 break-all">{fp}</p>
         </div>
       </div>
     </div>
@@ -1118,13 +1118,14 @@ export function CisInfoCard(props: CisInfoCardProps) {
           otherMerits,
           additionalNotes,
           financeCreditTerms,
-          financeCreditLimit,
+          financeCreditLimit: financeCreditLimit ? (/^\d+$/.test(financeCreditLimit) ? Number(financeCreditLimit).toLocaleString("en-US") : financeCreditLimit) : financeCreditLimit,
         };
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         function fmtCusVal(field: string, val: any): string {
           if (val === null || val === undefined || val === "") return "—";
           if (field === "customerType") return CUSTOMER_TYPE_LABELS[val] ?? humanizeDisplayValue(val);
+          if (field === "financeCreditLimit") { const d = String(val).replace(/[^\d]/g, ""); return d ? Number(d).toLocaleString("en-US") : String(val); }
           if (field === "financeCreditTerms") return FINANCE_CREDIT_TERMS_LABELS[val] ?? humanizeDisplayValue(val);
           if (field === "businessType") return BUSINESS_TYPE_LABELS[val] ?? humanizeDisplayValue(val);
           if (field === "lineOfBusiness") return val === "other" ? (lineOfBusinessOther ?? val) : (LINE_OF_BUSINESS_LABELS[val] ?? humanizeDisplayValue(val));
@@ -1142,10 +1143,10 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <div className="hidden print:block px-0 pt-0 pb-2">
             {/* Company name — centered */}
             <div className="text-center border-b-2 border-zinc-900 pb-1.5 mb-2">
-              <p className="text-[13px] font-black uppercase tracking-[0.22em] text-zinc-900">
+              <p className="text-[15px] font-black uppercase tracking-[0.22em] text-zinc-900">
                 Oracle Petroleum Corporation
               </p>
-              <p className="text-[9px] text-zinc-500 tracking-widest uppercase mt-0.5">
+              <p className="text-[11px] text-zinc-500 tracking-widest uppercase mt-0.5">
                 Toll Blend Division
               </p>
             </div>
@@ -1156,7 +1157,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <p className="text-sm font-bold uppercase tracking-wide text-zinc-900">
                   Customer Registration Sheet
                 </p>
-                <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-zinc-600">
+                <div className="flex flex-wrap gap-3 mt-1 text-[12px] text-zinc-600">
                   <span>Status: <strong className="text-zinc-900">{STATUS_LABELS[status] ?? humanizeDisplayValue(status)}</strong></span>
                   <span>Type: <strong className="text-zinc-900">{customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "—"}</strong></span>
 
@@ -1166,7 +1167,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   )}
                 </div>
               </div>
-              <div className="shrink-0 text-right text-[10px] text-zinc-400">
+              <div className="shrink-0 text-right text-[12px] text-zinc-400">
                 <p>Form No.: <span className="font-mono font-semibold text-zinc-600">{cisId.slice(0, 8)}</span></p>
                 <p>Submitted: {new Date(createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 <p>Updated: {new Date(updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
@@ -1176,19 +1177,19 @@ export function CisInfoCard(props: CisInfoCardProps) {
             {/* CUS changes table — only if fieldHistory has tracked changes */}
             {cusChangedFields.length > 0 && (
               <div className="mt-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-700 mb-1">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-zinc-700 mb-1">
                   Customer Information Updated via CUS
                 </p>
-                <table className="w-full border-collapse text-[11px]">
+                <table className="w-full border-collapse text-[13px]">
                   <thead>
                     <tr className="bg-zinc-100">
-                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500 w-[30%]">
+                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[12px] font-bold uppercase tracking-widest text-zinc-500 w-[30%]">
                         Field
                       </th>
-                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500 w-[35%]">
+                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[12px] font-bold uppercase tracking-widest text-zinc-500 w-[35%]">
                         Before
                       </th>
-                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500 w-[35%]">
+                      <th className="border border-zinc-400 px-2.5 py-1.5 text-left text-[12px] font-bold uppercase tracking-widest text-zinc-500 w-[35%]">
                         After
                       </th>
                     </tr>
@@ -1339,7 +1340,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[11px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1366,7 +1367,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div>
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[11px]">
+                    <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Name</th>
@@ -1422,7 +1423,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[11px]">
+                    <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Company</th>
@@ -1449,7 +1450,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="mb-4">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
-                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[11px]">
+                    <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
                         <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                           <th className="px-3 py-2 text-xs font-semibold text-zinc-500">Bank</th>
@@ -1773,7 +1774,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <FileText className="h-3.5 w-3.5 print:hidden" />
                 Additional Notes
               </p>
-              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-1 print:text-[11px] print:border-l print:border-zinc-300 print:pl-2">
+              <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap print:rounded-none print:bg-white print:px-0 print:py-1 print:text-[13px] print:border-l print:border-zinc-300 print:pl-2">
                 {additionalNotes}
               </p>
           </SectionCard>
@@ -1798,25 +1799,25 @@ export function CisInfoCard(props: CisInfoCardProps) {
                     ? "border-emerald-200 bg-emerald-50"
                     : "border-dashed border-zinc-200 bg-zinc-50"
                 }`}>
-                  <p className={`mb-1 text-[10px] font-bold uppercase tracking-widest print:text-[11px] ${
+                  <p className={`mb-1 text-[10px] font-bold uppercase tracking-widest print:text-[13px] ${
                     financeCreditLimit || financeCreditTerms ? "text-emerald-700" : "text-zinc-400"
                   }`}>
                     CFO Credit Decision
                   </p>
                   <div className="grid gap-4 sm:grid-cols-2 print:gap-2">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-zinc-600">Credit Limit</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-[12px] print:text-zinc-600">Credit Limit</p>
                       {financeCreditLimit ? (
-                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-base print:text-zinc-900">{financeCreditLimit}</p>
+                        <p className="text-xl font-bold text-emerald-700 leading-tight print:text-base print:text-zinc-900">{/^\d+$/.test(financeCreditLimit!) ? Number(financeCreditLimit).toLocaleString("en-US") : financeCreditLimit}</p>
                       ) : (
                         <div className="h-8 rounded border border-dashed border-zinc-300 bg-white print:h-5" />
                       )}
                       {old("financeCreditLimit") && (
-                        <p className="text-[10px] text-zinc-400 line-through">{old("financeCreditLimit")}</p>
+                        <p className="text-[10px] text-zinc-400 line-through">{/^\d+$/.test(old("financeCreditLimit")!) ? Number(old("financeCreditLimit")).toLocaleString("en-US") : old("financeCreditLimit")}</p>
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-zinc-600">Credit Terms</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 print:text-[12px] print:text-zinc-600">Credit Terms</p>
                       {financeCreditTerms ? (
                         <p className="text-xl font-bold text-emerald-700 leading-tight print:text-base print:text-zinc-900">
                           {FINANCE_CREDIT_TERMS_LABELS[financeCreditTerms] ?? humanizeDisplayValue(financeCreditTerms)}
@@ -1886,7 +1887,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
                 <PenLine className="h-3.5 w-3.5" />
               </span>
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[11px] print:font-black print:text-zinc-800">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[13px] print:font-black print:text-zinc-800">
                 CFO Approval
               </p>
             </div>
@@ -1908,7 +1909,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
             {/* Print layout */}
             <div className="hidden print:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-4">
+              <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-zinc-500 mb-4">
                 Reviewed &amp; Approved by (Chief Finance Officer)
               </p>
 
@@ -1916,7 +1917,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <div className="mb-6">
                 <div className="h-14 border border-dashed border-zinc-300 rounded mb-1" />
                 <div className="border-b-2 border-zinc-700 mb-1" />
-                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Signature over Printed Name</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Signature over Printed Name</p>
               </div>
 
               {/* Date + Position row — each with its own tall writing area */}
@@ -1924,12 +1925,12 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 <div className="w-2/5">
                   <div className="h-8 border border-dashed border-zinc-300 rounded mb-1" />
                   <div className="border-b-2 border-zinc-700 mb-1" />
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Date</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Date</p>
                 </div>
                 <div className="flex-1">
                   <div className="h-8 border border-dashed border-zinc-300 rounded mb-1" />
                   <div className="border-b-2 border-zinc-700 mb-1" />
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Position / Title</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Position / Title</p>
                 </div>
               </div>
             </div>
@@ -2006,8 +2007,8 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {/* Print footer */}
         <div className="hidden print:block border-t border-zinc-900 pt-2 mt-3">
           <div className="flex justify-between items-center">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400">Oracle Petroleum Corporation — Confidential</p>
-            <p className="text-[10px] text-zinc-400 font-mono">{cisId}</p>
+            <p className="text-[12px] uppercase tracking-widest text-zinc-400">Oracle Petroleum Corporation — Confidential</p>
+            <p className="text-[12px] text-zinc-400 font-mono">{cisId}</p>
           </div>
         </div>
 

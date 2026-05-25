@@ -243,8 +243,11 @@ export function CusFinancePanel({
               <Label htmlFor="creditLimit" className="text-xs font-medium text-zinc-600">Credit Limit</Label>
               <Input
                 id="creditLimit"
-                value={creditLimit}
-                onChange={(e) => setCreditLimit(e.target.value)}
+                value={creditLimit ? Number(creditLimit.replace(/,/g, "")).toLocaleString("en-US") : ""}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  setCreditLimit(raw);
+                }}
                 placeholder="e.g. 500,000"
                 className={`h-8 text-sm ${creditDirty ? "border-amber-300 focus-visible:ring-amber-300" : ""}`}
               />
