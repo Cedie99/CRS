@@ -125,6 +125,9 @@ async function notifyParties({
   const appUrl =
     process.env.NEXTAUTH_URL?.replace(/\/$/, "") ??
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  console.log("[workflow] appUrl for email links:", appUrl);
+  console.log("[workflow] NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
+  console.log("[workflow] NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL);
 
   const [agent] = await tx
     .select({ id: users.id, email: users.email, fullName: users.fullName })
