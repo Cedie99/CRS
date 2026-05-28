@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, notifications, users } from "@/lib/db/schema";
 import {
@@ -174,7 +174,7 @@ async function notifyParties({
     const recipients = await tx
       .select({ id: users.id, email: users.email, fullName: users.fullName })
       .from(users)
-      .where(eq(users.role, role as any));
+      .where(and(eq(users.role, role as any), eq(users.isActive, true)));
 
     for (const r of recipients) {
       const reviewUrl = appUrl ? `${appUrl}/${dashPath}/${cisId}` : null;

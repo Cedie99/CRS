@@ -133,6 +133,7 @@ function DynamicTable<T extends { [K in keyof T]: string }>({
     min?: number;
     max?: number;
     step?: number;
+    maxLength?: number;
     title?: string;
     sanitize?: (value: string) => string;
   }[];
@@ -164,6 +165,7 @@ function DynamicTable<T extends { [K in keyof T]: string }>({
                   min={col.min}
                   max={col.max}
                   step={col.step}
+                  maxLength={col.maxLength}
                   title={col.title}
                   disabled={disabled}
                   className="h-8 text-sm"
@@ -585,7 +587,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                     name="contactNumber"
                     placeholder="09XX XXX XXXX"
                     inputMode="tel"
-                    title="Use numbers and phone symbols only"
+                    maxLength={11}
+                    title="Mobile number must be 11 digits"
                     value={contactNumber}
                     onChange={(e) => setContactNumber(sanitizePhoneInput(e.target.value))}
                     disabled={isLoading}
@@ -667,7 +670,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                         name="deliveryMobile"
                         placeholder="09XX XXX XXXX"
                         inputMode="tel"
-                        title="Use numbers and phone symbols only"
+                        maxLength={11}
+                        title="Mobile number must be 11 digits"
                         value={deliveryMobile}
                         onChange={(e) => setDeliveryMobile(sanitizePhoneInput(e.target.value))}
                         disabled={isLoading}
@@ -821,7 +825,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                     label: "Contact number",
                     placeholder: "09XX XXX XXXX",
                     inputMode: "tel",
-                    title: "Use numbers and phone symbols only",
+                    maxLength: 11,
+                    title: "Mobile number must be 11 digits",
                     sanitize: sanitizePhoneInput,
                   },
                 ]}
@@ -845,7 +850,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                     label: "Contact",
                     placeholder: "09XX XXX XXXX",
                     inputMode: "tel",
-                    title: "Use numbers and phone symbols only",
+                    maxLength: 11,
+                    title: "Mobile number must be 11 digits",
                     sanitize: sanitizePhoneInput,
                   },
                 ]}
@@ -1030,8 +1036,9 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                       label: "Contact",
                       placeholder: "09XX XXX XXXX",
                       inputMode: "tel",
+                      maxLength: 11,
                       pattern: "[0-9+\\(\\) -]*",
-                      title: "Use numbers and phone symbols only",
+                      title: "Mobile number must be 11 digits",
                       sanitize: sanitizePhoneInput,
                     },
                     {
@@ -1078,6 +1085,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                       label: "Contact number",
                       placeholder: "09XX-XXX-XXXX",
                       inputMode: "tel",
+                      maxLength: 11,
+                      title: "Mobile number must be 11 digits",
                       sanitize: sanitizePhoneInput,
                     },
                   ]}

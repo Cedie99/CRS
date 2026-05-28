@@ -24,7 +24,7 @@ const numericDecimalString = (label: string) =>
     .trim()
     .regex(DIGITS_OPTIONAL_DECIMAL, `${label} must be a valid number`);
 
-const phoneLikeString = (label: string, min = 7) =>
+const phoneLikeString = (label: string, min = 7, max?: number) =>
   z
     .string()
     .trim()
@@ -33,9 +33,12 @@ const phoneLikeString = (label: string, min = 7) =>
     .regex(PHONE_CHARS, `${label} must contain numbers and phone symbols only`)
     .refine((value) => digitCount(value) >= min, {
       message: `${label} must include at least ${min} digits`,
+    })
+    .refine((value) => !max || digitCount(value) <= max, {
+      message: `${label} must not exceed ${max} digits`,
     });
 
-const optionalPhoneLikeString = (label: string, min = 7) =>
+const optionalPhoneLikeString = (label: string, min = 7, max?: number) =>
   z
     .string()
     .trim()
@@ -43,6 +46,9 @@ const optionalPhoneLikeString = (label: string, min = 7) =>
     .regex(PHONE_CHARS, `${label} must contain numbers and phone symbols only`)
     .refine((value) => value === "" || digitCount(value) >= min, {
       message: `${label} must include at least ${min} digits`,
+    })
+    .refine((value) => value === "" || !max || digitCount(value) <= max, {
+      message: `${label} must not exceed ${max} digits`,
     })
     .optional()
     .or(z.literal(""));
@@ -93,19 +99,19 @@ const ownerRowSchema = z.object({
     .regex(PERCENTAGE, "Ownership percentage must be a valid number (0-100)")
     .optional()
     .or(z.literal("")),
-  contact: z.string().trim().max(50).regex(PHONE_CHARS, "Contact must contain numbers and phone symbols only"),
+  contact: optionalPhoneLikeString("Contact number", 7, 11),
 });
 
 const officerRowSchema = z.object({
   name: z.string().max(255),
   position: z.string().max(100),
-  contact: z.string().trim().max(50).regex(PHONE_CHARS, "Contact must contain numbers and phone symbols only"),
+  contact: optionalPhoneLikeString("Contact number", 7, 11),
 });
 
 const tradeRefRowSchema = z.object({
   company: z.string().max(255),
   address: z.string().max(500),
-  contact: z.string().trim().max(50).regex(PHONE_CHARS, "Contact must contain numbers and phone symbols only"),
+  contact: optionalPhoneLikeString("Contact number", 7, 11),
   years: z
     .string()
     .trim()
@@ -136,6 +142,7 @@ const bankRefRowSchema = z.object({
     }, {
       message: "Account number must contain 6 to 20 digits",
     }),
+  contactNumber: optionalPhoneLikeString("Contact number", 7, 11),
 });
 
 export const cisFormSchema = z.object({
@@ -148,7 +155,7 @@ export const cisFormSchema = z.object({
   // Contact Details
   contactPerson: z.string().min(2, "Contact person is required").max(255),
   emailAddress: z.string().email("Invalid email address"),
-  contactNumber: phoneLikeString("Contact number"),
+  contactNumber: phoneLikeString("Contact number", 7, 11),
   telephoneNumber: optionalPhoneLikeString("Telephone number"),
   website: z.string().max(255).optional().or(z.literal("")),
 
@@ -161,7 +168,7 @@ export const cisFormSchema = z.object({
   deliverySameAsOffice: z.boolean().optional(),
   deliveryAddress: z.string().max(500).optional(),
   deliveryLandmarks: z.string().max(500).optional(),
-  deliveryMobile: optionalPhoneLikeString("Delivery mobile"),
+  deliveryMobile: optionalPhoneLikeString("Delivery mobile", 7, 11),
   deliveryTelephone: optionalPhoneLikeString("Delivery telephone"),
 
   // Business Classification
