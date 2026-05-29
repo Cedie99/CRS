@@ -26,6 +26,11 @@ export async function PATCH(
       status: cusSubmissions.status,
       cisId: cusSubmissions.cisId,
       newCustomerType: cusSubmissions.newCustomerType,
+      newPaymentTerms: cusSubmissions.newPaymentTerms,
+      docValidId: cusSubmissions.docValidId,
+      docSecDti: cusSubmissions.docSecDti,
+      docBirCertificate: cusSubmissions.docBirCertificate,
+      docBankStatement: cusSubmissions.docBankStatement,
     })
     .from(cusSubmissions)
     .where(eq(cusSubmissions.id, id))
@@ -37,17 +42,46 @@ export async function PATCH(
     return NextResponse.json({ error: "Only draft CUS forms can be submitted" }, { status: 409 });
   }
 
-  // Look up the linked CIS to determine routing by customerType
+  // Look up the linked CIS to determine routing by customerType and current payment terms
   const [cis] = await db
     .select({
       customerType: cisSubmissions.customerType,
       tradeName: cisSubmissions.tradeName,
+      paymentTerms: cisSubmissions.paymentTerms,
     })
     .from(cisSubmissions)
     .where(eq(cisSubmissions.id, cus.cisId))
     .limit(1);
 
   if (!cis) return NextResponse.json({ error: "Linked CIS not found" }, { status: 404 });
+
+  // Document validation: if changing from COD to "with_terms", require financial documents
+  const currentPaymentTerms = cis.paymentTerms?.toLowerCase() || "";
+  const newPaymentTerms = cus.newPaymentTerms?.toLowerCase() || "";
+  const isMovingToWithTerms = newPaymentTerms === "with_terms" && currentPaymentTerms !== "with_terms";
+
+  if (isMovingToWithTerms) {
+    const hasValidId = cus.docValidId && Array.isArray(cus.docValidId) && cus.docValidId.length > 0;
+    const hasSecDti = cus.docSecDti && Array.isArray(cus.docSecDti) && cus.docSecDti.length > 0;
+    const hasBir = cus.docBirCertificate && Array.isArray(cus.docBirCertificate) && cus.docBirCertificate.length > 0;
+    const hasBankStatement = cus.docBankStatement && Array.isArray(cus.docBankStatement) && cus.docBankStatement.length > 0;
+
+    const missingDocs: string[] = [];
+    if (!hasValidId) missingDocs.push("Valid ID");
+    if (!hasSecDti) missingDocs.push("SEC/DTI Registration");
+    if (!hasBir) missingDocs.push("BIR Certificate");
+    if (!hasBankStatement) missingDocs.push("Bank Statement");
+
+    if (missingDocs.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Documents required for credit terms",
+          message: `Changing to credit terms requires: ${missingDocs.join(", ")}. Please upload these documents before submitting.`,
+        },
+        { status: 400 }
+      );
+    }
+  }
 
   // If the CUS requests a customer type reclassification, route based on the
   // new type — not the original CIS type.

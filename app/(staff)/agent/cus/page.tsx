@@ -42,6 +42,7 @@ export default async function AgentCusListPage() {
         status: cisSubmissions.status,
         cityMunicipality: cisSubmissions.cityMunicipality,
         businessType: cisSubmissions.businessType,
+        paymentTerms: cisSubmissions.paymentTerms,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.agentId, userId))

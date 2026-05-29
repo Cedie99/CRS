@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Send,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { CusSubmitButton } from "./cus-submit-button";
 import { CusDocSection } from "@/components/cus-doc-section";
@@ -221,6 +222,12 @@ export default async function AgentCusDetailPage({
   const currentStep  = stepIndex(cus.status);
   const reviewerLabel = cis?.customerType === "dealer" ? "Legal Review" : "Finance Review";
   const deniedEvent  = events.findLast((e) => e.action === "denied");
+
+  // Check if changing to credit terms
+  const currentPaymentTerms = cis?.paymentTerms?.toLowerCase() || "";
+  const newPaymentTerms = cus.newPaymentTerms?.toLowerCase() || "";
+  const isMovingToWithTerms = newPaymentTerms === "with_terms" && currentPaymentTerms !== "with_terms";
+  const requiredDocKeys = ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement"];
 
   function humanize(v: string | null | undefined) {
     if (!v) return null;
@@ -497,6 +504,21 @@ export default async function AgentCusDetailPage({
           </div>
         </div>
       )}
+      {isDraft && isMovingToWithTerms && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">Documents Required for Credit Terms</p>
+            <p className="text-sm text-amber-700 mt-1">Changing to credit terms requires the following documents to be uploaded before submission:</p>
+            <ul className="text-sm text-amber-700 mt-2 space-y-1 list-disc list-inside">
+              <li>Valid ID</li>
+              <li>SEC/DTI Registration</li>
+              <li>BIR Certificate</li>
+              <li>Bank Statement</li>
+            </ul>
+          </div>
+        </div>
+      )}
       {isUnderReview && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
           <Clock className="h-5 w-5 shrink-0 text-amber-500 mt-0.5" />
@@ -691,6 +713,8 @@ export default async function AgentCusDetailPage({
                   initialDocs={initialDocs}
                   cisDocs={cisDocs}
                   disabled={false}
+                  isMovingToWithTerms={isMovingToWithTerms}
+                  requiredDocKeys={requiredDocKeys}
                 />
               ) : uploadedSlots.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-zinc-200 py-10 text-center">

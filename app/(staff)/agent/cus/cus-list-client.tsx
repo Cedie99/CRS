@@ -51,6 +51,7 @@ interface ApprovedCis {
   status: string;
   cityMunicipality: string | null;
   businessType: string | null;
+  paymentTerms: string | null;
 }
 
 export function CusListClient({

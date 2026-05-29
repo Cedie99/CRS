@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, FileText, CheckCircle2, FolderOpen } from "lucide-react";
 import { DocUploadSlot } from "@/components/doc-upload-slot";
@@ -15,17 +15,34 @@ export function CusDocSection({
   cisDocs = {},
   disabled = false,
   onDocChange,
+  isMovingToWithTerms = false,
+  requiredDocKeys = [],
 }: {
   cusId: string;
   initialDocs: Record<string, FileEntry[]>;
   cisDocs?: Record<string, FileEntry[]>;
   disabled?: boolean;
   onDocChange?: (key: string, files: FileEntry[]) => void;
+  isMovingToWithTerms?: boolean;
+  requiredDocKeys?: string[];
 }) {
   const [docs, setDocs] = useState<Record<string, FileEntry[]>>(initialDocs);
   const [expanded, setExpanded] = useState<string | null>(null);
   const router = useRouter();
   const endpoint = `/api/cus/${cusId}/docs`;
+
+  // Auto-expand required document sections when moving to credit terms
+  useEffect(() => {
+    if (isMovingToWithTerms) {
+      const missingRequired = requiredDocKeys.filter((key) => {
+        const files = docs[key] ?? [];
+        return files.length === 0;
+      });
+      if (missingRequired.length > 0) {
+        setExpanded(missingRequired[0]);
+      }
+    }
+  }, [isMovingToWithTerms, requiredDocKeys, docs]);
 
   function setDocFiles(key: string, files: FileEntry[]) {
     setDocs((prev) => ({ ...prev, [key]: files }));
@@ -45,9 +62,11 @@ export function CusDocSection({
         const hasCus = cusFiles.length > 0;
         const hasCis = cisFiles.length > 0;
         const isOpen = expanded === slot.key;
+        const isRequired = isMovingToWithTerms && requiredDocKeys.includes(slot.key);
+        const isMissing = isRequired && cusFiles.length === 0;
 
         return (
-          <div key={slot.key}>
+          <div key={slot.key} className={isMissing ? "doc-required-glow" : ""}>
             {/* Row header — always visible */}
             <button
               type="button"

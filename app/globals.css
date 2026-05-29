@@ -222,6 +222,23 @@
   animation: agent-step-shine 1.4s ease-in-out infinite;
 }
 
+@keyframes doc-required-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2), 0 0 12px rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.6);
+  }
+}
+
+.doc-required-glow {
+  animation: doc-required-glow 2s ease-in-out infinite;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
 @media print {
   @page {
     margin: 7mm 10mm;

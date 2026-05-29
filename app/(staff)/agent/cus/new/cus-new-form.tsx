@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Building2, User, MapPin, ArrowRight, Plus, Trash2, Paperclip, X, ChevronDown, FileText } from "lucide-react";
+import { Loader2, Building2, User, MapPin, ArrowRight, Plus, Trash2, Paperclip, X, ChevronDown, FileText, AlertCircle } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   LINE_OF_BUSINESS_OPTIONS,
@@ -54,6 +54,7 @@ interface ApprovedCis {
   status: string;
   cityMunicipality: string | null;
   businessType: string | null;
+  paymentTerms: string | null;
 }
 
 interface OwnerRow { name: string; nationality: string; percentage: string; contact: string }
@@ -161,6 +162,16 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
   const [newAdditionalNotes, setNewAdditionalNotes] = useState("");
 
   const selected = approvedCisList.find((c) => c.id === cisId) ?? null;
+
+  // Auto-expand documents when changing to credit terms
+  const isMovingToWithTerms = newPaymentTerms === "with_terms" && selected?.paymentTerms?.toLowerCase() !== "with_terms";
+  const requiredDocKeys = ["docValidId", "docSecDti", "docBirCertificate", "docBankStatement"];
+
+  useEffect(() => {
+    if (isMovingToWithTerms) {
+      setDocsExpanded(true);
+    }
+  }, [isMovingToWithTerms]);
 
   function updateOwner(i: number, field: keyof OwnerRow, val: string) {
     setOwners(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
@@ -371,6 +382,25 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
         <p className="text-xs text-zinc-400">Visible to the reviewer.</p>
       </div>
 
+      {/* Credit Terms Warning Banner */}
+      {isMovingToWithTerms && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">Documents Required for Credit Terms</p>
+              <p className="text-sm text-amber-700 mt-1">Changing to credit terms requires the following documents to be uploaded before submission:</p>
+              <ul className="text-sm text-amber-700 mt-2 space-y-1 list-disc list-inside">
+                <li>Valid ID</li>
+                <li>SEC/DTI Registration</li>
+                <li>BIR Certificate</li>
+                <li>Bank Statement</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Requested changes */}
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 divide-y divide-zinc-100">
         <div className="px-4 pt-3 pb-2">
@@ -542,6 +572,23 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
                   ))}
                 </SelectContent>
               </Select>
+              {newPaymentTerms === "with_terms" && selected?.paymentTerms?.toLowerCase() !== "with_terms" && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-amber-800">Documents Required for Credit Terms</p>
+                      <p className="text-xs text-amber-700 mt-1">Changing to credit terms requires the following documents to be uploaded:</p>
+                      <ul className="text-xs text-amber-700 mt-1.5 space-y-0.5 list-disc list-inside">
+                        <li>Valid ID</li>
+                        <li>SEC/DTI Registration</li>
+                        <li>BIR Certificate</li>
+                        <li>Bank Statement</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="newLineOfBusiness" className="text-xs">Line of Business</Label>
@@ -847,8 +894,10 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           <div className="border-t border-zinc-200 divide-y divide-zinc-100">
             {ALL_DOC_SLOTS.map((slot) => {
               const staged = stagedDocs[slot.key] ?? [];
+              const isRequired = isMovingToWithTerms && requiredDocKeys.includes(slot.key);
+              const isMissing = isRequired && staged.length === 0;
               return (
-                <div key={slot.key} className="px-4 py-3 space-y-2 bg-white">
+                <div key={slot.key} className={`px-4 py-3 space-y-2 bg-white ${isMissing ? "doc-required-glow" : ""}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs leading-snug ${staged.length > 0 ? "font-medium text-zinc-900" : "text-zinc-600"}`}>
                       {slot.label}
