@@ -617,6 +617,42 @@ async function notifyParties({
       }),
     );
   } else if (action === "erp_encoded") {
+    // Notify the customer — onboarding complete
+    if (cis.emailAddress) {
+      const customerName = cis.contactPerson ?? "Valued Customer";
+      emailJobs.push({
+        to: cis.emailAddress,
+        subject: `[CRS] Your account is now active – ${label}`,
+        text: [
+          `Hello ${customerName},`,
+          "",
+          `Great news! Your Customer Information Sheet for ${label} has been successfully processed and encoded in our ERP system.`,
+          "Your account is now fully active and ready for transactions.",
+          "",
+          `Business Name: ${label}`,
+          `CIS ID: ${cisId}`,
+          "",
+          "If you have any questions, please contact your assigned sales agent.",
+          "",
+          "This is an automated notification from the Oracle Petroleum CRS.",
+        ].join("\n"),
+        html: buildEmailHtml({
+          name: customerName,
+          title: "Your Account is Now Active",
+          body: `Great news! Your Customer Information Sheet for <strong>${label}</strong> has been successfully processed and encoded in our ERP system.<br><br>Your account is now <strong>fully active</strong> and ready for transactions. If you have any questions, please contact your assigned sales agent.`,
+          cisId,
+          accentColor: "#1a6e3c",
+          statusBadge: { label: "Account Active", color: "#16a34a" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Status", value: "Onboarding Complete" },
+          ],
+        }),
+      });
+    }
+
+    // Notify the agent — onboarding complete
     if (agent) {
       const viewUrl = appUrl ? `${appUrl}/agent/${cisId}` : null;
       addNotification(

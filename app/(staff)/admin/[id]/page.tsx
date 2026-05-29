@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { cisSubmissions, workflowEvents, users } from "@/lib/db/schema";
 import { CisInfoCard } from "@/components/cis-info-card";
 import { AuditTimeline } from "@/components/audit-timeline";
-import { ErpEncodeActions } from "@/components/actions/erp-encode-actions";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +46,6 @@ export default async function AdminCisDetailPage({
     .innerJoin(users, eq(workflowEvents.actorId, users.id))
     .where(eq(workflowEvents.cisId, id))
     .orderBy(workflowEvents.createdAt);
-
-  const canEncode = cis.status === "approved";
 
   const fieldHistory = await getCusFieldHistory(cis.id);
 
@@ -169,7 +166,6 @@ export default async function AdminCisDetailPage({
             docReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
             metricPoints={(cis.financeMetricPoints as any) ?? undefined}
           />
-          {canEncode && <ErpEncodeActions cisId={id} backHref="/admin" />}
           <div className="print:hidden">
             <DeleteCisZone cisId={cis.id} tradeName={cis.tradeName} />
           </div>

@@ -1,6 +1,6 @@
 {
-  "id": "9b394fa2-7f9d-4821-b49b-8a5cf2ded9de",
-  "prevId": "f938cc10-ff4d-4fb0-b3a3-6e4ddc4de720",
+  "id": "62adcfd9-3115-4b0c-bfa2-47a1a12eda1d",
+  "prevId": "9b394fa2-7f9d-4821-b49b-8a5cf2ded9de",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -395,6 +395,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "agent_account_type": {
+          "name": "agent_account_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "agent_account_specialist_first": {
           "name": "agent_account_specialist_first",
           "type": "varchar(255)",
@@ -407,14 +413,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "account_specialist_first_name": {
+          "name": "account_specialist_first_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "account_specialist_last_name": {
+          "name": "account_specialist_last_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "agent_sales_specialist": {
           "name": "agent_sales_specialist",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
+        "sales_specialist": {
+          "name": "sales_specialist",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "agent_sales_manager": {
           "name": "agent_sales_manager",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_manager": {
+          "name": "sales_manager",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
@@ -431,14 +461,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "tpc_first_name": {
+          "name": "tpc_first_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tpc_last_name": {
+          "name": "tpc_last_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "doc_agent_other_requirements": {
           "name": "doc_agent_other_requirements",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
+        "agent_completion_note": {
+          "name": "agent_completion_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "sales_support_notes": {
           "name": "sales_support_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sales_support_note": {
+          "name": "sales_support_note",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -581,9 +635,39 @@
           "primaryKey": false,
           "notNull": false
         },
+        "finance_payment_mode": {
+          "name": "finance_payment_mode",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_payment_term_days": {
+          "name": "finance_payment_term_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finance_assessment_note": {
+          "name": "finance_assessment_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doc_cfo_credit_terms": {
+          "name": "doc_cfo_credit_terms",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "doc_sir_resty_signed": {
           "name": "doc_sir_resty_signed",
           "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cfo_signed_at": {
+          "name": "cfo_signed_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
@@ -647,6 +731,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "customer_code": {
+          "name": "customer_code",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -759,6 +849,21 @@
           "columns": [
             {
               "expression": "customer_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cis_is_archived_idx": {
+          "name": "cis_is_archived_idx",
+          "columns": [
+            {
+              "expression": "is_archived",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1794,7 +1899,7 @@
           "name": "cis_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "cus_id": {
           "name": "cus_id",
@@ -1988,6 +2093,55 @@
         "avatar_url": {
           "name": "avatar_url",
           "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signature_name": {
+          "name": "signature_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signature_title": {
+          "name": "signature_title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signature_text": {
+          "name": "signature_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notification_preferences": {
+          "name": "notification_preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile_preferences": {
+          "name": "profile_preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role_settings": {
+          "name": "role_settings",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },

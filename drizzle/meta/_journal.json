@@ -50,6 +50,13 @@
       "when": 1778640609395,
       "tag": "0007_cus_expanded_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780024770473,
+      "tag": "0007_hard_king_cobra",
+      "breakpoints": true
     }
   ]
 }
