@@ -99,10 +99,10 @@ export function AgentDocSection({
                     label={slot.label}
                     endpoint={endpoint}
                     files={rejectedFiles}
-                    onChange={() => {}}
-                    disabled
+                    onChange={(files) => setDocFiles(slot.key, [...files, ...newFiles])}
+                    disabled={disabled}
                     allowRename={false}
-                    allowDelete={false}
+                    allowDelete={!disabled}
                     reviewStatus="rejected"
                     hideUploadButtons
                   />

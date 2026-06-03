@@ -70,7 +70,7 @@ export function AgentResubmitForm({ cisId, returnedBy, canResubmit }: AgentResub
         <div className="flex flex-col gap-2 border-t border-rose-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-rose-600">
             {!canResubmit
-              ? "Upload at least one replacement file for a rejected document to enable resubmission."
+              ? "Upload a replacement file or delete at least one rejected document to enable resubmission."
               : returnedBy
                 ? `This will route the form back to ${returnedBy} for review.`
                 : "This will route the form back for review."}

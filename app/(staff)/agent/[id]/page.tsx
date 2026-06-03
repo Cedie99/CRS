@@ -427,7 +427,10 @@ export default async function AgentCisDetailPage({
             if (cutoff === null || Number.isNaN(cutoff)) return true;
 
             const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
-
+            
+            // If the document has been deleted (no files), don't show it in the summary
+            if (!files || files.length === 0) return false;
+            
             return !files.some((file) => {
 
               if (!file.uploadedAt) return false;
@@ -475,7 +478,11 @@ export default async function AgentCisDetailPage({
         return rejectedKeys.some((key) => {
 
           const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
-
+          
+          // If the document has been deleted (no files), that counts as addressing the rejection
+          if (!files || files.length === 0) return true;
+          
+          // Otherwise, check if there's a replacement upload after the rejection timestamp
           return files.some((file) => {
 
             if (!file.uploadedAt) return false;
@@ -624,9 +631,9 @@ export default async function AgentCisDetailPage({
 
                         "Check the list of rejected documents below.",
 
-                        "Upload a replacement file for each rejected document.",
+                        "Upload a replacement file OR delete the rejected document.",
 
-                        "Click \u201CResubmit\u201D once all replacements are uploaded.",
+                        "Click \u201CResubmit\u201D once all rejections are addressed.",
 
                       ]
 

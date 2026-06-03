@@ -72,8 +72,13 @@ export async function PATCH(
       );
     }
 
-    const hasReplacementUpload = rejectedKeys.some((key) => {
+    const hasAddressedRejection = rejectedKeys.some((key) => {
       const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
+      
+      // If the document has been deleted (no files), that counts as addressing the rejection
+      if (!files || files.length === 0) return true;
+      
+      // Otherwise, check if there's a replacement upload after the rejection timestamp
       return files.some((file) => {
         if (!file.uploadedAt) return false;
         const uploadedAt = Date.parse(file.uploadedAt);
@@ -81,12 +86,37 @@ export async function PATCH(
       });
     });
 
-    if (!hasReplacementUpload) {
+    if (!hasAddressedRejection) {
       return NextResponse.json(
-        { error: "Upload at least one replacement file for the rejected documents before resubmitting." },
+        { error: "Upload a replacement file or delete the rejected documents before resubmitting." },
         { status: 409 }
       );
     }
+
+    // Clear rejected status for documents that have been deleted or replaced
+    const updatedDocReviewStatuses = { ...(cis.docReviewStatuses as DocReviewStatuses | null) ?? {} };
+    rejectedKeys.forEach((key) => {
+      const files = ((cis as Record<string, unknown>)[key] as FileEntry[] | null | undefined) ?? [];
+      
+      // If document was deleted (no files), clear its status entirely
+      if (!files || files.length === 0) {
+        delete updatedDocReviewStatuses[key];
+      } else {
+        // If document was replaced (has new files after cutoff), clear its rejected status
+        const hasReplacement = files.some((file) => {
+          if (!file.uploadedAt) return false;
+          const uploadedAt = Date.parse(file.uploadedAt);
+          return !Number.isNaN(uploadedAt) && uploadedAt > cutoff;
+        });
+        if (hasReplacement) {
+          delete updatedDocReviewStatuses[key];
+        }
+      }
+    });
+
+    await db.update(cisSubmissions)
+      .set({ docReviewStatuses: updatedDocReviewStatuses })
+      .where(eq(cisSubmissions.id, id));
   }
 
   // Get the actor's role to determine where to route
