@@ -1,132 +1,47 @@
 import { NextResponse } from "next/server";
-
 import { eq } from "drizzle-orm";
-
 import { auth } from "@/lib/auth";
-
 import { db } from "@/lib/db";
-
 import { cisSubmissions } from "@/lib/db/schema";
-
-import { salesSupportSubmitSchema } from "@/lib/validations/cis";
-
+import { denySchema } from "@/lib/validations/cis";
 import { transitionCis } from "@/lib/workflow";
 
-
-
 export async function PATCH(
-
   req: Request,
-
   { params }: { params: Promise<{ id: string }> }
-
 ) {
-
   const session = await auth();
-
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  if (session.user.role !== "sales_support") {
-
+  if (session.user.role !== "legal_approver") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
   }
-
-
 
   const { id } = await params;
 
-
-
   const [cis] = await db
-
-    .select({ id: cisSubmissions.id, status: cisSubmissions.status })
-
+    .select({ status: cisSubmissions.status })
     .from(cisSubmissions)
-
     .where(eq(cisSubmissions.id, id))
-
     .limit(1);
 
-
-
   if (!cis) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  if (cis.status !== "approved") {
-
-    return NextResponse.json({ error: "CIS is not approved" }, { status: 409 });
-
+  if (cis.status !== "pending_legal_review") {
+    return NextResponse.json({ error: "CIS is not pending legal review" }, { status: 409 });
   }
-
-
 
   const body = await req.json();
-
-  const parsed = salesSupportSubmitSchema.safeParse(body);
-
+  const parsed = denySchema.safeParse(body);
   if (!parsed.success) {
-
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
-
   }
 
-
-
-  const {
-
-    salesSupportPriceList1,
-
-    salesSupportPriceList2,
-
-    salesSupportSalesType,
-
-    salesSupportVatCode,
-
-    salesSupportOtherRemarks,
-
-  } = parsed.data;
-
-
-
-  await db
-
-    .update(cisSubmissions)
-
-    .set({
-
-      salesSupportPriceList1,
-
-      salesSupportPriceList2,
-
-      salesSupportSalesType,
-
-      salesSupportVatCode,
-
-      salesSupportOtherRemarks: salesSupportOtherRemarks || null,
-
-      updatedAt: new Date(),
-
-    })
-
-    .where(eq(cisSubmissions.id, id));
-
-
-
   await transitionCis({
-
     cisId: id,
-
-    toStatus: "pending_erp_encoding",
-
-    action: "sales_support_submitted",
-
+    toStatus: "denied",
+    action: "denied",
     actorId: session.user.id,
-
+    note: parsed.data.note,
   });
 
-
-
   return NextResponse.json({ success: true });
-
 }
-

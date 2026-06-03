@@ -1495,7 +1495,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasAgentInfo && (
           <SectionCard>
             <SectionTitle icon={User} label="Agent Information" />
-            {(agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast) && (
+            {(agentAccountSpecialistFirst || agentAccountSpecialistLast || agentSalesSpecialist || agentSalesManager || agentTpcFirst || agentTpcLast || salesSupportAccountType) && (
               <div className="grid gap-5 sm:grid-cols-2 print:gap-2">
                 {(agentAccountSpecialistFirst || agentAccountSpecialistLast) && (
                   <Field label="Account Specialist" value={[agentAccountSpecialistFirst, agentAccountSpecialistLast].filter(Boolean).join(" ")} icon={User} />
@@ -1505,6 +1505,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                 {(agentTpcFirst || agentTpcLast) && (
                   <Field label="TPC" value={[agentTpcFirst, agentTpcLast].filter(Boolean).join(" ")} icon={User} />
                 )}
+                {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} icon={Building2} />}
               </div>
             )}
             {agentOtherDocs.length > 0 && (
@@ -1941,7 +1942,6 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <SectionCard>
             <SectionTitle icon={Users} label="Sales Support Evaluation" />
             <div className="grid gap-5 sm:grid-cols-2 print:gap-2">
-              {salesSupportAccountType && <Field label="Account Type" value={salesSupportAccountType} />}
               {salesSupportPriceList1 && <Field label="Price List 1" value={salesSupportPriceList1} />}
               {salesSupportPriceList2 && <Field label="Price List 2" value={salesSupportPriceList2} />}
               {salesSupportSalesType && <Field label="Sales Type" value={salesSupportSalesType} />}

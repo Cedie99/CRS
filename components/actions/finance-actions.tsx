@@ -92,7 +92,7 @@ export function FinanceActions({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"forward" | "return" | null>(null);
+  const [action, setAction] = useState<"forward" | "return" | "reject" | null>(null);
   const [note, setNote] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -147,7 +147,7 @@ export function FinanceActions({
     return Object.keys(errors).length === 0;
   }
 
-  function openDialog(a: "forward" | "return") {
+  function openDialog(a: "forward" | "return" | "reject") {
     if (a === "forward" && !validateFields()) return;
     setAction(a);
     setNote("");
@@ -164,9 +164,9 @@ export function FinanceActions({
     if (!action) return;
     setDialogError("");
 
-    if (action === "return" && note.trim().length < 10) {
+    if ((action === "return" || action === "reject") && note.trim().length < 10) {
       setDialogError(
-        "Please provide a return reason of at least 10 characters.",
+        "Please provide a reason of at least 10 characters.",
       );
       return;
     }
@@ -196,8 +196,15 @@ export function FinanceActions({
           return;
         }
       } else {
+        let endpoint: string;
+        if (action === "reject") {
+          endpoint = "finance-reject";
+        } else {
+          endpoint = denyEndpoint ?? "finance-deny";
+        }
+        
         const res = await fetch(
-          denyEndpoint ?? `/api/cis/${cisId}/finance-deny`,
+          `/api/cis/${cisId}/${endpoint}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -220,6 +227,11 @@ export function FinanceActions({
         toast.success({
           title: "Forwarded to Senior Approver.",
           description: "The Senior Approver has been notified for final review.",
+        });
+      } else if (action === "reject") {
+        toast.error({
+          title: "Form rejected.",
+          description: "The form has been rejected. The agent must redo the customer fillup and submission.",
         });
       } else {
         toast.error({
@@ -446,10 +458,19 @@ export function FinanceActions({
                 onClick={() => openDialog("return")}
                 disabled={isLoading || !canReturn}
                 title={!canReturn ? "Reject at least one document before returning the form" : undefined}
-                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto disabled:opacity-50"
+                className="w-full gap-2 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 sm:w-auto disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 Return
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => openDialog("reject")}
+                disabled={isLoading}
+                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+              >
+                <XCircle className="h-4 w-4" />
+                Reject Form
               </Button>
             </div>
           </div>
@@ -463,6 +484,8 @@ export function FinanceActions({
             <DialogTitle>
               {action === "forward"
                 ? "Forward to Senior Approver"
+                : action === "reject"
+                ? "Reject Form"
                 : "Return to Agent"}
             </DialogTitle>
           </DialogHeader>
@@ -470,12 +493,14 @@ export function FinanceActions({
           <p className="text-sm text-zinc-600">
             {action === "forward"
               ? "You are forwarding this submission to the Senior Approver for final decision. You may add an optional note."
+              : action === "reject"
+              ? "You are rejecting this entire form. The agent must redo the customer fillup and submission. Please explain why."
               : "You are returning this submission to the agent. Please explain why it needs corrections."}
           </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="dialog-note">
-              {action === "forward" ? "Note (optional)" : "Return reason *"}
+              {action === "forward" ? "Note (optional)" : "Reason *"}
             </Label>
             {action === "forward" ? (
               <DecisionNoteTemplates
@@ -498,6 +523,8 @@ export function FinanceActions({
               placeholder={
                 action === "forward"
                   ? "Finance review notes…"
+                  : action === "reject"
+                  ? "Reason for rejection…"
                   : "Reason for return…"
               }
               disabled={isLoading}
@@ -518,12 +545,14 @@ export function FinanceActions({
             <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              variant={action === "return" ? "destructive" : "default"}
+              variant={action === "return" ? "default" : action === "reject" ? "destructive" : "default"}
             >
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
                   ? "Yes, Forward"
+                  : action === "reject"
+                  ? "Yes, Reject"
                   : "Yes, Return"}
             </Button>
           </DialogFooter>

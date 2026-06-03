@@ -141,7 +141,7 @@ export function DashboardFilters({
               placeholder="Search a name…"
               defaultValue={q}
               onChange={(e) => updateParams({ q: e.target.value })}
-              className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none sm:w-80 sm:text-sm"
+              className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-3 pr-9 text-base text-zinc-900 focus:border-zinc-400 focus:outline-none sm:w-80 sm:text-sm"
             />
             <button
               type="button"

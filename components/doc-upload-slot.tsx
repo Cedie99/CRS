@@ -240,20 +240,25 @@ export function DocUploadSlot({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: facing } },
+        video: { 
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
         audio: false,
       });
       streamRef.current = stream;
       setCameraOpen(true);
       setCameraFacing(facing);
 
-      setTimeout(() => {
-        if (!videoRef.current) return;
+      if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        void videoRef.current.play().catch(() => {
-          setCameraError("Unable to start camera preview.");
-        });
-      }, 0);
+        videoRef.current.onloadedmetadata = () => {
+          void videoRef.current?.play().catch(() => {
+            setCameraError("Unable to start camera preview.");
+          });
+        };
+      }
     } catch {
       cameraInputRef.current?.click();
     }

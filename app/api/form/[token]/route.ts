@@ -68,6 +68,7 @@ export async function POST(
   const signedAt = new Date();
   const seal = computeSeal(cis.id, signedAt, parsed.data.customerSignature);
   const fp = sha256Fingerprint(parsed.data.customerSignature);
+  const normalizedEmail = parsed.data.emailAddress?.trim() || null;
 
   const possiblePoints = computePossiblePoints({
     docMayorsPermit:       body.docMayorsPermit,
@@ -97,6 +98,7 @@ export async function POST(
       .update(cisSubmissions)
       .set({
         ...parsed.data,
+        emailAddress: normalizedEmail,
         tinNumber,
         status: "submitted",
         customerSignedAt: signedAt,

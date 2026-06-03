@@ -24,12 +24,12 @@ interface LegalActionsProps {
 export function LegalActions({ cisId }: LegalActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"forward" | "return" | null>(null);
+  const [action, setAction] = useState<"forward" | "return" | "reject" | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  function openDialog(a: "forward" | "return") {
+  function openDialog(a: "forward" | "return" | "reject") {
     setAction(a);
     setNote("");
     setError("");
@@ -45,14 +45,22 @@ export function LegalActions({ cisId }: LegalActionsProps) {
     if (!action) return;
     setError("");
 
-    if (action === "return" && note.trim().length < 10) {
-      setError("Please provide a return reason of at least 10 characters.");
+    if ((action === "return" || action === "reject") && note.trim().length < 10) {
+      setError("Please provide a reason of at least 10 characters.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const endpoint = action === "forward" ? "legal-forward" : "legal-deny";
+      let endpoint: string;
+      if (action === "forward") {
+        endpoint = "legal-forward";
+      } else if (action === "reject") {
+        endpoint = "legal-reject";
+      } else {
+        endpoint = "legal-deny";
+      }
+      
       const res = await fetch(`/api/cis/${cisId}/${endpoint}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -68,6 +76,11 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         toast.success({
           title: "Forwarded to Finance.",
           description: "Finance can now review this submission.",
+        });
+      } else if (action === "reject") {
+        toast.error({
+          title: "Form rejected.",
+          description: "The form has been rejected. The agent must redo the customer fillup and submission.",
         });
       } else {
         toast.error({
@@ -102,10 +115,17 @@ export function LegalActions({ cisId }: LegalActionsProps) {
           </Button>
           <Button
             onClick={() => openDialog("return")}
-            className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+            className="w-full gap-2 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
             Return
+          </Button>
+          <Button
+            onClick={() => openDialog("reject")}
+            className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+          >
+            <XCircle className="h-4 w-4" />
+            Reject Form
           </Button>
         </div>
       </CardContent>
@@ -114,19 +134,21 @@ export function LegalActions({ cisId }: LegalActionsProps) {
         <DialogContent showCloseButton={!isLoading}>
           <DialogHeader>
             <DialogTitle>
-              {action === "forward" ? "Forward to Finance" : "Return to Agent"}
+              {action === "forward" ? "Forward to Finance" : action === "reject" ? "Reject Form" : "Return to Agent"}
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-sm text-zinc-600">
             {action === "forward"
               ? "You are forwarding this submission to the Finance team. You may add an optional note."
+              : action === "reject"
+              ? "You are rejecting this entire form. The agent must redo the customer fillup and submission. Please explain why."
               : "You are returning this submission to the agent. Please explain why it needs corrections."}
           </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="dialog-note">
-              {action === "forward" ? "Note (optional)" : "Return reason *"}
+              {action === "forward" ? "Note (optional)" : "Reason *"}
             </Label>
             {action === "forward" ? (
               <DecisionNoteTemplates type="legal_forward_note" onSelect={setNote} disabled={isLoading} />
@@ -139,7 +161,7 @@ export function LegalActions({ cisId }: LegalActionsProps) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={
-                action === "forward" ? "Legal clearance notes…" : "Reason for return…"
+                action === "forward" ? "Legal clearance notes…" : action === "reject" ? "Reason for rejection…" : "Reason for return…"
               }
               disabled={isLoading}
             />
@@ -153,12 +175,14 @@ export function LegalActions({ cisId }: LegalActionsProps) {
             <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              variant={action === "return" ? "destructive" : "default"}
+              variant={action === "return" ? "default" : action === "reject" ? "destructive" : "default"}
             >
               {isLoading
                 ? "Submitting…"
                 : action === "forward"
                 ? "Yes, Forward"
+                : action === "reject"
+                ? "Yes, Reject"
                 : "Yes, Return"}
             </Button>
           </DialogFooter>

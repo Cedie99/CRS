@@ -240,6 +240,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
   const formRef = useRef<HTMLFormElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const STORAGE_KEY = `cis_draft_${token}`;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -287,6 +289,116 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
   const [debugStep, setDebugStep] = useState("idle");
   const withTermsSelected = paymentTerms === "with_terms";
 
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.currentStep) setCurrentStep(data.currentStep);
+        if (data.businessType) setBusinessType(data.businessType);
+        if (data.lineOfBusiness) setLineOfBusiness(data.lineOfBusiness);
+        if (data.businessActivity) setBusinessActivity(data.businessActivity);
+        if (data.paymentTerms) setPaymentTerms(data.paymentTerms);
+        if (data.salesChannel) setSalesChannel(data.salesChannel);
+        if (data.contactNumber) setContactNumber(data.contactNumber);
+        if (data.telephoneNumber) setTelephoneNumber(data.telephoneNumber);
+        if (data.deliveryMobile) setDeliveryMobile(data.deliveryMobile);
+        if (data.deliveryTelephone) setDeliveryTelephone(data.deliveryTelephone);
+        if (data.tinNumber) setTinNumber(data.tinNumber);
+        if (data.numberOfEmployees) setNumberOfEmployees(data.numberOfEmployees);
+        if (data.businessLife) setBusinessLife(data.businessLife);
+        if (data.howLongAtAddress) setHowLongAtAddress(data.howLongAtAddress);
+        if (data.numberOfBranches) setNumberOfBranches(data.numberOfBranches);
+        if (data.deliverySameAsOffice !== undefined) setDeliverySameAsOffice(data.deliverySameAsOffice);
+        if (data.owners && Array.isArray(data.owners)) setOwners(data.owners);
+        if (data.officers && Array.isArray(data.officers)) setOfficers(data.officers);
+        if (data.tradeRefs && Array.isArray(data.tradeRefs)) setTradeRefs(data.tradeRefs);
+        if (data.bankRefs && Array.isArray(data.bankRefs)) setBankRefs(data.bankRefs);
+        if (data.declarationChecked) setDeclarationChecked(data.declarationChecked);
+        
+        // Restore uncontrolled form fields after a small delay to ensure DOM is ready
+        setTimeout(() => {
+          if (data.formFields) {
+            Object.entries(data.formFields).forEach(([name, value]) => {
+              const input = formRef.current?.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement | null;
+              if (input && value) input.value = value as string;
+            });
+          }
+        }, 100);
+      }
+    } catch (e) {
+      console.error("Failed to load draft from localStorage:", e);
+    }
+  }, [STORAGE_KEY]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      // Capture uncontrolled form field values
+      const formFields: Record<string, string> = {};
+      if (formRef.current) {
+        const formData = new FormData(formRef.current);
+        formData.forEach((value, name) => {
+          if (value) formFields[name] = value as string;
+        });
+      }
+      
+      const data = {
+        currentStep,
+        businessType,
+        lineOfBusiness,
+        businessActivity,
+        paymentTerms,
+        salesChannel,
+        contactNumber,
+        telephoneNumber,
+        deliveryMobile,
+        deliveryTelephone,
+        tinNumber,
+        numberOfEmployees,
+        businessLife,
+        howLongAtAddress,
+        numberOfBranches,
+        deliverySameAsOffice,
+        owners,
+        officers,
+        tradeRefs,
+        bankRefs,
+        declarationChecked,
+        formFields,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error("Failed to save draft to localStorage:", e);
+    }
+  }, [
+    STORAGE_KEY,
+    currentStep,
+    businessType,
+    lineOfBusiness,
+    businessActivity,
+    paymentTerms,
+    salesChannel,
+    contactNumber,
+    telephoneNumber,
+    deliveryMobile,
+    deliveryTelephone,
+    tinNumber,
+    numberOfEmployees,
+    businessLife,
+    howLongAtAddress,
+    numberOfBranches,
+    deliverySameAsOffice,
+    owners,
+    officers,
+    tradeRefs,
+    bankRefs,
+    declarationChecked,
+  ]);
+
   // Documents required based on customer type + payment terms (per business rules from meetings)
   // COD end_user / dealer → ID only
   // COD distributor / private_label / toll_blend → ID + DTI/SEC + BIR
@@ -325,7 +437,6 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
       if (!fd.get("corporateName")) errs.corporateName = "Required";
       if (!fd.get("tradeName")) errs.tradeName = "Required";
       if (!fd.get("contactPerson")) errs.contactPerson = "Required";
-      if (!fd.get("emailAddress")) errs.emailAddress = "Required";
       if (!contactNumber) errs.contactNumber = "Required";
     }
     if (step === 2) {
@@ -391,6 +502,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
     const cleanTradeRefs = tradeRefs.filter((r) => r.company.trim());
     const cleanBankRefs  = bankRefs.filter((r) => r.bank.trim());
 
+    const emailAddressValue = ((fd.get("emailAddress") as string) || "").trim();
+
     const data = {
       corporateName:     fd.get("corporateName") as string,
       tradeName:         fd.get("tradeName") as string,
@@ -398,7 +511,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
       numberOfEmployees: numberOfEmployees || undefined,
 
       contactPerson:    fd.get("contactPerson") as string,
-      emailAddress:     fd.get("emailAddress") as string,
+      emailAddress:     emailAddressValue || undefined,
       contactNumber,
       telephoneNumber:  telephoneNumber || undefined,
       website:          (fd.get("website") as string) || undefined,
@@ -446,7 +559,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
 
       // Navigate back to the earliest step that contains a validation error
       // so the user can see which field is failing.
-      const step1Fields = ["corporateName", "tradeName", "contactPerson", "emailAddress", "contactNumber", "telephoneNumber", "website"];
+      const step1Fields = ["corporateName", "tradeName", "contactPerson", "contactNumber", "telephoneNumber", "website"];
       const step2Fields = ["businessAddress", "cityMunicipality", "deliveryAddress", "deliveryMobile", "deliveryTelephone"];
       const step3Fields = ["businessType", "salesChannel", "lineOfBusiness", "lineOfBusinessOther", "businessActivity", "businessActivityOther", "tinNumber"];
       const step4Fields = ["owners", "officers", "paymentTerms"];
@@ -478,6 +591,12 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
         else if (json.error && typeof json.error === "object") setErrors(Object.fromEntries(Object.entries(json.error).map(([k, v]) => [k, (v as string[])[0]])));
         else setErrors({ _form: json.message ?? "Something went wrong. Please try again." });
         return;
+      }
+      // Clear localStorage on successful submission
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.error("Failed to clear draft from localStorage:", e);
       }
       router.push(agentFillMode ? "/agent" : `/form/${token}/submitted`);
     } catch {
@@ -576,7 +695,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                   {errors.contactPerson && <p className="text-xs text-red-600">{errors.contactPerson}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="emailAddress">Email address <span className="font-bold text-red-600 text-base leading-none">*</span></Label>
+                  <Label htmlFor="emailAddress">Email address</Label>
                   <Input id="emailAddress" name="emailAddress" type="email" placeholder="contact@business.com" disabled={isLoading} />
                   {errors.emailAddress && <p className="text-xs text-red-600">{errors.emailAddress}</p>}
                 </div>

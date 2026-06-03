@@ -424,7 +424,7 @@ async function seed() {
         bankBalanceAmount: isApproved ? String(randomInt(50000, 10000000)) : null,
 
         // Sales support
-        salesSupportAccountType: isErpDone ? pick(["Regular", "Premium", "Key Account", "VIP"]) : null,
+        salesSupportAccountType: isErpDone ? pick(["individual", "corporate"]) : null,
         salesSupportPriceList1: isErpDone ? `PL-${String(randomInt(1, 10)).padStart(3, "0")}` : null,
         salesSupportPriceList2: isErpDone && Math.random() < 0.5 ? `PL-${String(randomInt(11, 20)).padStart(3, "0")}` : null,
         salesSupportSalesType: isErpDone ? pick(["Wholesale", "Retail", "Consignment", "Direct"]) : null,
