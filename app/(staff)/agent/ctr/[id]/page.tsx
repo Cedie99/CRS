@@ -123,6 +123,7 @@ export default async function AgentCtrDetailPage({
         customerType: cisSubmissions.customerType,
         contactPerson: cisSubmissions.contactPerson,
         cityMunicipality: cisSubmissions.cityMunicipality,
+        postalCode: cisSubmissions.postalCode,
       },
     })
     .from(ctrSubmissions)

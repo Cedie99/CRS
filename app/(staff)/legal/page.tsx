@@ -12,8 +12,11 @@ import { Scale, Clock3 } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { ActionRequiredSection } from "@/components/action-required-section";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata = { title: "Legal Review Queue — CRS" };
+
+noStore();
 
 const ALL_VISIBLE_STATUSES: CisStatus[] = [
   "draft",

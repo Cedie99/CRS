@@ -264,6 +264,8 @@ export const cisSubmissions = pgTable("cis_submissions", {
 
   cityMunicipality: varchar("city_municipality", { length: 255 }),
 
+  postalCode: varchar("postal_code", { length: 20 }),
+
   businessType: businessTypeEnum("business_type"),
 
   tinNumber: varchar("tin_number", { length: 50 }),
@@ -691,6 +693,8 @@ export const cusSubmissions = pgTable("cus_submissions", {
   newBusinessAddress: text("new_business_address"),
 
   newCityMunicipality: varchar("new_city_municipality", { length: 200 }),
+
+  newPostalCode: varchar("new_postal_code", { length: 20 }),
 
   newLandmarks: text("new_landmarks"),
 

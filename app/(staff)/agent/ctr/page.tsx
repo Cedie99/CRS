@@ -49,6 +49,7 @@ export default async function AgentCtrListPage() {
       customerType: cisSubmissions.customerType,
       status: cisSubmissions.status,
       cityMunicipality: cisSubmissions.cityMunicipality,
+      postalCode: cisSubmissions.postalCode,
       businessType: cisSubmissions.businessType,
     })
     .from(cisSubmissions)

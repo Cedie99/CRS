@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 import { eq, sql } from "drizzle-orm";
 
@@ -319,7 +320,10 @@ export async function PATCH(
 
   });
 
-
+  // Invalidate cache tags
+  revalidateTag("agent-stats", {});
+  revalidateTag("manager-stats", {});
+  revalidateTag("workflow-history", {});
 
   return NextResponse.json({ success: true });
 

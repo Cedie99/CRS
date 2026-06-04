@@ -69,6 +69,7 @@ interface FinanceCisDetailClientProps {
   emailAddress: string | null;
   businessAddress: string | null;
   cityMunicipality: string | null;
+  postalCode?: string | null;
   businessType: string | null;
   tinNumber: string | null;
   additionalNotes: string | null;

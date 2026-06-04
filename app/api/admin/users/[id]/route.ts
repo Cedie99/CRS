@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq, and, ne, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -87,6 +88,9 @@ export async function PATCH(
 
   await db.update(users).set(updateData).where(eq(users.id, id));
 
+  // Invalidate cache tags
+  revalidateTag("manager-agents", {});
+
   return NextResponse.json({ success: true, agentCode: (updateData.agentCode ?? existing.agentCode) ?? null });
 }
 
@@ -142,6 +146,9 @@ export async function DELETE(
   await db.update(users).set({ managerId: null }).where(eq(users.managerId, id));
   await db.delete(notifications).where(eq(notifications.recipientId, id));
   await db.delete(users).where(eq(users.id, id));
+
+  // Invalidate cache tags
+  revalidateTag("manager-agents", {});
 
   return NextResponse.json({ success: true });
 }

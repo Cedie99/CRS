@@ -71,6 +71,7 @@ export default async function ApproverCtrDetailPage({
       contactPerson: cisSubmissions.contactPerson,
       customerType: cisSubmissions.customerType,
       cityMunicipality: cisSubmissions.cityMunicipality,
+      postalCode: cisSubmissions.postalCode,
       agentCode: cisSubmissions.agentCode,
       businessType: cisSubmissions.businessType,
     })

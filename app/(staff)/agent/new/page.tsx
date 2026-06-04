@@ -242,6 +242,7 @@ function NewCisContent() {
         return;
       }
 
+      router.refresh();
       router.push(`/agent/fill/${data.id}`);
     } catch {
       setError("Unable to create the form. Please try again.");
@@ -301,6 +302,7 @@ function NewCisContent() {
       setGeneratedLink(link);
       setGeneratedQr(qr);
       setExistingDraftId(null);
+      router.refresh();
       toast.success({
         title: "Customer form link generated.",
         description: "Send the link to your customer to start their submission.",

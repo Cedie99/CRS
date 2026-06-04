@@ -124,6 +124,8 @@ export default async function AgentCisDetailPage({
 
         cityMunicipality: cisSubmissions.cityMunicipality,
 
+        postalCode: cisSubmissions.postalCode,
+
         businessType: cisSubmissions.businessType,
 
         tinNumber: cisSubmissions.tinNumber,
@@ -788,6 +790,8 @@ export default async function AgentCisDetailPage({
             businessAddress={cis.businessAddress}
 
             cityMunicipality={cis.cityMunicipality}
+
+            postalCode={cis.postalCode}
 
             businessType={cis.businessType}
 

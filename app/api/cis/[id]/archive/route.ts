@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq, and, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -35,6 +36,9 @@ export async function PATCH(
     .update(cisSubmissions)
     .set({ isArchived: true })
     .where(and(eq(cisSubmissions.id, id), inArray(cisSubmissions.status, ["denied", "returned"])));
+
+  // Invalidate cache tags
+  revalidateTag("agent-stats", {});
 
   return NextResponse.json({ ok: true });
 }

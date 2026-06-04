@@ -37,6 +37,7 @@ export default async function ManagerCisDetailPage({
       emailAddress: cisSubmissions.emailAddress,
       businessAddress: cisSubmissions.businessAddress,
       cityMunicipality: cisSubmissions.cityMunicipality,
+      postalCode: cisSubmissions.postalCode,
       businessType: cisSubmissions.businessType,
       tinNumber: cisSubmissions.tinNumber,
       additionalNotes: cisSubmissions.additionalNotes,
@@ -186,6 +187,7 @@ export default async function ManagerCisDetailPage({
             emailAddress={cis.emailAddress}
             businessAddress={cis.businessAddress}
             cityMunicipality={cis.cityMunicipality}
+            postalCode={cis.postalCode}
             businessType={cis.businessType}
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}

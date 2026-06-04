@@ -327,6 +327,7 @@ interface CisInfoCardProps {
   emailAddress: string | null;
   businessAddress: string | null;
   cityMunicipality: string | null;
+  postalCode?: string | null;
   businessType: string | null;
   tinNumber: string | null;
   additionalNotes: string | null;
@@ -690,34 +691,38 @@ function Field({
   oldValue?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-linear-to-br from-zinc-50 to-white px-4 py-5 sm:px-5 sm:py-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-2">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 print:text-[13px] print:tracking-[0.1em] print:text-zinc-500">
-        {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
-        {label}
-      </p>
-      {oldValue && (
-        <div className="mt-2 print:hidden">
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
-            Updated
-          </span>
-          <p className={`mt-0.5 min-w-0 wrap-break-word text-xs leading-relaxed text-zinc-400 line-through opacity-60 ${mono ? "font-mono" : ""}`}>
-            {oldValue}
-          </p>
-        </div>
-      )}
-      <p className={`mt-2 min-w-0 wrap-break-word text-sm leading-relaxed text-zinc-900 font-medium print:mt-0.5 print:text-[13px] print:leading-snug ${mono ? "font-mono" : ""}`}>
-        {value
-          ? value
-          : printBlank
-            ? (
-              <>
-                <span className="text-zinc-300 print:hidden">—</span>
-                <span className="hidden print:inline-block print:w-full print:border-b print:border-zinc-400 print:pb-1">&nbsp;</span>
-              </>
-            )
-            : <span className="text-zinc-300 print:text-zinc-400">—</span>
-        }
-      </p>
+    <div className="rounded-lg border border-zinc-200 bg-white shadow-sm print:rounded-none print:border-0 print:border-b print:border-zinc-200 print:bg-white print:px-0 print:pt-1 print:pb-2">
+      <div className="bg-zinc-100 px-4 py-2.5 border-b border-zinc-200 print:bg-white print:border-0 print:px-0 print:py-0">
+        <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-zinc-600 print:text-[13px] print:tracking-[0.1em] print:text-zinc-600">
+          {Icon && <Icon className="h-3.5 w-3.5 print:hidden" />}
+          {label}
+        </p>
+      </div>
+      <div className="px-4 py-4 sm:px-5 sm:py-4.5 print:px-0 print:py-2">
+        {oldValue && (
+          <div className="mb-2 print:hidden">
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+              Updated
+            </span>
+            <p className={`mt-0.5 min-w-0 wrap-break-word text-xs leading-relaxed text-zinc-400 line-through opacity-60 ${mono ? "font-mono" : ""}`}>
+              {oldValue}
+            </p>
+          </div>
+        )}
+        <p className={`min-w-0 wrap-break-word text-base leading-relaxed text-zinc-900 font-medium print:text-[13px] print:leading-snug ${mono ? "font-mono" : ""}`}>
+          {value
+            ? value
+            : printBlank
+              ? (
+                <>
+                  <span className="text-zinc-300 print:hidden">—</span>
+                  <span className="hidden print:inline-block print:w-full print:border-b print:border-zinc-400 print:pb-1">&nbsp;</span>
+                </>
+              )
+              : <span className="text-zinc-300 print:text-zinc-400">—</span>
+          }
+        </p>
+      </div>
     </div>
   );
 }
@@ -732,11 +737,11 @@ function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={`mb-5 flex items-center gap-2 border-b border-zinc-200 pb-3 print:mb-2 print:border-zinc-300 print:border-b print:pb-1 ${className}`}>
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 print:hidden">
-        <Icon className="h-3.5 w-3.5" />
+    <div className={`mb-6 flex items-center gap-3 border-b border-zinc-200 pb-4 print:mb-3 print:border-zinc-300 print:border-b print:pb-2 ${className}`}>
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 print:hidden">
+        <Icon className="h-4 w-4" />
       </span>
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-600 print:text-[13px] print:font-black print:text-zinc-800">
+      <p className="text-[13px] font-bold uppercase tracking-wide text-zinc-700 print:text-[14px] print:font-bold print:text-zinc-800">
         {label}
       </p>
     </div>
@@ -746,7 +751,7 @@ function SectionTitle({
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`scroll-mt-22 rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6 print:mb-0 print:break-inside-avoid print:rounded-none print:border-0 print:border-t print:border-zinc-200 print:bg-white print:px-0 print:pt-2 print:pb-2 print:shadow-none ${className}`}
+      className={`scroll-mt-22 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-7 print:mb-0 print:break-inside-avoid print:rounded-none print:border-0 print:border-t print:border-zinc-200 print:bg-white print:px-0 print:pt-3 print:pb-3 print:shadow-none ${className}`}
     >
       {children}
     </section>
@@ -836,6 +841,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
     emailAddress,
     businessAddress,
     cityMunicipality,
+    postalCode,
     businessType,
     tinNumber,
     additionalNotes,
@@ -1292,6 +1298,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
               <Field label="Street Address" value={businessAddress} icon={MapPin} oldValue={old("businessAddress")} />
             </div>
             <Field label="City / Municipality" value={cityMunicipality} icon={MapPin} oldValue={old("cityMunicipality")} />
+            <Field label="Postal Code" value={postalCode} icon={Hash} oldValue={old("postalCode")} />
             {(landmarks || old("landmarks")) && <Field label="Landmarks" value={landmarks} oldValue={old("landmarks")} />}
           </div>
         </SectionCard>

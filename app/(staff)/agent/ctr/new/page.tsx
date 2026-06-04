@@ -24,6 +24,7 @@ export default async function AgentCtrNewPage() {
       customerType: cisSubmissions.customerType,
       status: cisSubmissions.status,
       cityMunicipality: cisSubmissions.cityMunicipality,
+      postalCode: cisSubmissions.postalCode,
       businessType: cisSubmissions.businessType,
     })
     .from(cisSubmissions)

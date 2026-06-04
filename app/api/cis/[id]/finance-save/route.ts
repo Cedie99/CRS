@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -68,6 +69,10 @@ export async function PATCH(
     .update(cisSubmissions)
     .set(updates)
     .where(eq(cisSubmissions.id, id));
+
+  // Invalidate cache tags (data updated even though workflow status unchanged)
+  revalidateTag("agent-stats", {});
+  revalidateTag("manager-stats", {});
 
   return NextResponse.json({ success: true });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -160,6 +161,11 @@ export async function PATCH(
     isDealer: cis.customerType === "dealer",
     isResubmission: true,
   });
+
+  // Invalidate cache tags
+  revalidateTag("agent-stats", {});
+  revalidateTag("manager-stats", {});
+  revalidateTag("workflow-history", {});
 
   return NextResponse.json({ success: true });
 }

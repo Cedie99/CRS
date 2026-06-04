@@ -99,6 +99,7 @@ export default async function SpecialistCisDetailPage({
             emailAddress={cis.emailAddress}
             businessAddress={cis.businessAddress}
             cityMunicipality={cis.cityMunicipality}
+            postalCode={cis.postalCode}
             businessType={cis.businessType}
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}

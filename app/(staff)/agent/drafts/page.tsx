@@ -9,8 +9,12 @@ import { buttonVariants } from "@/lib/button-variants";
 import { formatDistanceToNow } from "@/lib/utils";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { DeleteDraftButton } from "@/components/delete-draft-button";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata = { title: "Drafts — CRS" };
+
+noStore();
 
 export default async function AgentDraftsPage({
   searchParams,
@@ -84,25 +88,30 @@ export default async function AgentDraftsPage({
           <ul className="divide-y divide-zinc-50">
             {drafts.map((d) => (
               <li key={d.id}>
-                <Link
-                  href={d.directFill ? `/agent/fill/${d.id}` : `/agent/new?id=${d.id}`}
-                  className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-50"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50">
-                    <LinkIcon className="h-4 w-4 text-amber-500" />
+                <div className="px-5 py-4">
+                  <Link
+                    href={d.directFill ? `/agent/fill/${d.id}` : `/agent/new?id=${d.id}`}
+                    className="flex items-center gap-4 transition-colors hover:bg-zinc-50 -mx-5 px-5 py-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50">
+                      <LinkIcon className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-zinc-900">
+                        {d.tradeName ?? <span className="font-normal italic text-zinc-400">Untitled customer</span>}
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-400">
+                        Link generated {formatDistanceToNow(d.createdAt)} ago — waiting for customer to submit
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
+                      Awaiting
+                    </span>
+                  </Link>
+                  <div className="mt-3 flex justify-end sm:justify-start">
+                    <DeleteDraftButton cisId={d.id} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-zinc-900">
-                      {d.tradeName ?? <span className="font-normal italic text-zinc-400">Untitled customer</span>}
-                    </p>
-                    <p className="mt-0.5 text-xs text-zinc-400">
-                      Link generated {formatDistanceToNow(d.createdAt)} ago — waiting for customer to submit
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
-                    Awaiting
-                  </span>
-                </Link>
+                </div>
               </li>
             ))}
           </ul>

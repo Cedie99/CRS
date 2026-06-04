@@ -333,6 +333,8 @@ export const cisFormSchema = z.object({
 
   cityMunicipality: z.string().min(2, "City/Municipality is required").max(255),
 
+  postalCode: z.string().regex(/^\d*$/, "Postal code must contain only numbers").max(20).optional().or(z.literal("")),
+
   landmarks: z.string().max(500).optional(),
 
 

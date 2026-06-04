@@ -15,17 +15,9 @@ import { ActionRequiredSection } from "@/components/action-required-section";
 export const metadata = { title: "Sales Support — CRS" };
 
 const ALL_VISIBLE_STATUSES: CisStatus[] = [
-  "draft",
-  "submitted",
-  "pending_endorsement",
-  "pending_legal_review",
-  "pending_finance_review",
-  "pending_approval",
   "approved",
   "pending_erp_encoding",
   "erp_encoded",
-  "denied",
-  "returned",
 ];
 
 export default async function SupportDashboard({

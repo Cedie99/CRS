@@ -41,6 +41,7 @@ export default async function AgentCusListPage() {
         customerType: cisSubmissions.customerType,
         status: cisSubmissions.status,
         cityMunicipality: cisSubmissions.cityMunicipality,
+        postalCode: cisSubmissions.postalCode,
         businessType: cisSubmissions.businessType,
         paymentTerms: cisSubmissions.paymentTerms,
       })

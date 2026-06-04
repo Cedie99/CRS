@@ -49,6 +49,7 @@ interface CusDetail {
   newTinNumber: string | null;
   newBusinessAddress: string | null;
   newCityMunicipality: string | null;
+  newPostalCode: string | null;
   newLandmarks: string | null;
   newDeliveryAddress: string | null;
   newDeliveryLandmarks: string | null;
@@ -87,6 +88,7 @@ interface CusDetail {
     customerType: string | null;
     businessAddress: string | null;
     cityMunicipality: string | null;
+    postalCode?: string | null;
     landmarks: string | null;
     deliveryAddress: string | null;
     deliveryMobile: string | null;
@@ -236,6 +238,7 @@ export function CusDetailModal({
     { label: "Website",             current: cis?.website ?? null,                                     requested: cus.newWebsite ?? null },
     { label: "Business Address",    current: cis?.businessAddress ?? null,                             requested: cus.newBusinessAddress ?? null },
     { label: "City/Municipality",   current: cis?.cityMunicipality ?? null,                            requested: cus.newCityMunicipality ?? null },
+    { label: "Postal Code",        current: cis?.postalCode ?? null,                               requested: cus.newPostalCode ?? null },
     { label: "Landmarks",           current: cis?.landmarks ?? null,                                   requested: cus.newLandmarks ?? null },
     { label: "Delivery Address",    current: cis?.deliveryAddress ?? null,                             requested: cus.newDeliveryAddress ?? null },
     { label: "Delivery Landmarks",  current: (cis?.deliveryLandmarks as string) ?? null,               requested: cus.newDeliveryLandmarks ?? null },
@@ -287,6 +290,7 @@ export function CusDetailModal({
       { label: "Website",             cisKey: "website",              after: cus.newWebsite },
       { label: "Business Address",    cisKey: "businessAddress",      after: cus.newBusinessAddress },
       { label: "City/Municipality",   cisKey: "cityMunicipality",     after: cus.newCityMunicipality },
+      { label: "Postal Code",        cisKey: "postalCode",          after: cus.newPostalCode },
       { label: "Landmarks",           cisKey: "landmarks",            after: cus.newLandmarks },
       { label: "Delivery Address",    cisKey: "deliveryAddress",      after: cus.newDeliveryAddress },
       { label: "Delivery Landmarks",  cisKey: "deliveryLandmarks",    after: cus.newDeliveryLandmarks },

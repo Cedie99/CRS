@@ -13,13 +13,18 @@ import { notFound, redirect } from "next/navigation";
 import type { CisStatus } from "@/components/status-badge";
 
 const SUPPORT_STATUSES: CisStatus[] = ["approved", "erp_encoded", "denied"];
+const ALL_VISIBLE_STATUSES: CisStatus[] = [
+  "approved",
+  "pending_erp_encoding",
+  "erp_encoded",
+];
 
 export default async function SupportCustomerTypePage({
   params,
   searchParams,
 }: {
   params: Promise<{ customerType: string }>;
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -27,7 +32,8 @@ export default async function SupportCustomerTypePage({
   const { customerType } = await params;
   if (!isDashboardCustomerType(customerType)) notFound();
 
-  const { q, status, page } = await searchParams;
+  const { q, status, page, view } = await searchParams;
+  const isAllView = view === "all";
   const currentPage = getPageNumber(page);
   const pageSize = 12;
   const offset = (currentPage - 1) * pageSize;
@@ -36,7 +42,7 @@ export default async function SupportCustomerTypePage({
     eq(cisSubmissions.customerType, customerType),
     status
       ? eq(cisSubmissions.status, status as CisStatus)
-      : inArray(cisSubmissions.status, SUPPORT_STATUSES),
+      : inArray(cisSubmissions.status, isAllView ? ALL_VISIBLE_STATUSES : SUPPORT_STATUSES),
   ];
 
   if (q) {
@@ -76,10 +82,19 @@ export default async function SupportCustomerTypePage({
 
   const total = Number(countRow[0]?.total ?? 0);
 
+  const buildBackHref = () => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status) params.set("status", status);
+    if (isAllView) params.set("view", "all");
+    const suffix = params.toString();
+    return `/support${suffix ? `?${suffix}` : ""}`;
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/support" className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
+        <Link href={buildBackHref()} className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900">
           <ArrowLeft className="h-4 w-4" />
           Back to customer types
         </Link>

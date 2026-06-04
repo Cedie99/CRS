@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -47,6 +48,11 @@ export async function PATCH(
     actorId: session.user.id,
     note: `Customer encoded in ERP system. Customer code: ${customerCode}`,
   });
+
+  // Invalidate cache tags
+  revalidateTag("agent-stats", {});
+  revalidateTag("manager-stats", {});
+  revalidateTag("workflow-history", {});
 
   return NextResponse.json({ success: true });
 }

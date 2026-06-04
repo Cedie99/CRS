@@ -518,6 +518,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
 
       businessAddress:  fd.get("businessAddress") as string,
       cityMunicipality: fd.get("cityMunicipality") as string,
+      postalCode:       (fd.get("postalCode") as string) || undefined,
       landmarks:        (fd.get("landmarks") as string) || undefined,
 
       deliverySameAsOffice,
@@ -752,6 +753,20 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                   {errors.cityMunicipality && <p className="text-xs text-red-600">{errors.cityMunicipality}</p>}
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="postalCode">Postal code</Label>
+                  <Input 
+                    id="postalCode" 
+                    name="postalCode" 
+                    placeholder="1200" 
+                    disabled={isLoading}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.value = target.value.replace(/\D/g, '');
+                    }}
+                  />
+                  {errors.postalCode && <p className="text-xs text-red-600">{errors.postalCode}</p>}
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="landmarks">Landmarks / directions</Label>
                   <Input id="landmarks" name="landmarks" placeholder="Near SM Makati" disabled={isLoading} />
                 </div>

@@ -18,6 +18,7 @@ interface ApprovedCis {
   customerType: string | null;
   status: string;
   cityMunicipality: string | null;
+  postalCode?: string | null;
   businessType: string | null;
 }
 

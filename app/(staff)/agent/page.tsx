@@ -12,8 +12,11 @@ import { Plus, Link as LinkIcon, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { ActionRequiredSection } from "@/components/action-required-section";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata = { title: "My Submissions — CRS" };
+
+noStore();
 
 function isMissingArchivedColumnError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;

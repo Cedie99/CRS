@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -81,6 +82,9 @@ export async function DELETE(
   }
 
   await db.delete(cisSubmissions).where(and(eq(cisSubmissions.id, id), eq(cisSubmissions.status, "draft")));
+// Invalidate cache tags
+  revalidateTag("agent-stats", {});
 
+  
   return NextResponse.json({ ok: true });
 }

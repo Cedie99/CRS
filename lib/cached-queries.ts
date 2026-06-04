@@ -30,7 +30,7 @@ export const getAgentStats = unstable_cache(
     };
   },
   ["agent-stats"],
-  { revalidate: 10, tags: ["agent-stats"] }
+  { tags: ["agent-stats"] }
 );
 
 /**
@@ -59,7 +59,7 @@ export const getManagerStats = unstable_cache(
     };
   },
   ["manager-stats"],
-  { revalidate: 10, tags: ["manager-stats"] }
+  { tags: ["manager-stats"] }
 );
 
 /**
@@ -80,7 +80,7 @@ export const getUserWorkflowHistory = unstable_cache(
       .limit(1000);
   },
   ["workflow-history"],
-  { revalidate: 10, tags: ["workflow-history"] }
+  { tags: ["workflow-history"] }
 );
 
 /**
@@ -106,5 +106,5 @@ export const getManagerAgents = unstable_cache(
       .where(eq(users.managerId, managerId));
   },
   ["manager-agents"],
-  { revalidate: 30, tags: ["manager-agents"] }
+  { tags: ["manager-agents"] }
 );

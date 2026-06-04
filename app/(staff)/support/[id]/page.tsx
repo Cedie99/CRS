@@ -186,6 +186,8 @@ export default async function SupportCisDetailPage({
 
             cityMunicipality={cis.cityMunicipality}
 
+            postalCode={cis.postalCode}
+
             businessType={cis.businessType}
 
             tinNumber={cis.tinNumber}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { eq, desc, inArray, and, sql, ilike, notInArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -177,6 +178,9 @@ export async function POST(req: Request) {
     if (!inserted?.publicToken) {
       return NextResponse.json({ error: "Unable to generate a customer link right now." }, { status: 500 });
     }
+
+    // Invalidate cache tags
+    revalidateTag("agent-stats", {});
 
     return NextResponse.json({ id: inserted.id, publicToken: inserted.publicToken }, { status: 201 });
   } catch (error) {

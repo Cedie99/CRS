@@ -12,8 +12,11 @@ import { ClipboardCheck, Clock, CheckCircle, XCircle, X, FileText, Activity } fr
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { ActionRequiredSection } from "@/components/action-required-section";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata = { title: "Team Submissions — CRS" };
+
+noStore();
 
 const IN_PROGRESS_STATUSES: CisStatus[] = [
   "submitted",

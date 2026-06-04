@@ -20,6 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   tinNumber:          "TIN Number",
   businessAddress:    "Business Address",
   cityMunicipality:   "City / Municipality",
+  postalCode:         "Postal Code",
   landmarks:          "Landmarks",
   deliveryAddress:    "Delivery Address",
   deliveryLandmarks:  "Delivery Landmarks",

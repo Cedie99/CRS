@@ -53,6 +53,7 @@ interface ApprovedCis {
   customerType: string | null;
   status: string;
   cityMunicipality: string | null;
+  postalCode?: string | null;
   businessType: string | null;
   paymentTerms: string | null;
 }
@@ -130,6 +131,7 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
   // Office address
   const [newBusinessAddress, setNewBusinessAddress] = useState("");
   const [newCityMunicipality, setNewCityMunicipality] = useState("");
+  const [newPostalCode, setNewPostalCode] = useState("");
   const [newLandmarks, setNewLandmarks] = useState("");
 
   // Delivery
@@ -221,6 +223,7 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
           // Office address
           newBusinessAddress: newBusinessAddress.trim() || undefined,
           newCityMunicipality: newCityMunicipality.trim() || undefined,
+          newPostalCode: newPostalCode.trim() || undefined,
           newLandmarks: newLandmarks.trim() || undefined,
           // Delivery
           newDeliveryAddress: newDeliveryAddress.trim() || undefined,
@@ -503,6 +506,16 @@ export function CusNewForm({ approvedCisList }: { approvedCisList: ApprovedCis[]
               <Label htmlFor="newCityMunicipality" className="text-xs">City / Municipality</Label>
               <Input id="newCityMunicipality" placeholder="e.g. Quezon City" value={newCityMunicipality}
                 onChange={(e) => setNewCityMunicipality(e.target.value)} className="bg-white text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="newPostalCode" className="text-xs">Postal Code</Label>
+              <Input 
+                id="newPostalCode" 
+                placeholder="e.g. 1200" 
+                value={newPostalCode}
+                onChange={(e) => setNewPostalCode(e.target.value.replace(/\D/g, ''))}
+                className="bg-white text-sm" 
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="newLandmarks" className="text-xs">Landmarks / Directions</Label>

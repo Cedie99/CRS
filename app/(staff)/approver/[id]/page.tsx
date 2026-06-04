@@ -103,6 +103,7 @@ export default async function ApproverCisDetailPage({
             emailAddress={cis.emailAddress}
             businessAddress={cis.businessAddress}
             cityMunicipality={cis.cityMunicipality}
+            postalCode={cis.postalCode}
             businessType={cis.businessType}
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}

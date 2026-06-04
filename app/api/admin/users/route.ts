@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { desc, count, eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -107,6 +108,9 @@ export async function POST(req: Request) {
     isActive: true,
     mustChangePassword: true,
   });
+
+  // Invalidate cache tags
+  revalidateTag("manager-agents", {});
 
   return NextResponse.json({ success: true, agentCode: agentCode ?? null }, { status: 201 });
 }
