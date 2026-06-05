@@ -23,6 +23,7 @@ interface LegalCisDetailClientProps {
   isReadOnlyContextView: boolean;
   forwardEndpoint?: string;
   denyEndpoint?: string;
+  rejectEndpoint?: string;
   initialSirRestyFiles?: unknown;
   events: Array<{
     id: string;
@@ -46,6 +47,7 @@ export function LegalCisDetailClient({
   isReadOnlyContextView: _isReadOnlyContextView,
   forwardEndpoint,
   denyEndpoint,
+  rejectEndpoint,
   initialSirRestyFiles,
   events,
   status,
@@ -183,6 +185,7 @@ export function LegalCisDetailClient({
           initialCreditLimit={(cisData.financeCreditLimit as string | null) ?? ""}
           forwardEndpoint={forwardEndpoint}
           denyEndpoint={denyEndpoint}
+          rejectEndpoint={rejectEndpoint}
           dashboardPath="/legal"
           printEnabled={printEnabled}
           docReviewStatuses={docReviewStatuses}

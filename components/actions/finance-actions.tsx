@@ -45,6 +45,8 @@ interface FinanceActionsProps {
   forwardEndpoint?: string;
   /** Override the deny endpoint. Defaults to /api/cis/{cisId}/finance-deny */
   denyEndpoint?: string;
+  /** Override the reject endpoint. Defaults to /api/cis/{cisId}/finance-reject */
+  rejectEndpoint?: string;
   /** Dashboard path to redirect to on success. Defaults to /finance */
   dashboardPath?: string;
   /** Whether printing is allowed. Blocked when there are unreviewed documents. */
@@ -74,6 +76,7 @@ export function FinanceActions({
   initialCreditLimit = "",
   forwardEndpoint,
   denyEndpoint,
+  rejectEndpoint,
   dashboardPath = "/finance",
   printEnabled = true,
   docReviewStatuses = {},
@@ -198,13 +201,14 @@ export function FinanceActions({
       } else {
         let endpoint: string;
         if (action === "reject") {
-          endpoint = "finance-reject";
+          endpoint = rejectEndpoint ?? "finance-reject";
         } else {
           endpoint = denyEndpoint ?? "finance-deny";
         }
-        
+
+        const url = endpoint.startsWith("/") ? endpoint : `/api/cis/${cisId}/${endpoint}`;
         const res = await fetch(
-          `/api/cis/${cisId}/${endpoint}`,
+          url,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -454,20 +458,18 @@ export function FinanceActions({
                 Forward to Sr. Approver
               </Button>
               <Button
-                variant="outline"
                 onClick={() => openDialog("return")}
                 disabled={isLoading || !canReturn}
                 title={!canReturn ? "Reject at least one document before returning the form" : undefined}
-                className="w-full gap-2 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 sm:w-auto disabled:opacity-50"
+                className="w-full gap-2 bg-amber-500 text-white hover:bg-amber-600 sm:w-auto disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 Return
               </Button>
               <Button
-                variant="outline"
                 onClick={() => openDialog("reject")}
                 disabled={isLoading}
-                className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                className="w-full gap-2 bg-red-600 text-white hover:bg-red-700 sm:w-auto"
               >
                 <XCircle className="h-4 w-4" />
                 Reject Form

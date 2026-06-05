@@ -19,9 +19,13 @@ import { toast } from "@/lib/toast";
 
 interface LegalActionsProps {
   cisId: string;
+  /** Override the forward endpoint. Defaults to /api/cis/{cisId}/legal-forward */
+  forwardEndpoint?: string;
+  /** Override the deny endpoint. Defaults to /api/cis/{cisId}/legal-deny */
+  denyEndpoint?: string;
 }
 
-export function LegalActions({ cisId }: LegalActionsProps) {
+export function LegalActions({ cisId, forwardEndpoint, denyEndpoint }: LegalActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState<"forward" | "return" | "reject" | null>(null);
@@ -54,14 +58,15 @@ export function LegalActions({ cisId }: LegalActionsProps) {
     try {
       let endpoint: string;
       if (action === "forward") {
-        endpoint = "legal-forward";
+        endpoint = forwardEndpoint ?? "legal-forward";
       } else if (action === "reject") {
         endpoint = "legal-reject";
       } else {
-        endpoint = "legal-deny";
+        endpoint = denyEndpoint ?? "legal-deny";
       }
-      
-      const res = await fetch(`/api/cis/${cisId}/${endpoint}`, {
+
+      const url = endpoint.startsWith("/") ? endpoint : `/api/cis/${cisId}/${endpoint}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: note.trim() || undefined }),
@@ -115,14 +120,14 @@ export function LegalActions({ cisId }: LegalActionsProps) {
           </Button>
           <Button
             onClick={() => openDialog("return")}
-            className="w-full gap-2 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 sm:w-auto"
+            className="w-full gap-2 bg-amber-500 text-white hover:bg-amber-600 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
             Return
           </Button>
           <Button
             onClick={() => openDialog("reject")}
-            className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+            className="w-full gap-2 bg-red-600 text-white hover:bg-red-700 sm:w-auto"
           >
             <XCircle className="h-4 w-4" />
             Reject Form

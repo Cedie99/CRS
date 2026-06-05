@@ -192,6 +192,7 @@ export default async function LegalCisDetailPage({
         isReadOnlyContextView={isReadOnlyContextView}
         forwardEndpoint={`/api/cis/${id}/legal-forward`}
         denyEndpoint={`/api/cis/${id}/legal-deny`}
+        rejectEndpoint={`/api/cis/${id}/legal-reject`}
         initialSirRestyFiles={(cis.docSirRestySigned as any) ?? []}
         events={events as any}
         status={cis.status}
