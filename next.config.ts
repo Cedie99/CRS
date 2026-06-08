@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["@sparticuz/chromium"],
   outputFileTracingIncludes: {
-    "/api/cis/[id]/pdf": ["./node_modules/@sparticuz/chromium/**/*"],
+    "/api/cis/*/pdf": ["./node_modules/@sparticuz/chromium/**/*"],
   },
 };
 
