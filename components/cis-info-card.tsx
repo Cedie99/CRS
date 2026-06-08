@@ -1249,7 +1249,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-end">
-            {!hidePrintButton && <PrintButton disabled={!canPrint} disabledReason={printDisabledReason} />}
+            {!hidePrintButton && <PrintButton cisId={cisId} disabled={!canPrint} disabledReason={printDisabledReason} />}
             <StatusBadge status={status} />
             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
               <Building2 className="h-3 w-3" />

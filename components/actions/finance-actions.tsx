@@ -306,7 +306,7 @@ export function FinanceActions({
                   type="button"
                   size="sm"
                   className="mt-2 w-full"
-                  onClick={() => window.print()}
+                  onClick={() => window.open(`/api/cis/${cisId}/pdf`, "_blank")}
                   disabled={isLoading || !printEnabled}
                 >
                   Print now
