@@ -84,18 +84,29 @@ export async function GET(
     await page.setViewport({ width: 1240, height: 1754 });
 
     // Forward session cookies so NextAuth recognizes the user
-    const cookies = cookieHeader.split(";").filter(Boolean).map((pair) => {
-      const eqIdx = pair.indexOf("=");
-      const name = eqIdx > 0 ? pair.slice(0, eqIdx).trim() : pair.trim();
-      const value = eqIdx > 0 ? pair.slice(eqIdx + 1).trim() : "";
-      return { name, value, domain: new URL(pageUrl).hostname, path: "/" };
-    });
+    const cookies = cookieHeader
+      .split(";")
+      .map((pair) => pair.trim())
+      .filter(Boolean)
+      .map((pair) => {
+        const eqIdx = pair.indexOf("=");
+        if (eqIdx <= 0) return null;
+        const name = pair.slice(0, eqIdx).trim();
+        const value = pair.slice(eqIdx + 1).trim();
+        if (!name || !value) return null;
+        return { name, value, url: pageUrl };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
+    // Navigate first so the domain context is established
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
+
     if (cookies.length > 0) {
       await page.setCookie(...cookies);
     }
 
-    // Navigate to the CIS detail page
-    await page.goto(pageUrl, { waitUntil: "networkidle0", timeout: 45000 });
+    // Reload to apply authentication
+    await page.reload({ waitUntil: "networkidle0", timeout: 45000 });
 
     // Wait for the print content to render
     await page.waitForSelector("[data-print-root]", { timeout: 20000 });
