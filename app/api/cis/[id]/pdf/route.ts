@@ -5,15 +5,33 @@ import { STAFF_ROUTES } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
 
-let browserInstance: Awaited<ReturnType<typeof import("puppeteer").default.launch>> | null = null;
+type Browser = Awaited<ReturnType<typeof import("puppeteer-core").launch>>;
 
-async function getBrowser() {
+let browserInstance: Browser | null = null;
+
+async function getBrowser(): Promise<Browser> {
   if (browserInstance?.connected) return browserInstance;
-  const puppeteer = await import("puppeteer");
-  browserInstance = await puppeteer.default.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-  });
+
+  const isDev = process.env.NODE_ENV === "development";
+
+  if (isDev) {
+    // Local dev — use puppeteer which bundles Chromium
+    const puppeteerMod = await import("puppeteer");
+    browserInstance = await puppeteerMod.default.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    }) as unknown as Browser;
+  } else {
+    // Production (Vercel) — use puppeteer-core + @sparticuz/chromium
+    const { default: chromium } = await import("@sparticuz/chromium");
+    const puppeteerCore = await import("puppeteer-core");
+    browserInstance = await puppeteerCore.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
+
   return browserInstance;
 }
 
