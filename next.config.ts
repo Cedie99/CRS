@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
     formats: ["image/avif", "image/webp"],
   },
+  serverExternalPackages: ["@sparticuz/chromium"],
 };
 
 export default withSentryConfig(nextConfig, {
