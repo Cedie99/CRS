@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   serverExternalPackages: ["@sparticuz/chromium"],
+  outputFileTracingIncludes: {
+    "/api/cis/[id]/pdf": ["./node_modules/@sparticuz/chromium/**/*"],
+  },
 };
 
 export default withSentryConfig(nextConfig, {
