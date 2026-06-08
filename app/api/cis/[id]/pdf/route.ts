@@ -87,16 +87,19 @@ export async function GET(
     const cookies = cookieHeader
       .split(";")
       .map((pair) => pair.trim())
-      .filter(Boolean)
+      .filter((pair) => {
+        const eqIdx = pair.indexOf("=");
+        return eqIdx > 0;
+      })
       .map((pair) => {
         const eqIdx = pair.indexOf("=");
-        if (eqIdx <= 0) return null;
-        const name = pair.slice(0, eqIdx).trim();
-        const value = pair.slice(eqIdx + 1).trim();
-        if (!name || !value) return null;
-        return { name, value, url: pageUrl };
-      })
-      .filter((c): c is NonNullable<typeof c> => c !== null);
+        return {
+          name: pair.slice(0, eqIdx).trim(),
+          value: pair.slice(eqIdx + 1).trim(),
+          domain: new URL(pageUrl).hostname,
+          path: "/",
+        };
+      });
 
     // Navigate first so the domain context is established
     await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
@@ -105,8 +108,8 @@ export async function GET(
       await page.setCookie(...cookies);
     }
 
-    // Reload to apply authentication
-    await page.reload({ waitUntil: "networkidle0", timeout: 45000 });
+    // Navigate again with authentication cookies
+    await page.goto(pageUrl, { waitUntil: "networkidle0", timeout: 45000 });
 
     // Wait for the print content to render
     await page.waitForSelector("[data-print-root]", { timeout: 20000 });
