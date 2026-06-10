@@ -136,7 +136,7 @@ export async function POST(req: Request) {
             ilike(cisSubmissions.tradeName, parsed.data.tradeName),
             eq(cisSubmissions.customerType, parsed.data.customerType),
             eq(cisSubmissions.isArchived, false),
-            notInArray(cisSubmissions.status, ["denied", "erp_encoded"])
+            notInArray(cisSubmissions.status, ["denied"])
           )
         )
         .limit(1);
