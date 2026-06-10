@@ -53,10 +53,10 @@ export async function getCusFieldHistory(
   ]);
 
   const cusHistory = normalizeSnapshot(
-    cusRow?.beforeSnapshot as Record<string, unknown> | null | undefined,
+    cusRow[0]?.beforeSnapshot as Record<string, unknown> | null | undefined,
   );
   const agentHistory = normalizeSnapshot(
-    cisRow?.agentEditBeforeSnapshot as Record<string, unknown> | null | undefined,
+    cisRow[0]?.agentEditBeforeSnapshot as Record<string, unknown> | null | undefined,
   );
 
   if (!cusHistory && !agentHistory) return null;
