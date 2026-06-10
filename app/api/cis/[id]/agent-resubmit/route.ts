@@ -125,11 +125,6 @@ export async function PATCH(
     .set({ agentEditBeforeSnapshot: null })
     .where(eq(cisSubmissions.id, id));
 
-  // Route based on customer type — dealer goes to legal, all others to finance
-  const isDealer = cis.customerType === "dealer";
-  const toStatus: "pending_finance_review" | "pending_legal_review" =
-    isDealer ? "pending_legal_review" : "pending_finance_review";
-
   // Get manager ID for informational notification
   const [agent] = await db
     .select({ managerId: users.managerId })
@@ -137,13 +132,19 @@ export async function PATCH(
     .where(eq(users.id, userId))
     .limit(1);
 
+  // Always route to finance/legal for re-review — dealer → legal, all others → finance.
+  // This applies whether the form was returned by finance, legal, or senior approver.
+  const isDealer = cis.customerType === "dealer";
+  const toStatus: "pending_finance_review" | "pending_legal_review" =
+    isDealer ? "pending_legal_review" : "pending_finance_review";
+
   await transitionCis({
     cisId: id,
     toStatus,
     action: "agent_submitted",
     actorId: userId,
     managerId: agent?.managerId ?? null,
-    isDealer: cis.customerType === "dealer",
+    isDealer,
     isResubmission: true,
   });
 

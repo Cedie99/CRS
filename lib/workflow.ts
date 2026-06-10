@@ -426,9 +426,18 @@ async function notifyParties({
 
       // Customize message based on who returned it
       const isFinanceOrLegal = actorRole === "finance_reviewer" || actorRole === "legal_approver";
+      const isSeniorApprover = actorRole === "senior_approver";
       const reviewerType = isFinanceOrLegal
         ? (actorRole === "finance_reviewer" ? "Finance" : "Legal")
-        : "Manager";
+        : isSeniorApprover
+          ? "Senior Approver"
+          : "Manager";
+
+      const returnReasonHint = isFinanceOrLegal
+        ? "This is likely due to document issues or incomplete information."
+        : isSeniorApprover
+          ? "Please review the Senior Approver's note and make the requested corrections before resubmitting."
+          : "";
 
       addNotification(
         agent.id,
@@ -438,7 +447,7 @@ async function notifyParties({
         {
           name: agent.fullName,
           title: `CIS Returned by ${reviewerType} – Revisions Needed`,
-          body: `Your CIS submission for <strong>${label}</strong> has been returned by <strong>${reviewerType}</strong> and requires your attention.<br><br>${isFinanceOrLegal ? "This is likely due to document issues or incomplete information." : ""}Please review the reviewer's note for details on what needs to be corrected, then resubmit the form once the changes have been made.`,
+          body: `Your CIS submission for <strong>${label}</strong> has been returned by <strong>${reviewerType}</strong> and requires your attention.<br><br>${returnReasonHint ? `${returnReasonHint} ` : ""}Please review the reviewer's note for details on what needs to be corrected, then resubmit the form once the changes have been made.`,
           reviewUrl: viewUrl,
           ctaLabel: "Review & Resubmit",
           accentColor: "#c17a00",
@@ -473,26 +482,49 @@ async function notifyParties({
       }),
     );
   } else if (action === "forwarded_to_approver") {
-    await notifyRole(
-      "senior_approver",
-      `CIS for "${label}" (${custType}) has been reviewed by Finance and is ready for your final approval.`,
-      `[CRS] Action required – Final approval: ${label}`,
-      "approver",
-      (_name, _url) => ({
-        title: "CIS Pending Your Final Approval",
-        body: `A Customer Information Sheet for <strong>${label}</strong> has been reviewed and approved by Finance and is now awaiting your final decision.<br><br>Please review the complete form — including the customer details, agent section, and finance credit evaluation — then approve or deny the submission.`,
-        ctaLabel: "Review & Approve",
-        accentColor: "#0f2340",
-        statusBadge: { label: "Pending Final Approval", color: "#7c3aed" },
-        details: [
-          { label: "Business Name", value: label },
-          { label: "Customer Type", value: custType },
-          { label: "Contact Person", value: cis.contactPerson ?? "—" },
-          { label: "Agent", value: agent?.fullName ?? "—" },
-          { label: "Finance Status", value: "Approved" },
-        ],
-      }),
-    );
+    if (isResubmission) {
+      await notifyRole(
+        "senior_approver",
+        `Agent resubmitted the CIS for "${label}" (${custType}) after your return. Please re-review.`,
+        `[CRS] Resubmission – Final approval required: ${label}`,
+        "approver",
+        (_name, _url) => ({
+          title: "CIS Resubmitted – Final Approval Required",
+          body: `The agent has resubmitted the Customer Information Sheet for <strong>${label}</strong> after addressing the issues raised during your previous review.<br><br>Please re-review the updated submission and either approve or return it again if further corrections are needed.`,
+          ctaLabel: "Re-review Now",
+          accentColor: "#0f2340",
+          statusBadge: { label: "Resubmitted – Pending Final Approval", color: "#d97706" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Agent", value: agent?.fullName ?? "—" },
+            { label: "Submission", value: "Resubmission (corrections made)" },
+          ],
+        }),
+      );
+    } else {
+      await notifyRole(
+        "senior_approver",
+        `CIS for "${label}" (${custType}) has been reviewed by Finance and is ready for your final approval.`,
+        `[CRS] Action required – Final approval: ${label}`,
+        "approver",
+        (_name, _url) => ({
+          title: "CIS Pending Your Final Approval",
+          body: `A Customer Information Sheet for <strong>${label}</strong> has been reviewed and approved by Finance and is now awaiting your final decision.<br><br>Please review the complete form — including the customer details, agent section, and finance credit evaluation — then approve or deny the submission.`,
+          ctaLabel: "Review & Approve",
+          accentColor: "#0f2340",
+          statusBadge: { label: "Pending Final Approval", color: "#7c3aed" },
+          details: [
+            { label: "Business Name", value: label },
+            { label: "Customer Type", value: custType },
+            { label: "Contact Person", value: cis.contactPerson ?? "—" },
+            { label: "Agent", value: agent?.fullName ?? "—" },
+            { label: "Finance Status", value: "Approved" },
+          ],
+        }),
+      );
+    }
   } else if (action === "sales_support_submitted") {
     await notifyRole(
       "project_development_specialist",

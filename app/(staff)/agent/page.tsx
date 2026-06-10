@@ -12,6 +12,7 @@ import { Plus, Link as LinkIcon, ChevronRight } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 import { EmptyStateLogo } from "@/components/empty-state-logo";
 import { ActionRequiredSection } from "@/components/action-required-section";
+import { AgentPriorityQueue } from "@/components/agent-priority-queue";
 import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata = { title: "My Submissions — CRS" };
@@ -208,6 +209,7 @@ export default async function AgentDashboard({
 
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
   const openPipeline = draft + awaitingAgentCompletion + active;
+  const hasPriorityActions = !effectiveShowArchived && (returnedTotal > 0 || agentCompletionTotal > 0);
 
   const queueCards = [
     {
@@ -240,9 +242,9 @@ export default async function AgentDashboard({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="order-1 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-zinc-900">My Submissions</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
@@ -261,112 +263,164 @@ export default async function AgentDashboard({
         </Link>
       </div>
 
-      <DashboardFilters
-        showArchivedToggle={supportsArchived}
-        archivedCount={archivedCount}
-      />
+      {/* Mobile: action queue first so agents see it without scrolling */}
+      {hasPriorityActions && (
+        <div className="order-2">
+          <AgentPriorityQueue
+            returned={returnedRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+            returnedTotal={returnedTotal}
+            completion={agentCompletionRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+            completionTotal={agentCompletionTotal}
+          />
+        </div>
+      )}
 
-      {/* Stats — hidden in archived view */}
+      <div className="order-3 lg:order-2">
+        <DashboardFilters
+          showArchivedToggle={supportsArchived}
+          archivedCount={archivedCount}
+        />
+      </div>
+
+      {/* Stats — hidden in archived view; compact on mobile when actions are pending */}
       {!effectiveShowArchived && (
-        <div className="rounded-xl border border-zinc-200 bg-white">
-          <div className="flex items-center justify-between px-4 py-3">
-            <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
-            <span className="text-xs text-zinc-400">{total} total</span>
-          </div>
+        <div className={`order-4 lg:order-3 ${hasPriorityActions ? "max-lg:hidden" : ""}`}>
+          <div className="rounded-xl border border-zinc-200 bg-white">
+            <div className="flex items-center justify-between px-4 py-3">
+              <h2 className="text-sm font-semibold text-zinc-700">Performance Snapshot</h2>
+              <span className="text-xs text-zinc-400">{total} total</span>
+            </div>
 
-          <div className="grid grid-cols-2 gap-px border-t border-zinc-100 bg-zinc-100 sm:grid-cols-4">
-            {/* Drafts — actionable tile */}
-            <Link
-              href="/agent/drafts"
-              className="group col-span-2 flex items-center justify-between gap-4 bg-amber-50 p-4 transition-colors hover:bg-amber-100/60 sm:col-span-1"
-            >
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600">Drafts</p>
-                <p className="mt-1 text-3xl font-bold tabular-nums text-amber-700">{draft}</p>
-                <p className="mt-1 text-xs text-amber-600/70">{draft === 1 ? "1 link sent" : `${draft} links sent`}</p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                <span className="rounded-lg bg-amber-100 p-2 text-amber-600 ring-1 ring-amber-200">
-                  <LinkIcon className="h-4 w-4" />
-                </span>
-                <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-600 opacity-0 transition-opacity group-hover:opacity-100">
-                  View <ChevronRight className="h-3 w-3" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Overview tiles */}
-            {overviewTiles.map(({ label, value, sub }) => (
-              <div key={label} className="flex flex-col justify-between bg-white p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-                <div>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-zinc-900">{value}</p>
-                  <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+            <div className="grid grid-cols-2 gap-px border-t border-zinc-100 bg-zinc-100 sm:grid-cols-4">
+              <Link
+                href="/agent/drafts"
+                className="group col-span-2 flex items-center justify-between gap-4 bg-amber-50 p-4 transition-colors hover:bg-amber-100/60 sm:col-span-1"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600">Drafts</p>
+                  <p className="mt-1 text-3xl font-bold tabular-nums text-amber-700">{draft}</p>
+                  <p className="mt-1 text-xs text-amber-600/70">{draft === 1 ? "1 link sent" : `${draft} links sent`}</p>
                 </div>
-              </div>
-            ))}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <span className="rounded-lg bg-amber-100 p-2 text-amber-600 ring-1 ring-amber-200">
+                    <LinkIcon className="h-4 w-4" />
+                  </span>
+                  <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-600 opacity-0 transition-opacity group-hover:opacity-100">
+                    View <ChevronRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Link>
+
+              {overviewTiles.map(({ label, value, sub }) => (
+                <div key={label} className="flex flex-col justify-between bg-white p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+                  <div>
+                    <p className="mt-2 text-3xl font-bold tabular-nums text-zinc-900">{value}</p>
+                    <p className="mt-1 text-xs text-zinc-400">{sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {!effectiveShowArchived && (
-        <ActionRequiredSection
-          submissions={returnedRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
-          totalCount={returnedTotal}
-          hrefPrefix="agent"
-          label="Returned — Needs Your Attention"
-          sublabel="These forms were sent back to you. Replace the rejected documents and resubmit."
-          accentClass="border-rose-300 bg-rose-50/70"
-          badgeClass="bg-rose-100 text-rose-800"
-          icon="return"
-          cardMobileCta="Tap to resubmit"
-        />
-      )}
+      {!effectiveShowArchived && hasPriorityActions && (
+        <div className="order-4 flex gap-2 overflow-x-auto pb-0.5 lg:hidden">
+          {[
+            { label: "Drafts", value: draft, href: "/agent/drafts" },
+            { label: "Open", value: openPipeline },
+            { label: "Onboarded", value: completed },
+            { label: "Not Accepted", value: denied },
+          ].map(({ label, value, href }) => {
+            const chip = (
+              <>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">{label}</span>
+                <span className="text-lg font-bold tabular-nums text-zinc-900">{value}</span>
+              </>
+            );
 
-      {!effectiveShowArchived && (
-        <ActionRequiredSection
-          submissions={agentCompletionRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
-          totalCount={agentCompletionTotal}
-          hrefPrefix="agent"
-          label="Forms You Need to Fill Out"
-          sublabel="Your customers have submitted their forms. Complete your section to move these forward."
-          accentClass="border-blue-300 bg-blue-50/60"
-          badgeClass="bg-blue-100 text-blue-800"
-          cardMobileCta="Tap to fill out"
-        />
-      )}
-
-      <CustomerTypeNavCards
-        basePath="/agent"
-        searchParams={{ q, status, archived }}
-        submissions={submissions}
-        customerTypeCounts={customerTypeCounts}
-      />
-
-      {submissions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
-          <EmptyStateLogo />
-          <h2 className="mt-4 text-base font-semibold text-zinc-900">
-            {q || status ? "No matching submissions" : "No submissions yet"}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            {q || status
-              ? "Try adjusting your search or filters."
-              : "Start by adding a new customer. A form link will be generated for them to fill out."}
-          </p>
-          {!q && !status && (
-            <Link href="/agent/new" className={`mt-5 ${buttonVariants()}`}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add New Customer
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          <strong className="text-zinc-800">Highlighted cards</strong> have submissions. Select one to open its list.
+            return href ? (
+              <Link
+                key={label}
+                href={href}
+                className="flex min-w-[5.5rem] shrink-0 flex-col rounded-lg border border-zinc-200 bg-white px-3 py-2"
+              >
+                {chip}
+              </Link>
+            ) : (
+              <div key={label} className="flex min-w-[5.5rem] shrink-0 flex-col rounded-lg border border-zinc-200 bg-white px-3 py-2">
+                {chip}
+              </div>
+            );
+          })}
         </div>
       )}
 
+      {/* Desktop: full carousel sections */}
+      {!effectiveShowArchived && (
+        <div className="order-5 hidden space-y-6 lg:order-4 lg:block">
+          <ActionRequiredSection
+            submissions={returnedRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+            totalCount={returnedTotal}
+            hrefPrefix="agent"
+            label="Returned — Needs Your Attention"
+            sublabel="These forms were sent back to you. Replace the rejected documents and resubmit."
+            accentClass="border-rose-300 bg-rose-50/70"
+            badgeClass="bg-rose-100 text-rose-800"
+            icon="return"
+            viewAllHref="/agent?status=returned"
+            cardMobileCta="Tap to resubmit"
+          />
+
+          <ActionRequiredSection
+            submissions={agentCompletionRows.map((s) => ({ ...s, status: s.status as CisStatus }))}
+            totalCount={agentCompletionTotal}
+            hrefPrefix="agent"
+            label="Forms You Need to Fill Out"
+            sublabel="Your customers have submitted their forms. Complete your section to move these forward."
+            accentClass="border-blue-300 bg-blue-50/60"
+            badgeClass="bg-blue-100 text-blue-800"
+            viewAllHref="/agent/agent-completion"
+            cardMobileCta="Tap to fill out"
+          />
+        </div>
+      )}
+
+      <div className="order-6 lg:order-5">
+        <CustomerTypeNavCards
+          basePath="/agent"
+          searchParams={{ q, status, archived }}
+          submissions={submissions}
+          customerTypeCounts={customerTypeCounts}
+        />
+      </div>
+
+      <div className="order-7 lg:order-6">
+        {submissions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-20 text-center">
+            <EmptyStateLogo />
+            <h2 className="mt-4 text-base font-semibold text-zinc-900">
+              {q || status ? "No matching submissions" : "No submissions yet"}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              {q || status
+                ? "Try adjusting your search or filters."
+                : "Start by adding a new customer. A form link will be generated for them to fill out."}
+            </p>
+            {!q && !status && (
+              <Link href="/agent/new" className={`mt-5 ${buttonVariants()}`}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Add New Customer
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+            <strong className="text-zinc-800">Highlighted cards</strong> have submissions. Select one to open its list.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

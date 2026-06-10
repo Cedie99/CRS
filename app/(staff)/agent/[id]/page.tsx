@@ -389,6 +389,10 @@ export default async function AgentCisDetailPage({
 
       isFinanceOrLegalReturn = true;
 
+    } else if (returnedEvent.actorRole === "senior_approver") {
+
+      returnedBy = "Senior Approver";
+
     } else if (returnedEvent.actorRole === "sales_manager" || returnedEvent.actorRole === "rsr_manager") {
 
       returnedBy = "Manager";
@@ -509,6 +513,8 @@ export default async function AgentCisDetailPage({
 
 
   const isLegalPath = cis.customerType === "dealer";
+
+  const routeTargetLabel = isLegalPath ? "Legal Review" : "Finance Review";
 
   const TOTAL_STEPS = 6;
 
@@ -1079,7 +1085,7 @@ export default async function AgentCisDetailPage({
 
           cisId={cis.id}
 
-          routeTargetLabel={isLegalPath ? "Legal Review" : "Finance Review"}
+          routeTargetLabel={routeTargetLabel}
 
           canResubmit={canResubmitReturnedForm}
 

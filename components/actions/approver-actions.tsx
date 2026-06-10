@@ -73,8 +73,8 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
         });
       } else {
         toast.error({
-          title: "Submission denied.",
-          description: "The submission was closed with a denied status.",
+          title: "Returned to agent.",
+          description: "The form has been returned to the agent with your denial reason.",
         });
       }
       router.push("/approver");
@@ -124,7 +124,7 @@ export function ApproverActions({ cisId }: ApproverActionsProps) {
           <p className="text-sm text-zinc-600">
             {action === "approve"
               ? "You are approving this customer. The Sales Support team will then enter them into the system. You may add an optional note."
-              : "You are denying this submission. Please explain why it cannot be approved."}
+              : "You are returning this submission to the agent for corrections. Please explain what needs to be fixed."}
           </p>
 
           <div className="space-y-1.5">

@@ -99,31 +99,26 @@ draft
 
 ### Return / Resubmit
 
-Either reviewer can return a form to the agent:
+Finance, Legal, or Senior Approver can return a form to the agent:
 
 ```
 pending_finance_review → returned  (finance_reviewer returns)
 pending_legal_review   → returned  (legal_approver returns)
+pending_approval       → returned  (senior_approver denies — returns to agent)
 ```
 
-Agent resubmits after uploading replacement docs for any rejected documents:
+Agent resubmits after uploading replacement docs for any rejected documents, or after making requested corrections:
 
 ```
-returned → pending_finance_review  (if originally came from finance)
-returned → pending_legal_review    (if originally came from legal)
+returned → pending_finance_review  (non-dealer customer types)
+returned → pending_legal_review    (dealer customer type)
 ```
 
-Resubmission routing is determined by the last reviewer role in `workflowEvents`.
+Resubmission always routes back to finance or legal for re-review — based on customer type, not who returned it. Senior approver returns follow the same path so finance/legal can review again before the form reaches final approval.
 
 ### Denial (terminal)
 
-Only `senior_approver` can deny. Only allowed when status is `pending_approval`.
-
-```
-pending_approval → denied
-```
-
-No resubmission after denial. Agent is notified. Sales Support is notified that no action is needed.
+The `denied` status remains in the enum for legacy/hard-reject flows (e.g. finance/legal document reject), but **Senior Approver "Deny" returns the form to the agent** — same as finance/legal return — not a terminal denial.
 
 ---
 
@@ -179,10 +174,10 @@ Finance and Legal are the same stage, split only by which customer types they ha
 - **Role:** `senior_approver`
 - **Actions:**
   - Approve → `approved`, workflow action `approved`
-  - Deny → `denied`, workflow action `denied`
+  - Deny → `returned`, workflow action `returned` (returns to agent for corrections, same as finance/legal return)
 - **Notifications:**
   - Approve: Agent, Sales Support, Admin
-  - Deny: Agent, Sales Support (no action needed)
+  - Deny (return): Agent (revisions needed)
 
 ### 6. Sales Support fill-out
 
@@ -496,7 +491,7 @@ end_user
 | Legal forwards           | Finance (action needed)                                   |
 | Finance forwards         | Senior Approver (action needed)                           |
 | Senior Approver approves | Agent, Sales Support, Admin                               |
-| Senior Approver denies   | Agent, Sales Support (no action needed)                   |
+| Senior Approver returns (deny) | Agent (revisions needed)                          |
 | Any reviewer returns     | Agent (revisions needed)                                  |
 | Sales Support submits    | Specialist (ERP encoding needed)                          |
 | Specialist encodes       | Agent (onboarding complete)                               |
