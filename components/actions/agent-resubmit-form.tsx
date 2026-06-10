@@ -9,11 +9,11 @@ import { toast } from "@/lib/toast";
 
 interface AgentResubmitFormProps {
   cisId: string;
-  returnedBy: string | null;
+  routeTargetLabel: string;
   canResubmit: boolean;
 }
 
-export function AgentResubmitForm({ cisId, returnedBy, canResubmit }: AgentResubmitFormProps) {
+export function AgentResubmitForm({ cisId, routeTargetLabel, canResubmit }: AgentResubmitFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,9 +36,7 @@ export function AgentResubmitForm({ cisId, returnedBy, canResubmit }: AgentResub
 
       toast.success({
         title: "Form resubmitted",
-        description: returnedBy
-          ? `Your form has been resubmitted to ${returnedBy} for review.`
-          : "Your form has been resubmitted for review.",
+        description: `Your form has been routed to ${routeTargetLabel} for review.`,
       });
       router.refresh();
     } catch {
@@ -71,9 +69,7 @@ export function AgentResubmitForm({ cisId, returnedBy, canResubmit }: AgentResub
           <p className="text-xs text-rose-600">
             {!canResubmit
               ? "Upload a replacement file or delete at least one rejected document to enable resubmission."
-              : returnedBy
-                ? `This will route the form back to ${returnedBy} for review.`
-                : "This will route the form back for review."}
+              : `This will route the form to ${routeTargetLabel} based on the customer type.`}
           </p>
           <Button
             onClick={handleResubmit}

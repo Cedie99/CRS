@@ -42,6 +42,9 @@ const TEMPLATES: Record<TemplateType, string[]> = {
     "Financial review indicates credit risk beyond acceptable threshold.",
     "Submitted financial documents are insufficient for a positive credit decision.",
     "Customer did not meet finance approval criteria for onboarding.",
+    "Customer information needs correction. Please review and update the details.",
+    "Trade name, business address, or contact information requires correction.",
+    "Business registration details (TIN, DTI/SEC) need to be verified and corrected.",
   ],
   approver_approve_note: [
     "Final approval granted. Submission is cleared for ERP onboarding.",

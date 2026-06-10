@@ -120,30 +120,15 @@ export async function PATCH(
       .where(eq(cisSubmissions.id, id));
   }
 
-  // Get the actor's role to determine where to route
-  const [actor] = await db
-    .select({ role: users.role })
-    .from(users)
-    .where(eq(users.id, returnedEvent.actorId))
-    .limit(1);
+  await db
+    .update(cisSubmissions)
+    .set({ agentEditBeforeSnapshot: null })
+    .where(eq(cisSubmissions.id, id));
 
-  if (!actor) {
-    return NextResponse.json({ error: "Actor not found" }, { status: 409 });
-  }
-
-  // Route back to the appropriate reviewer
-  let toStatus: "pending_finance_review" | "pending_legal_review";
-  if (actor.role === "finance_reviewer") {
-    toStatus = "pending_finance_review";
-  } else if (actor.role === "legal_approver") {
-    toStatus = "pending_legal_review";
-  } else if (actor.role === "sales_manager" || actor.role === "rsr_manager") {
-    // If manager returned, route based on customer type
-    const isDealer = cis.customerType === "dealer";
-    toStatus = isDealer ? "pending_legal_review" : "pending_finance_review";
-  } else {
-    return NextResponse.json({ error: "Invalid actor role for routing" }, { status: 409 });
-  }
+  // Route based on customer type — dealer goes to legal, all others to finance
+  const isDealer = cis.customerType === "dealer";
+  const toStatus: "pending_finance_review" | "pending_legal_review" =
+    isDealer ? "pending_legal_review" : "pending_finance_review";
 
   // Get manager ID for informational notification
   const [agent] = await db

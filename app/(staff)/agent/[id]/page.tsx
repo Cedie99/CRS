@@ -21,6 +21,7 @@ import { WorkflowHandoff } from "@/components/workflow-handoff";
 import { AgentFillOutForm } from "@/components/actions/agent-fill-out-form";
 
 import { AgentResubmitForm } from "@/components/actions/agent-resubmit-form";
+import { AgentEditCustomerInfo } from "@/components/actions/agent-edit-customer-info";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -631,11 +632,13 @@ export default async function AgentCisDetailPage({
 
                     ? [
 
+                        "Review the customer information below and click \u201CEdit\u201D if corrections are needed.",
+
                         "Check the list of rejected documents below.",
 
                         "Upload a replacement file OR delete the rejected document.",
 
-                        "Click \u201CResubmit\u201D once all rejections are addressed.",
+                        "Click \u201CResubmit\u201D once all issues are addressed.",
 
                       ]
 
@@ -722,6 +725,51 @@ export default async function AgentCisDetailPage({
       )}
 
 
+
+      {/* Customer info edit — shown when form is returned */}
+
+      {cis.status === "returned" && (
+        <AgentEditCustomerInfo
+          cisId={cis.id}
+          initialBankReferences={(cis.bankReferences as { bank: string; branch: string; accountType: string; accountNo: string }[] | null) ?? []}
+          initialData={{
+            customerType: cis.customerType,
+            tradeName: cis.tradeName,
+            corporateName: cis.corporateName,
+            contactPerson: cis.contactPerson,
+            contactNumber: cis.contactNumber,
+            emailAddress: cis.emailAddress,
+            telephoneNumber: cis.telephoneNumber,
+            businessAddress: cis.businessAddress,
+            cityMunicipality: cis.cityMunicipality,
+            postalCode: cis.postalCode,
+            businessType: cis.businessType,
+            tinNumber: cis.tinNumber,
+            website: cis.website,
+            dateOfBusinessReg: cis.dateOfBusinessReg,
+            numberOfEmployees: cis.numberOfEmployees,
+            landmarks: cis.landmarks,
+            deliverySameAsOffice: cis.deliverySameAsOffice,
+            deliveryAddress: cis.deliveryAddress,
+            deliveryLandmarks: cis.deliveryLandmarks,
+            deliveryMobile: cis.deliveryMobile,
+            deliveryTelephone: cis.deliveryTelephone,
+            lineOfBusiness: cis.lineOfBusiness,
+            lineOfBusinessOther: cis.lineOfBusinessOther,
+            businessActivity: cis.businessActivity,
+            businessActivityOther: cis.businessActivityOther,
+            paymentTerms: cis.paymentTerms,
+            salesChannel: cis.salesChannel,
+            businessLife: cis.businessLife,
+            howLongAtAddress: cis.howLongAtAddress,
+            numberOfBranches: cis.numberOfBranches,
+            govCertifications: cis.govCertifications,
+            achievements: cis.achievements,
+            otherMerits: cis.otherMerits,
+            additionalNotes: cis.additionalNotes,
+          }}
+        />
+      )}
 
       {/* Rejected documents summary — shown when form is returned and docs have been rejected */}
 
@@ -1031,7 +1079,7 @@ export default async function AgentCisDetailPage({
 
           cisId={cis.id}
 
-          returnedBy={returnedBy}
+          routeTargetLabel={isLegalPath ? "Legal Review" : "Finance Review"}
 
           canResubmit={canResubmitReturnedForm}
 

@@ -520,6 +520,12 @@ export const cisSubmissions = pgTable("cis_submissions", {
 
 
 
+  // Pre-edit field values when agent updates customer info on a returned CIS
+
+  agentEditBeforeSnapshot: jsonb("agent_edit_before_snapshot"),
+
+
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

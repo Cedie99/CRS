@@ -132,7 +132,7 @@ export function FinanceActions({
   const creditFilled = !!creditTerms.trim() && !!creditLimit.trim();
   const creditSaved = creditFilled && !creditDirty;
   const canForward = uploadComplete && !hasRejectedDocs && !hasUnreviewedDocs && creditSaved;
-  const canReturn = hasRejectedDocs;
+  const canReturn = true;
 
   function validateFields(): boolean {
     const errors: FieldErrors = {};
@@ -446,7 +446,7 @@ export function FinanceActions({
                 ? "Some documents are rejected. Return this form to the agent to upload replacements."
                 : hasUnreviewedDocs
                   ? "All uploaded documents must be reviewed before forwarding. Reject any problematic documents to enable Return."
-                  : "Upload the signed copy before forwarding."}
+                  : "Upload the signed copy before forwarding. You may also return the form if the customer information needs correction."}
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button
@@ -460,7 +460,7 @@ export function FinanceActions({
               <Button
                 onClick={() => openDialog("return")}
                 disabled={isLoading || !canReturn}
-                title={!canReturn ? "Reject at least one document before returning the form" : undefined}
+                title="Return the form to agent for corrections to customer info or documents"
                 className="w-full gap-2 bg-amber-500 text-white hover:bg-amber-600 sm:w-auto disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
@@ -497,7 +497,7 @@ export function FinanceActions({
               ? "You are forwarding this submission to the Senior Approver for final decision. You may add an optional note."
               : action === "reject"
               ? "You are rejecting this entire form. The agent must redo the customer fillup and submission. Please explain why."
-              : "You are returning this submission to the agent. Please explain why it needs corrections."}
+              : "You are returning this submission to the agent. Please explain what needs to be corrected — whether it's the customer information, documents, or other issues."}
           </p>
 
           <div className="space-y-1.5">
@@ -527,7 +527,7 @@ export function FinanceActions({
                   ? "Finance review notes…"
                   : action === "reject"
                   ? "Reason for rejection…"
-                  : "Reason for return…"
+                  : "Reason for return (e.g. incorrect customer info, document issues)…"
               }
               disabled={isLoading}
             />

@@ -114,6 +114,7 @@ const BUSINESS_ACTIVITY_LABELS: Record<string, string> = {
 
 const PAYMENT_TERMS_LABELS: Record<string, string> = {
   cod:       "COD",
+  prepaid:   "Prepaid",
   with_terms: "With Terms",
   credit_30: "Credit – 30 days",
   credit_60: "Credit – 60 days",
@@ -923,9 +924,23 @@ export function CisInfoCard(props: CisInfoCardProps) {
     if (!fieldHistory) return undefined;
     if (!(key in fieldHistory)) return undefined;
     const v = fieldHistory[key];
-    // For customerType, humanize the raw enum value
     if (key === "customerType" && v) return CUSTOMER_TYPE_LABELS[v] ?? v.replace(/_/g, " ");
+    if (key === "salesChannel" && v) return CUSTOMER_TYPE_LABELS[v] ?? v.replace(/_/g, " ");
+    if (key === "paymentTerms" && v) return PAYMENT_TERMS_LABELS[v] ?? humanizeDisplayValue(v);
     if (key === "financeCreditTerms" && v) return v.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    if (key === "bankReferences" && v) {
+      try {
+        const parsed = JSON.parse(v) as { bank?: string; branch?: string }[];
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map((row) => [row.bank, row.branch].filter(Boolean).join(" - "))
+            .filter(Boolean)
+            .join("; ") || v;
+        }
+      } catch {
+        return v;
+      }
+    }
     return v;
   };
 
@@ -1251,15 +1266,32 @@ export function CisInfoCard(props: CisInfoCardProps) {
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-end">
             {!hidePrintButton && <PrintButton cisId={cisId} disabled={!canPrint} disabledReason={printDisabledReason} />}
             <StatusBadge status={status} />
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
-              <Building2 className="h-3 w-3" />
-              {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "Pending"}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              {old("customerType") && (
+                <span className="text-[10px] text-zinc-400 line-through">{old("customerType")}</span>
+              )}
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${customerType ? (CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600") : "bg-zinc-100 text-zinc-400"}`}>
+                <Building2 className="h-3 w-3" />
+                {customerType ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)) : "Pending"}
+                {old("customerType") && (
+                  <span className="ml-1 rounded bg-amber-100 border border-amber-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">Updated</span>
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6 print:space-y-2 print:px-0 print:pt-2">
+
+        {fieldHistory && Object.keys(fieldHistory).length > 0 && (
+          <div className="print:hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-semibold text-amber-900">Customer information updated</p>
+            <p className="text-xs text-amber-800 mt-0.5">
+              Changed fields are marked <span className="inline-flex items-center rounded-md bg-amber-100 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Updated</span> with the previous value shown above the current value.
+            </p>
+          </div>
+        )}
 
         <div className="hidden print:block print:mb-1">
           <p className="text-sm font-bold text-zinc-900">

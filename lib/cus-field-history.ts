@@ -1,28 +1,64 @@
 import { eq, and, desc, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { cusSubmissions } from "@/lib/db/schema";
+import { cisSubmissions, cusSubmissions } from "@/lib/db/schema";
+
+function normalizeSnapshot(
+  snapshot: Record<string, unknown> | null | undefined,
+): Record<string, string | null> | null {
+  if (!snapshot || Object.keys(snapshot).length === 0) return null;
+  const out: Record<string, string | null> = {};
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (value === null || value === undefined) {
+      out[key] = null;
+    } else if (typeof value === "boolean") {
+      out[key] = value ? "Yes" : "No";
+    } else if (typeof value === "string" || typeof value === "number") {
+      out[key] = String(value);
+    } else if (Array.isArray(value)) {
+      out[key] = JSON.stringify(value);
+    } else {
+      out[key] = JSON.stringify(value);
+    }
+  }
+  return out;
+}
 
 /**
- * Returns the beforeSnapshot from the most recent approved CUS for a given CIS.
- * This is used by CIS detail pages to show old field values inline.
+ * Returns before-values for fields changed via approved CUS or agent edits on returned CIS.
+ * Used by CIS detail pages to show old field values inline on the read-only form.
  */
 export async function getCusFieldHistory(
   cisId: string
 ): Promise<Record<string, string | null> | null> {
-  const [row] = await db
-    .select({ beforeSnapshot: cusSubmissions.beforeSnapshot })
-    .from(cusSubmissions)
-    .where(
-      and(
-        eq(cusSubmissions.cisId, cisId),
-        eq(cusSubmissions.status, "approved"),
-        isNotNull(cusSubmissions.beforeSnapshot)
+  const [cisRow, cusRow] = await Promise.all([
+    db
+      .select({ agentEditBeforeSnapshot: cisSubmissions.agentEditBeforeSnapshot })
+      .from(cisSubmissions)
+      .where(eq(cisSubmissions.id, cisId))
+      .limit(1)
+      .catch(() => [] as never[]),
+    db
+      .select({ beforeSnapshot: cusSubmissions.beforeSnapshot })
+      .from(cusSubmissions)
+      .where(
+        and(
+          eq(cusSubmissions.cisId, cisId),
+          eq(cusSubmissions.status, "approved"),
+          isNotNull(cusSubmissions.beforeSnapshot),
+        ),
       )
-    )
-    .orderBy(desc(cusSubmissions.updatedAt))
-    .limit(1)
-    .catch(() => [] as never[]);
+      .orderBy(desc(cusSubmissions.updatedAt))
+      .limit(1)
+      .catch(() => [] as never[]),
+  ]);
 
-  if (!row?.beforeSnapshot) return null;
-  return row.beforeSnapshot as Record<string, string | null>;
+  const cusHistory = normalizeSnapshot(
+    cusRow?.beforeSnapshot as Record<string, unknown> | null | undefined,
+  );
+  const agentHistory = normalizeSnapshot(
+    cisRow?.agentEditBeforeSnapshot as Record<string, unknown> | null | undefined,
+  );
+
+  if (!cusHistory && !agentHistory) return null;
+  return { ...(cusHistory ?? {}), ...(agentHistory ?? {}) };
 }
