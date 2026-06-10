@@ -599,13 +599,31 @@ async function notifyParties({
       );
     }
     await notifyRole(
-      "sales_support",
-      `CIS for "${label}" (${custType}) has been denied.`,
+      "legal_approver",
+      `CIS for "${label}" (${custType}) has been denied by the Senior Approver.`,
       `[CRS] CIS denied – ${label}`,
-      "support",
+      "legal",
       (_name, _url) => ({
         title: "CIS Submission Denied",
-        body: `The Customer Information Sheet for <strong>${label}</strong> has been denied. No further action is required from Sales Support for this submission.`,
+        body: `The Customer Information Sheet for <strong>${label}</strong> has been denied by the Senior Approver. No further action is required from Legal for this submission.`,
+        ctaLabel: "View Form",
+        accentColor: "#8b2020",
+        statusBadge: { label: "Denied", color: "#dc2626" },
+        details: [
+          { label: "Business Name", value: label },
+          { label: "Customer Type", value: custType },
+          { label: "Agent", value: agent?.fullName ?? "—" },
+        ],
+      }),
+    );
+    await notifyRole(
+      "finance_reviewer",
+      `CIS for "${label}" (${custType}) has been denied by the Senior Approver.`,
+      `[CRS] CIS denied – ${label}`,
+      "finance",
+      (_name, _url) => ({
+        title: "CIS Submission Denied",
+        body: `The Customer Information Sheet for <strong>${label}</strong> has been denied by the Senior Approver. No further action is required from Finance for this submission.`,
         ctaLabel: "View Form",
         accentColor: "#8b2020",
         statusBadge: { label: "Denied", color: "#dc2626" },
