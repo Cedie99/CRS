@@ -1,52 +1,182 @@
 "use client";
 
-
-
 import { useState } from "react";
-
 import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
-
 import { Textarea } from "@/components/ui/textarea";
-
 import { Label } from "@/components/ui/label";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { DocUploadSlot } from "@/components/doc-upload-slot";
-
+import { Input } from "@/components/ui/input";
 import {
-
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import {
   Select,
-
   SelectContent,
-
   SelectItem,
-
   SelectTrigger,
-
   SelectValue,
-
 } from "@/components/ui/select";
-
-import { ArrowRight, CheckCircle2, ClipboardList, FileUp, PackagePlus } from "lucide-react";
-
+import { Check, CheckCircle2, ChevronDown, ClipboardList, FileUp, PackagePlus, Search, X } from "lucide-react";
 import { toast } from "@/lib/toast";
-
 import {
-
   SALES_SUPPORT_PRICE_LIST_1_OPTIONS,
-
   SALES_SUPPORT_PRICE_LIST_2_OPTIONS,
-
   SALES_SUPPORT_SALES_TYPE_OPTIONS,
-
   SALES_SUPPORT_VAT_CODE_OPTIONS,
-
+  type PriceListOption,
 } from "@/lib/validations/cis";
-
 import type { FileEntry } from "@/lib/doc-types";
+
+function PriceListPicker({
+  id,
+  options,
+  value,
+  onSelect,
+  disabled,
+  pickerTitle,
+}: {
+  id: string;
+  options: PriceListOption[];
+  value: string;
+  onSelect: (opt: PriceListOption) => void;
+  disabled: boolean;
+  pickerTitle: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = search
+    ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+    : options;
+
+  const selected = options.find((o) => o.value === value);
+
+  function close() {
+    setOpen(false);
+    setSearch("");
+  }
+
+  return (
+    <>
+      <button
+        id={id}
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={disabled}
+        className="group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm text-left shadow-xs transition-colors hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span className={`truncate font-medium ${selected ? "text-zinc-900" : "text-zinc-400 font-normal"}`}>
+          {selected?.label ?? "Please select…"}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-hover:text-zinc-500" />
+      </button>
+
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) close(); }}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl p-0 overflow-hidden gap-0">
+          {/* Header */}
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-100">
+              <Search className="h-3.5 w-3.5 text-emerald-700" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-900">{pickerTitle}</p>
+              <p className="text-xs text-zinc-400">{options.length} price lists available</p>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="px-5 py-3 bg-zinc-50/60 border-b border-zinc-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Type to search…"
+                autoFocus
+                className="w-full h-9 rounded-md border border-zinc-200 bg-white pl-9 pr-8 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-colors"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="max-h-72 overflow-y-auto overscroll-contain divide-y divide-zinc-50">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-zinc-400">
+                <Search className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">No results for &ldquo;{search}&rdquo;</p>
+              </div>
+            ) : (
+              filtered.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => { onSelect(opt); close(); }}
+                    className={`w-full flex items-center gap-4 px-5 py-3 text-left transition-colors ${
+                      isSelected
+                        ? "bg-emerald-50 hover:bg-emerald-100/70"
+                        : "bg-white hover:bg-zinc-50"
+                    }`}
+                  >
+                    {/* Indicator */}
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      isSelected ? "border-emerald-500 bg-emerald-500" : "border-zinc-300"
+                    }`}>
+                      {isSelected && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+                    </span>
+
+                    {/* Label + VAT badge */}
+                    <span className="flex flex-1 items-start justify-between gap-3">
+                      <span className={`text-sm font-medium leading-snug ${isSelected ? "text-emerald-900" : "text-zinc-800"}`}>
+                        {opt.label}
+                      </span>
+                      {opt.vatCode && (
+                        <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset mt-px ${
+                          isSelected
+                            ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+                            : "bg-zinc-100 text-zinc-600 ring-zinc-200"
+                        }`}>
+                          {opt.vatCode}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between px-5 py-2.5 border-t border-zinc-100 bg-zinc-50">
+            <p className="text-xs text-zinc-400">
+              {search
+                ? `${filtered.length} of ${options.length} results`
+                : `${options.length} price lists`}
+            </p>
+            {selected && (
+              <p className="text-xs text-emerald-600 font-medium truncate max-w-[60%]">
+                Selected: {selected.label}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 
 
@@ -269,89 +399,39 @@ export function SalesSupportFillOutActions({ cisId, accountType, initialOtherDoc
           <div className="grid gap-4 sm:grid-cols-2">
 
             <div className="space-y-1.5">
-
               <Label htmlFor="price-list-1">Assigned Price List 1 *</Label>
-
-            <Select
-
-              value={fields.priceList1}
-
-              onValueChange={(v) => setField("priceList1", v)}
-
-            >
-
-              <SelectTrigger id="price-list-1" className="w-full">
-
-                <SelectValue placeholder="Please Select" />
-
-              </SelectTrigger>
-
-              <SelectContent>
-
-                {SALES_SUPPORT_PRICE_LIST_1_OPTIONS.map((opt) => (
-
-                  <SelectItem key={opt.value} value={opt.value}>
-
-                    {opt.label}
-
-                  </SelectItem>
-
-                ))}
-
-              </SelectContent>
-
-            </Select>
-
-            {errors.priceList1 && (
-
-              <p className="text-xs text-red-600">{errors.priceList1}</p>
-
-            )}
-
+              <PriceListPicker
+                id="price-list-1"
+                options={SALES_SUPPORT_PRICE_LIST_1_OPTIONS}
+                value={fields.priceList1}
+                onSelect={(opt) => {
+                  setField("priceList1", opt.value);
+                  if (opt.vatCode) setField("vatCode", opt.vatCode);
+                }}
+                disabled={isLoading}
+                pickerTitle="Select Price List 1"
+              />
+              {errors.priceList1 && (
+                <p className="text-xs text-red-600">{errors.priceList1}</p>
+              )}
             </div>
 
-
-
             <div className="space-y-1.5">
-
               <Label htmlFor="price-list-2">Assigned Price List 2 *</Label>
-
-            <Select
-
-              value={fields.priceList2}
-
-              onValueChange={(v) => setField("priceList2", v)}
-
-            >
-
-              <SelectTrigger id="price-list-2" className="w-full">
-
-                <SelectValue placeholder="Please Select" />
-
-              </SelectTrigger>
-
-              <SelectContent>
-
-                {SALES_SUPPORT_PRICE_LIST_2_OPTIONS.map((opt) => (
-
-                  <SelectItem key={opt.value} value={opt.value}>
-
-                    {opt.label}
-
-                  </SelectItem>
-
-                ))}
-
-              </SelectContent>
-
-            </Select>
-
-            {errors.priceList2 && (
-
-              <p className="text-xs text-red-600">{errors.priceList2}</p>
-
-            )}
-
+              <PriceListPicker
+                id="price-list-2"
+                options={SALES_SUPPORT_PRICE_LIST_2_OPTIONS}
+                value={fields.priceList2}
+                onSelect={(opt) => {
+                  setField("priceList2", opt.value);
+                  if (opt.vatCode) setField("vatCode", opt.vatCode);
+                }}
+                disabled={isLoading}
+                pickerTitle="Select Price List 2"
+              />
+              {errors.priceList2 && (
+                <p className="text-xs text-red-600">{errors.priceList2}</p>
+              )}
             </div>
 
 

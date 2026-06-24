@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Search, UserCheck, UserX, Pencil, KeyRound, Trash2, RefreshCw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,7 +21,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { UserCheck, UserX, Pencil, KeyRound, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
 
@@ -71,7 +72,7 @@ export function UserManagementTable({
 
   // Edit / Activate dialog state
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [form, setForm] = useState({ role: "", managerId: "", agentCode: "", isTopManager: false });
+  const [form, setForm] = useState({ fullName: "", email: "", role: "", managerId: "", agentCode: "", isTopManager: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [codeMode, setCodeMode] = useState<"select" | "generate">("select");
@@ -87,7 +88,22 @@ export function UserManagementTable({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+
   const TEMP_PASSWORD = "Opc1985!";
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const q = searchQuery.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.fullName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.agentCode ?? "").toLowerCase().includes(q) ||
+        (ROLE_LABELS[u.role] ?? "").toLowerCase().includes(q)
+    );
+  }, [users, searchQuery]);
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -115,6 +131,8 @@ export function UserManagementTable({
   function openEdit(user: UserRow) {
     setEditingUser(user);
     setForm({
+      fullName: user.fullName,
+      email: user.email,
       role: user.role,
       managerId: user.managerId ?? "",
       agentCode: user.agentCode ?? "",
@@ -131,6 +149,8 @@ export function UserManagementTable({
     try {
       const isAgent = isAgentRole(form.role);
       const body: Record<string, unknown> = {
+        fullName: form.fullName || undefined,
+        email: form.email || undefined,
         role: form.role || undefined,
         agentType: isAgent ? (form.role as "sales_agent" | "rsr") : null,
         managerId: form.managerId || null,
@@ -155,6 +175,8 @@ export function UserManagementTable({
           u.id === editingUser.id
             ? {
                 ...u,
+                fullName: form.fullName || u.fullName,
+                email: form.email || u.email,
                 role: form.role || u.role,
                 agentCode: json.agentCode ?? u.agentCode,
                 agentType: isAgent ? (form.role as "sales_agent" | "rsr") : null,
@@ -165,7 +187,7 @@ export function UserManagementTable({
             : u
         )
       );
-      toast.success({ title: "User updated.", description: "Role and assignment changes were saved." });
+      toast.success({ title: "User updated.", description: "Changes were saved." });
       setEditingUser(null);
       router.refresh();
     } catch {
@@ -285,10 +307,21 @@ export function UserManagementTable({
         </div>
       )}
 
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <Input
+          placeholder="Search by name, email, agent code, or role..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-10 pl-9"
+        />
+      </div>
+
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="md:hidden">
           <div className="space-y-4 p-4">
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <div
                 key={user.id}
                 className={`rounded-xl border p-4 ${!user.isActive ? "border-amber-200 bg-amber-50/40" : "border-zinc-200 bg-white"}`}
@@ -395,7 +428,7 @@ export function UserManagementTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className={`hover:bg-zinc-50 ${!user.isActive ? "bg-amber-50/40" : ""}`}>
                   <td className="px-4 py-3 font-medium text-zinc-900">{user.fullName}</td>
                   <td className="px-4 py-3 text-zinc-500">{user.email}</td>
@@ -484,6 +517,25 @@ export function UserManagementTable({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            <div className="min-w-0 space-y-1.5">
+              <Label>Full Name</Label>
+              <Input
+                value={form.fullName}
+                onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                placeholder="Enter full name..."
+              />
+            </div>
+
+            <div className="min-w-0 space-y-1.5">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="Enter email address..."
+              />
+            </div>
+
             <div className="min-w-0 space-y-1.5">
               <Label>Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v ?? "" }))}>

@@ -557,51 +557,69 @@ export type FinanceForwardInput = z.infer<typeof financeForwardSchema>;
 
 
 
-export const SALES_SUPPORT_PRICE_LIST_1_OPTIONS = [
+export type PriceListOption = {
+  value: string;
+  label: string;
+  currency?: string;
+  vatCode?: string;
+};
 
+export const SALES_SUPPORT_PRICE_LIST_1_OPTIONS: PriceListOption[] = [
   { value: "PLATINUM DISTRIBUTOR", label: "PLATINUM DISTRIBUTOR" },
-
   { value: "PLATINUM DEALER", label: "PLATINUM DEALER" },
-
   { value: "PLATINUM SRP", label: "PLATINUM SRP" },
-
   { value: "COMET DISTRIBUTOR", label: "COMET DISTRIBUTOR" },
-
   { value: "COMET DEALER", label: "COMET DEALER" },
-
   { value: "COMET SRP", label: "COMET SRP" },
-
   { value: "DRO PLATINUM DISTRIBUTOR", label: "DRO PLATINUM DISTRIBUTOR" },
-
   { value: "DRO PLATINUM DEALER", label: "DRO PLATINUM DEALER" },
-
   { value: "DRO PLATINUM SRP", label: "DRO PLATINUM SRP" },
-
   { value: "DRO COMET DISTRIBUTOR", label: "DRO COMET DISTRIBUTOR" },
-
   { value: "DRO COMET DEALER", label: "DRO COMET DEALER" },
-
   { value: "DRO COMET SRP", label: "DRO COMET SRP" },
+  { value: "BAGANI DEALER (CASH)", label: "BAGANI DEALER (CASH)", currency: "Philippine Peso", vatCode: "VAT-GFS (12.00%)" },
+  { value: "BAGANI DEALER (CASH) LAUNCH DAY", label: "BAGANI DEALER (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "BAGANI DEALER (TERMS)", label: "BAGANI DEALER (TERMS)", currency: "Philippine Peso" },
+  { value: "BAGANI DEALER (TERMS) LAUNCH DAY", label: "BAGANI DEALER (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "BAGANI DISTRI. (CASH) LAUNCH DAY", label: "BAGANI DISTRI. (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "BAGANI DISTRI. (TERMS) LAUNCH DAY", label: "BAGANI DISTRI. (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "BAGANI DISTRIBUTOR (CASH)", label: "BAGANI DISTRIBUTOR (CASH)", currency: "Philippine Peso", vatCode: "VAT-GFS (12.00%)" },
+  { value: "BAGANI DISTRIBUTOR (TERMS)", label: "BAGANI DISTRIBUTOR (TERMS)", currency: "Philippine Peso" },
+  { value: "BAGANI SRP", label: "BAGANI SRP", currency: "Philippine Peso", vatCode: "VAT-GFS (12.00%)" },
+  { value: "BAGANI SRP LAUNCH DAY", label: "BAGANI SRP LAUNCH DAY", currency: "Philippine Peso", vatCode: "VAT-GFS (12.00%)" },
+  { value: "CEBU LUBRIKING CORPORATION (BAGANI)", label: "CEBU LUBRIKING CORPORATION (BAGANI)", currency: "Philippine Peso", vatCode: "VAT-GFS (12.00%)" },
+  { value: "DRO BAGANI DEALER (CASH)", label: "DRO BAGANI DEALER (CASH)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (CASH) LAUNCH DAY", label: "DRO BAGANI DEALER (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (TERMS)", label: "DRO BAGANI DEALER (TERMS)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (TERMS) LAUNCH DAY", label: "DRO BAGANI DEALER (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRI. (TERMS) LAUNCH DAY", label: "DRO BAGANI DISTRI. (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRI. (CASH) LAUNCH DAY", label: "DRO BAGANI DISTRI. (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRIBUTOR (CASH)", label: "DRO BAGANI DISTRIBUTOR (CASH)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRIBUTOR (TERMS)", label: "DRO BAGANI DISTRIBUTOR (TERMS)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI SRP", label: "DRO BAGANI SRP", currency: "Philippine Peso" },
+  { value: "DRO BAGANI SRP LAUNCH DAY", label: "DRO BAGANI SRP LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO CEBU LUBRIKING CORP. (BAGANI)", label: "DRO CEBU LUBRIKING CORP. (BAGANI)", currency: "Philippine Peso" },
+];
 
-] as const;
-
-
-
-export const SALES_SUPPORT_PRICE_LIST_2_OPTIONS = [
-
+export const SALES_SUPPORT_PRICE_LIST_2_OPTIONS: PriceListOption[] = [
   { value: "DRO PLATINUM DISTRIBUTOR", label: "DRO PLATINUM DISTRIBUTOR" },
-
   { value: "DRO PLATINUM DEALER", label: "DRO PLATINUM DEALER" },
-
   { value: "DRO PLATINUM SRP", label: "DRO PLATINUM SRP" },
-
   { value: "DRO COMET DISTRIBUTOR", label: "DRO COMET DISTRIBUTOR" },
-
   { value: "DRO COMET DEALER", label: "DRO COMET DEALER" },
-
   { value: "DRO COMET SRP", label: "DRO COMET SRP" },
-
-] as const;
+  { value: "DRO BAGANI DEALER (CASH)", label: "DRO BAGANI DEALER (CASH)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (CASH) LAUNCH DAY", label: "DRO BAGANI DEALER (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (TERMS)", label: "DRO BAGANI DEALER (TERMS)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DEALER (TERMS) LAUNCH DAY", label: "DRO BAGANI DEALER (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRI. (TERMS) LAUNCH DAY", label: "DRO BAGANI DISTRI. (TERMS) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRI. (CASH) LAUNCH DAY", label: "DRO BAGANI DISTRI. (CASH) LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRIBUTOR (CASH)", label: "DRO BAGANI DISTRIBUTOR (CASH)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI DISTRIBUTOR (TERMS)", label: "DRO BAGANI DISTRIBUTOR (TERMS)", currency: "Philippine Peso" },
+  { value: "DRO BAGANI SRP", label: "DRO BAGANI SRP", currency: "Philippine Peso" },
+  { value: "DRO BAGANI SRP LAUNCH DAY", label: "DRO BAGANI SRP LAUNCH DAY", currency: "Philippine Peso" },
+  { value: "DRO CEBU LUBRIKING CORP. (BAGANI)", label: "DRO CEBU LUBRIKING CORP. (BAGANI)", currency: "Philippine Peso" },
+];
 
 
 

@@ -11,6 +11,8 @@ import {
 } from "@/lib/db/schema";
 
 const updateUserSchema = z.object({
+  fullName: z.string().min(1).max(255).optional(),
+  email: z.string().email().max(255).optional(),
   role: z.enum([
     "sales_agent", "rsr", "sales_manager", "rsr_manager",
     "finance_reviewer", "legal_approver", "senior_approver",
@@ -51,6 +53,18 @@ export async function PATCH(
 
   const { password, ...rest } = parsed.data;
   const updateData: Record<string, unknown> = { ...rest };
+
+  // Validate email uniqueness if provided
+  if (parsed.data.email) {
+    const [emailTaken] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, parsed.data.email), ne(users.id, id)))
+      .limit(1);
+    if (emailTaken) {
+      return NextResponse.json({ error: "This email is already in use by another account" }, { status: 409 });
+    }
+  }
 
   if (password) {
     updateData.passwordHash = await bcrypt.hash(password, 12);
