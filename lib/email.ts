@@ -159,11 +159,13 @@ let transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {
   if (transporter) return transporter;
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
+  const user = process.env.ZOHO_USER;
+  const pass = process.env.ZOHO_APP_PASSWORD;
   if (!user || !pass) return null;
   transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.zoho.com",
+    port: 465,
+    secure: true,
     auth: { user, pass },
   });
   return transporter;
@@ -173,9 +175,9 @@ export async function sendWorkflowEmails(jobs: WorkflowEmailJob[]) {
   if (jobs.length === 0) return;
 
   const smtp = getTransporter();
-  const from = process.env.GMAIL_USER;
+  const from = process.env.ZOHO_USER;
   if (!smtp || !from) {
-    console.warn("[email] Skipping email send. Missing GMAIL_USER or GMAIL_APP_PASSWORD.");
+    console.warn("[email] Skipping email send. Missing ZOHO_USER or ZOHO_APP_PASSWORD.");
     return;
   }
 

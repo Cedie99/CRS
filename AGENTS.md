@@ -463,7 +463,7 @@ end_user
 | `lib/workflow.ts`       | `transitionCis()` — core status transition + audit event; `notifyParties()` — determines who gets notified and sends email + in-app |
 | `lib/cached-queries.ts` | Dashboard stat queries with short-lived cache (10–30s)                                                                              |
 | `lib/doc-types.ts`      | Document slot definitions, scoring doc list, file entry type                                                                        |
-| `lib/email.ts`          | HTML email builder, Gmail sender via Nodemailer, deduplication                                                                      |
+| `lib/email.ts`          | HTML email builder, Zoho sender via Nodemailer, deduplication                                                                      |
 | `lib/agent-codes.ts`    | Agent code lookup/validation                                                                                                        |
 
 ---
@@ -480,7 +480,7 @@ end_user
 
 ## Notifications & Email
 
-- **Transport:** Gmail via Nodemailer (`GMAIL_USER`, `GMAIL_APP_PASSWORD` env vars)
+- **Transport:** Zoho Mail via Nodemailer (`ZOHO_USER`, `ZOHO_APP_PASSWORD` env vars), sent from `smtp.zoho.com:465`
 - Both **in-app** and **email** notifications are created for each workflow event
 - Emails are deduplicated by `to + subject` within a single workflow transition call
 
