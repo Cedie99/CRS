@@ -182,7 +182,7 @@ export const BUSINESS_ACTIVITY_OPTIONS = [
 
 const ownerRowSchema = z.object({
 
-  name: z.string().max(255),
+  name: z.string().trim().min(1, "Owner name is required").max(255),
 
   nationality: z.string().max(100),
 
@@ -409,11 +409,11 @@ export const cisFormSchema = z.object({
 
   // Ownership
 
-  owners: z.array(ownerRowSchema).optional(),
+  owners: z.array(ownerRowSchema).min(1, "At least one owner is required"),
 
   officers: z.array(officerRowSchema).optional(),
 
-  paymentTerms: z.string().max(50).optional(),
+  paymentTerms: z.string().min(1, "Payment terms is required").max(50),
 
   salesChannel: z.string().max(50).optional(),
 

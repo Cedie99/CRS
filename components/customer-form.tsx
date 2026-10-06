@@ -453,6 +453,11 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
         errs.businessActivityOther = "Please specify";
       }
     }
+    if (step === 4) {
+      const hasOwner = owners.some((r) => r.name.trim());
+      if (!hasOwner) errs.owners = "At least one owner is required";
+      if (!paymentTerms) errs.paymentTerms = "Please select a payment term";
+    }
 
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -535,9 +540,9 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
       salesChannel:          salesChannel || undefined,
       tinNumber:             tinNumber || undefined,
 
-      owners:       cleanOwners.length ? cleanOwners : undefined,
+      owners:       cleanOwners,
       officers:     cleanOfficers.length ? cleanOfficers : undefined,
-      paymentTerms: paymentTerms || undefined,
+      paymentTerms,
 
       businessLife:      businessLife || undefined,
       howLongAtAddress:  howLongAtAddress || undefined,
@@ -965,6 +970,8 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
                   },
                 ]}
               />
+
+              {errors.owners && <p className="text-xs text-red-600">{errors.owners}</p>}
             </section>
 
             <Separator />
@@ -1025,6 +1032,7 @@ export function CustomerForm({ token, agentCode, customerType, agentFillMode = f
               <p className="text-xs text-zinc-500">
                 If With Terms is selected, additional document requirements apply.
               </p>
+              {errors.paymentTerms && <p className="text-xs text-red-600">{errors.paymentTerms}</p>}
             </div>
           </div>
 

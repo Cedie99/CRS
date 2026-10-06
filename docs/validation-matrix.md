@@ -34,7 +34,7 @@ This matrix defines what each field should accept, what should be blocked, and w
 | businessActivityOther        | text           | Cond.    | Required only if businessActivity=other                   | Small batch lab           | (empty)         | text input             | required when other                      | conditional required     |
 | businessType                 | enum           | Yes      | corporation/partnership/sole_proprietor/cooperative/other | corporation               | corp            | dropdown only          | required                                 | enum whitelist           |
 | tinNumber                    | tax id         | No       | Digits and hyphens only                                   | 123-456-789-000           | 12A-456         | sanitize digits/hyphen | pattern if present                       | digits/hyphens only      |
-| owners[].name                | text           | Cond.    | Free text if row used                                     | Maria Santos              | -               | None                   | if row used, can require name            | max 255                  |
+| owners[].name                | text           | Yes      | Free text if row used                                     | Maria Santos              | -               | None                   | required                                 | max 255                  |
 | owners[].nationality         | text           | No       | Free text                                                 | Filipino                  | -               | None                   | if present valid                         | max 100                  |
 | owners[].percentage          | number         | No       | Decimal 0-100, optional % symbol                          | 50 or 50.5                | fifty           | type=number            | range 0-100                              | percentage regex         |
 | owners[].contact             | phone          | No       | Digits plus + ( ) - space                                 | 09123456789               | abc123          | sanitize phone         | pattern if present                       | no letters               |
@@ -66,7 +66,7 @@ This matrix defines what each field should accept, what should be blocked, and w
 | lineOfBusiness = other      | lineOfBusinessOther must be required                                          |
 | businessActivity = other    | businessActivityOther must be required                                        |
 | deliverySameAsOffice = true | Ignore delivery fields on submit                                              |
-| Owners entered              | Optional: total ownership must be <= 100; strict mode can require exactly 100 |
+| Owners entered              | Required: at least one owner row with a name; total ownership must be <= 100 |
 | Required document slots     | Block final submit if any required slot has 0 files                           |
 | paymentTerms = with_terms   | docValidId must include at least one uploaded file                             |
 
