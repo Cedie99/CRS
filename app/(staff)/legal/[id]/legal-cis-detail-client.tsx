@@ -36,6 +36,7 @@ interface LegalCisDetailClientProps {
   }>;
   status: string;
   customerType?: string | null;
+  customerProgram?: string | null;
   [key: string]: unknown;
 }
 
@@ -124,6 +125,7 @@ export function LegalCisDetailClient({
             cisId={cisId}
             status={status as any}
             customerType={customerType}
+            customerProgram={cisData.customerProgram}
             onStatusesChange={setDocReviewStatuses}
             onMetricSave={canAct ? handleMetricSave : undefined}
             reviewRejectionTimestamp={latestReturnedAt}
@@ -161,6 +163,7 @@ export function LegalCisDetailClient({
             docReviewStatuses={docReviewStatuses}
             agentType={cisData.agentType as string | null}
             customerType={customerType}
+            customerProgram={cisData.customerProgram}
             showApprovedAlways={canAct}
           />
           <Card>

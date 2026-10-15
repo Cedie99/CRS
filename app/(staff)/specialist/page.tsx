@@ -18,6 +18,7 @@ const SUBMISSION_COLS = {
   tradeName: cisSubmissions.tradeName,
   contactPerson: cisSubmissions.contactPerson,
   customerType: cisSubmissions.customerType,
+  customerProgram: cisSubmissions.customerProgram,
   agentCode: cisSubmissions.agentCode,
   agentId: cisSubmissions.agentId,
   status: cisSubmissions.status,

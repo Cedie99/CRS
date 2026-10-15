@@ -67,6 +67,7 @@ export default async function SupportDashboard({
     tradeName: cisSubmissions.tradeName,
     contactPerson: cisSubmissions.contactPerson,
     customerType: cisSubmissions.customerType,
+    customerProgram: cisSubmissions.customerProgram,
     agentCode: cisSubmissions.agentCode,
     customerCode: cisSubmissions.customerCode,
     status: cisSubmissions.status,

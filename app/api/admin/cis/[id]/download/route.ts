@@ -119,6 +119,9 @@ export async function GET(
     ["Sales Support Account Type", cis.salesSupportAccountType],
     ["Sales Support Price List 1", cis.salesSupportPriceList1],
     ["Sales Support Price List 2", cis.salesSupportPriceList2],
+    ...(cis.salesSupportExtraPriceLists ?? []).map(
+      (pl, i) => [`Sales Support Price List ${i + 3}`, pl] as [string, string],
+    ),
     ["Sales Support Sales Type", cis.salesSupportSalesType],
     ["Sales Support VAT Code", cis.salesSupportVatCode],
     ["Sales Support Other Remarks", cis.salesSupportOtherRemarks],

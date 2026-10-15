@@ -19,6 +19,12 @@ import { toast } from "@/lib/toast";
 import QRCode from "qrcode";
 import { DeleteDraftButton } from "@/components/delete-draft-button";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { CUSTOMER_PROGRAMS, CUSTOMER_PROGRAM_LABELS, customerTypeHasProgram, formatCustomerTypeLabel, type CustomerProgram } from "@/lib/customer-types";
+
+const PROGRAM_DESCRIPTIONS: Record<CustomerProgram, string> = {
+  platinum: "Standard credit-terms brackets",
+  bagani: "Bagani credit-terms brackets",
+};
 
 const CUSTOMER_TYPES = [
   { value: "dealer",         label: "Dealer",          desc: "Motorcycle shops, resellers" },
@@ -153,6 +159,7 @@ function NewCisContent() {
 
   const [customerName, setCustomerName] = useState("");
   const [customerType, setCustomerType] = useState("");
+  const [customerProgram, setCustomerProgram] = useState<CustomerProgram | "">("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [fillMode, setFillMode] = useState<"link" | "direct" | null>(null);
@@ -177,6 +184,7 @@ function NewCisContent() {
         const qr = await QRCode.toDataURL(link, { width: 260, margin: 1 });
         setCustomerName(data.tradeName ?? "");
         setCustomerType(data.customerType ?? "");
+        setCustomerProgram(data.customerProgram ?? "");
         setGeneratedLink(link);
         setGeneratedQr(qr);
         setExistingDraftId(draftId);
@@ -207,6 +215,10 @@ function NewCisContent() {
       setError("Please select a customer type before continuing.");
       return;
     }
+    if (customerTypeHasProgram(customerType) && !customerProgram) {
+      setError("Please choose Platinum or Bagani before continuing.");
+      return;
+    }
     setError("");
     setIsLoading(true);
     setFillMode("direct");
@@ -217,6 +229,7 @@ function NewCisContent() {
         body: JSON.stringify({
           tradeName: customerName.trim() || undefined,
           customerType,
+          customerProgram: customerProgram || undefined,
           directFill: true,
         }),
       });
@@ -261,6 +274,10 @@ function NewCisContent() {
       setError("Please select a customer type before generating the link.");
       return;
     }
+    if (customerTypeHasProgram(customerType) && !customerProgram) {
+      setError("Please choose Platinum or Bagani before generating the link.");
+      return;
+    }
     setError("");
     setIsLoading(true);
     setFillMode("link");
@@ -271,6 +288,7 @@ function NewCisContent() {
         body: JSON.stringify({
           tradeName: customerName.trim() || undefined,
           customerType,
+          customerProgram: customerProgram || undefined,
         }),
       });
 
@@ -342,6 +360,7 @@ function NewCisContent() {
     setExistingDraftId(null);
     setCustomerName("");
     setCustomerType("");
+    setCustomerProgram("");
     setCopied(false);
     setMessageCopied(false);
     setFillMode(null);
@@ -401,7 +420,14 @@ function NewCisContent() {
                       <Label className="text-sm font-medium text-zinc-700">
                         Customer Type <span className="text-red-500">*</span>
                       </Label>
-                      <Select value={customerType} onValueChange={(v) => setCustomerType(v ?? "")} disabled={isLoading}>
+                      <Select
+                        value={customerType}
+                        onValueChange={(v) => {
+                          setCustomerType(v ?? "");
+                          if (!customerTypeHasProgram(v)) setCustomerProgram("");
+                        }}
+                        disabled={isLoading}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select customer type…">
                             {customerType ? CUSTOMER_TYPES.find((t) => t.value === customerType)?.label : undefined}
@@ -418,6 +444,53 @@ function NewCisContent() {
                       </Select>
                       <p className="text-xs text-zinc-500">Determines required docs and approval route.</p>
                     </div>
+
+                    <AnimatePresence>
+                      {customerTypeHasProgram(customerType) && (
+                        <motion.div
+                          key="program"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 6 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="space-y-2"
+                        >
+                          <Label className="text-sm font-medium text-zinc-700">
+                            Program <span className="text-red-500">*</span>
+                          </Label>
+                          <div role="radiogroup" aria-label="Program" className="grid grid-cols-2 gap-2">
+                            {CUSTOMER_PROGRAMS.map((p) => {
+                              const isSelected = customerProgram === p;
+                              return (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={isSelected}
+                                  disabled={isLoading}
+                                  onClick={() => { setCustomerProgram(p); setError(""); }}
+                                  className={`rounded-xl border px-3 py-2.5 text-left transition-colors disabled:opacity-60 ${
+                                    isSelected
+                                      ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200"
+                                      : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
+                                  }`}
+                                >
+                                  <p className={`text-sm font-semibold ${isSelected ? "text-emerald-800" : "text-zinc-800"}`}>
+                                    {CUSTOMER_PROGRAM_LABELS[p]}
+                                  </p>
+                                  <p className="mt-0.5 text-[11px] text-zinc-500">{PROGRAM_DESCRIPTIONS[p]}</p>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {customerProgram && (
+                            <p className="text-xs text-zinc-500">
+                              Account type: <span className="font-semibold text-zinc-800">{formatCustomerTypeLabel(customerType, customerProgram)}</span>
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <AnimatePresence>
                       {selectedDetail && (
@@ -655,7 +728,7 @@ function NewCisContent() {
                       {customerName.trim() && <p className="mt-1 text-sm text-emerald-700">{customerName.trim()}</p>}
                       {customerType && (
                         <p className="mt-1 text-xs text-emerald-700">
-                          Type: <span className="font-semibold">{CUSTOMER_TYPES.find((t) => t.value === customerType)?.label ?? customerType}</span>
+                          Type: <span className="font-semibold">{formatCustomerTypeLabel(customerType, customerProgram)}</span>
                         </p>
                       )}
                     </div>

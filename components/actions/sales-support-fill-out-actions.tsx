@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, CheckCircle2, ChevronDown, ClipboardList, FileUp, PackagePlus, Search, X } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, ClipboardList, FileUp, PackagePlus, Plus, Search, X } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   SALES_SUPPORT_PRICE_LIST_1_OPTIONS,
@@ -221,6 +221,10 @@ export function SalesSupportFillOutActions({ cisId, accountType, initialOtherDoc
     otherRemarks: "",
   });
 
+  // Price List 3, 4, … — optional, added on demand
+  const [extraPriceLists, setExtraPriceLists] = useState<string[]>([]);
+  const [extraPriceListError, setExtraPriceListError] = useState("");
+
   const [otherDocs, setOtherDocs] = useState<FileEntry[]>(initialOtherDocs);
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -258,7 +262,12 @@ export function SalesSupportFillOutActions({ cisId, accountType, initialOtherDoc
 
     setErrors(errs);
 
-    return Object.keys(errs).length === 0;
+    const extraError = extraPriceLists.some((v) => !v)
+      ? "Select a price list or remove the empty field."
+      : "";
+    setExtraPriceListError(extraError);
+
+    return Object.keys(errs).length === 0 && !extraError;
 
   }
 
@@ -287,6 +296,8 @@ export function SalesSupportFillOutActions({ cisId, accountType, initialOtherDoc
           salesSupportPriceList1: fields.priceList1,
 
           salesSupportPriceList2: fields.priceList2,
+
+          salesSupportExtraPriceLists: extraPriceLists,
 
           salesSupportSalesType: fields.salesType,
 
@@ -431,6 +442,57 @@ export function SalesSupportFillOutActions({ cisId, accountType, initialOtherDoc
               />
               {errors.priceList2 && (
                 <p className="text-xs text-red-600">{errors.priceList2}</p>
+              )}
+            </div>
+
+            {extraPriceLists.map((value, i) => {
+              const n = i + 3;
+              return (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`price-list-${n}`}>Assigned Price List {n}</Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExtraPriceLists((lists) => lists.filter((_, j) => j !== i));
+                        setExtraPriceListError("");
+                      }}
+                      disabled={isLoading}
+                      aria-label={`Remove Price List ${n}`}
+                      className="rounded p-0.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <PriceListPicker
+                    id={`price-list-${n}`}
+                    options={SALES_SUPPORT_PRICE_LIST_1_OPTIONS}
+                    value={value}
+                    onSelect={(opt) => {
+                      setExtraPriceLists((lists) => lists.map((v, j) => (j === i ? opt.value : v)));
+                      setExtraPriceListError("");
+                    }}
+                    disabled={isLoading}
+                    pickerTitle={`Select Price List ${n}`}
+                  />
+                </div>
+              );
+            })}
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setExtraPriceLists((lists) => [...lists, ""])}
+                disabled={isLoading}
+                className="gap-1.5 border-dashed"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Price List {extraPriceLists.length + 3}
+              </Button>
+              {extraPriceListError && (
+                <p className="text-xs text-red-600">{extraPriceListError}</p>
               )}
             </div>
 

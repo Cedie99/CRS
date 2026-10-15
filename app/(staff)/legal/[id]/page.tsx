@@ -30,6 +30,7 @@ export default async function LegalCisDetailPage({
         agentCode: cisSubmissions.agentCode,
         agentType: cisSubmissions.agentType,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
@@ -121,6 +122,7 @@ export default async function LegalCisDetailPage({
         salesSupportAccountType: cisSubmissions.salesSupportAccountType,
         salesSupportPriceList1: cisSubmissions.salesSupportPriceList1,
         salesSupportPriceList2: cisSubmissions.salesSupportPriceList2,
+        salesSupportExtraPriceLists: cisSubmissions.salesSupportExtraPriceLists,
         salesSupportSalesType: cisSubmissions.salesSupportSalesType,
         salesSupportVatCode: cisSubmissions.salesSupportVatCode,
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
@@ -197,6 +199,7 @@ export default async function LegalCisDetailPage({
         events={events as any}
         status={cis.status}
         customerType={cis.customerType}
+        customerProgram={cis.customerProgram}
         agentCode={cis.agentCode}
         agentType={cis.agentType}
         tradeName={cis.tradeName}
@@ -289,6 +292,7 @@ export default async function LegalCisDetailPage({
         salesSupportAccountType={cis.salesSupportAccountType}
         salesSupportPriceList1={cis.salesSupportPriceList1}
         salesSupportPriceList2={cis.salesSupportPriceList2}
+        salesSupportExtraPriceLists={cis.salesSupportExtraPriceLists}
         salesSupportSalesType={cis.salesSupportSalesType}
         salesSupportVatCode={cis.salesSupportVatCode}
         salesSupportOtherRemarks={cis.salesSupportOtherRemarks}

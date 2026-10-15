@@ -22,7 +22,7 @@ const updateUserSchema = z.object({
   managerId: z.string().uuid().nullable().optional(),
   isActive: z.boolean().optional(),
   isTopManager: z.boolean().optional(),
-  agentCode: z.string().nullable().optional(),
+  agentCode: z.string().trim().max(50, "Agent code must be 50 characters or fewer").nullable().optional(),
   password: z.string().min(8).optional(),
 });
 

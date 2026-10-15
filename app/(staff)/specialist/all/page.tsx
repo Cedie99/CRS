@@ -1,3 +1,4 @@
+import { formatCustomerTypeLabel } from "@/lib/customer-types";
 import Link from "next/link";
 import { desc, eq, count, sql, ilike, or, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -7,19 +8,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
+import { formatDistanceToNow } from "@/lib/utils";
 import { List, Activity, CheckCircle2, XCircle, Database, FileText } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "All Submissions — CRS" };
-
-const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  dealer: "Dealer",
-  distributor: "Distributor",
-  private_label: "Private Label",
-  toll_blend: "Toll Blend",
-  end_user: "End-User",
-};
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
   dealer: "bg-blue-50 text-blue-700",
@@ -77,6 +70,7 @@ export default async function SpecialistAllSubmissionsPage({
       .select({
         id: cisSubmissions.id,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         agentCode: cisSubmissions.agentCode,
@@ -194,7 +188,7 @@ export default async function SpecialistAllSubmissionsPage({
                         CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                       }`}
                     >
-                      {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
+                      {formatCustomerTypeLabel(customerType, s.customerProgram)}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-zinc-400">Submitted {formatDistanceToNow(s.createdAt)} ago</p>
@@ -253,7 +247,7 @@ export default async function SpecialistAllSubmissionsPage({
                             CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                           }`}
                         >
-                          {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
+                          {formatCustomerTypeLabel(customerType, s.customerProgram)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">

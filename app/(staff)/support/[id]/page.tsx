@@ -195,6 +195,7 @@ export default async function SupportCisDetailPage({
             additionalNotes={cis.additionalNotes}
 
             customerType={cis.customerType}
+            customerProgram={cis.customerProgram}
 
             salesChannel={cis.salesChannel}
 
@@ -361,6 +362,7 @@ export default async function SupportCisDetailPage({
             salesSupportPriceList1={cis.salesSupportPriceList1}
 
             salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportExtraPriceLists={cis.salesSupportExtraPriceLists}
 
             salesSupportSalesType={cis.salesSupportSalesType}
 

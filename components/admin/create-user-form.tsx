@@ -51,7 +51,7 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [codeMode, setCodeMode] = useState<"select" | "generate">("select");
+  const [codeMode, setCodeMode] = useState<"select" | "generate" | "manual">("select");
   const [generatingCode, setGeneratingCode] = useState(false);
 
   const isAgentRole = form.role === "sales_agent" || form.role === "rsr";
@@ -69,9 +69,10 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
     }
   }
 
-  async function switchCodeMode(mode: "select" | "generate") {
+  async function switchCodeMode(mode: "select" | "generate" | "manual") {
     setCodeMode(mode);
-    setForm((f) => ({ ...f, agentCode: "" }));
+    // Keep the current code when switching to manual so it can be edited
+    if (mode !== "manual") setForm((f) => ({ ...f, agentCode: "" }));
     if (mode === "generate") fetchGeneratedCode();
   }
   const isManagerRole = form.role === "sales_manager" || form.role === "rsr_manager";
@@ -256,9 +257,25 @@ export function CreateUserForm({ managers, availableCodes }: CreateUserFormProps
                 >
                   Auto-generate
                 </button>
+                <button
+                  type="button"
+                  onClick={() => switchCodeMode("manual")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "manual" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
+                >
+                  Type manually
+                </button>
               </div>
 
-              {codeMode === "select" ? (
+              {codeMode === "manual" ? (
+                <Input
+                  value={form.agentCode}
+                  onChange={(e) => setForm((f) => ({ ...f, agentCode: e.target.value.toUpperCase() }))}
+                  placeholder="Enter agent code…"
+                  maxLength={50}
+                  className="font-mono"
+                  autoFocus
+                />
+              ) : codeMode === "select" ? (
                 availableCodes.length === 0 ? (
                   <div className="flex h-9 items-center rounded-md border border-dashed bg-zinc-50 px-3 text-sm text-zinc-400 italic">
                     No available predefined codes — use Auto-generate

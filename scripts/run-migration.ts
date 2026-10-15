@@ -11,9 +11,9 @@ const db = drizzle(sql);
 
 async function runMigration() {
   try {
-    const migrationSQL = readFileSync(join(process.cwd(), "drizzle", "0024_postal_code.sql"), "utf-8");
+    const migrationSQL = readFileSync(join(process.cwd(), "drizzle", "0026_sales_support_extra_price_lists.sql"), "utf-8");
     
-    console.log("Running migration 0024_postal_code.sql...");
+    console.log("Running migration 0026_sales_support_extra_price_lists.sql...");
     await sql.unsafe(migrationSQL);
     console.log("Migration completed successfully!");
     

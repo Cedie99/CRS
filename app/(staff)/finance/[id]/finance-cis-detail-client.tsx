@@ -45,6 +45,7 @@ interface FinanceCisDetailClientProps {
   initialMetricPoints?: { annualSales?: number | null; netIncome?: number | null; bankBalance?: number | null; businessLife?: number | null } | null;
   agentType?: string | null;
   customerType?: string | null;
+  customerProgram?: string | null;
   salesChannel?: string | null;
   // Events for timeline
   events: Array<{
@@ -131,6 +132,7 @@ interface FinanceCisDetailClientProps {
   salesSupportAccountType?: string | null;
   salesSupportPriceList1?: string | null;
   salesSupportPriceList2?: string | null;
+  salesSupportExtraPriceLists?: string[] | null;
   salesSupportSalesType?: string | null;
   salesSupportVatCode?: string | null;
   salesSupportOtherRemarks?: string | null;
@@ -233,6 +235,7 @@ export function FinanceCisDetailClient({
             cisId={cisId}
             status={status as any}
             customerType={customerType}
+            customerProgram={cisData.customerProgram}
             salesChannel={salesChannel}
             agentType={cisData.agentType ?? null}
             metricPoints={metricPoints}
@@ -267,6 +270,7 @@ export function FinanceCisDetailClient({
             docReviewStatuses={docReviewStatuses}
             agentType={cisData.agentType}
             customerType={customerType}
+            customerProgram={cisData.customerProgram}
             showApprovedAlways={canAct}
           />
           <Card>

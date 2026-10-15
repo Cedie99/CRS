@@ -86,6 +86,7 @@ export default async function ApproverCustomerTypePage({
     tradeName: cisSubmissions.tradeName,
     contactPerson: cisSubmissions.contactPerson,
     customerType: cisSubmissions.customerType,
+    customerProgram: cisSubmissions.customerProgram,
     agentCode: cisSubmissions.agentCode,
     status: cisSubmissions.status,
     createdAt: cisSubmissions.createdAt,

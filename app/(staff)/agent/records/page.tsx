@@ -1,3 +1,4 @@
+import { formatCustomerTypeLabel } from "@/lib/customer-types";
 import Link from "next/link";
 import { desc, eq, count, sql, ilike, or, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -7,19 +8,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { DashboardPagination, getPageNumber } from "@/components/dashboard-pagination";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { redirect } from "next/navigation";
-import { formatDistanceToNow, humanizeDisplayValue } from "@/lib/utils";
+import { formatDistanceToNow } from "@/lib/utils";
 import { FileText, Activity, CheckCircle2, XCircle } from "lucide-react";
 import type { CisStatus } from "@/components/status-badge";
 
 export const metadata = { title: "All Records — CRS" };
-
-const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  dealer: "Dealer",
-  distributor: "Distributor",
-  private_label: "Private Label",
-  toll_blend: "Toll Blend",
-  end_user: "End-User",
-};
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
   dealer: "bg-blue-50 text-blue-700",
@@ -93,6 +86,7 @@ export default async function AgentRecordsPage({
       .select({
         id: cisSubmissions.id,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
@@ -202,7 +196,7 @@ export default async function AgentRecordsPage({
                         CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                       }`}
                     >
-                      {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
+                      {formatCustomerTypeLabel(customerType, s.customerProgram)}
                     </span>
                     <span className={`text-xs font-medium ${dept.color}`}>{dept.label}</span>
                   </div>
@@ -287,7 +281,7 @@ export default async function AgentRecordsPage({
                             CUSTOMER_TYPE_COLORS[customerType] ?? "bg-zinc-100 text-zinc-600"
                           }`}
                         >
-                          {CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}
+                          {formatCustomerTypeLabel(customerType, s.customerProgram)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">

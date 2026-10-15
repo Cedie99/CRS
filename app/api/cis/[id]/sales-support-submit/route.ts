@@ -79,6 +79,8 @@ export async function PATCH(
 
     salesSupportPriceList2,
 
+    salesSupportExtraPriceLists,
+
     salesSupportSalesType,
 
     salesSupportVatCode,
@@ -98,6 +100,8 @@ export async function PATCH(
       salesSupportPriceList1,
 
       salesSupportPriceList2,
+
+      salesSupportExtraPriceLists: salesSupportExtraPriceLists?.length ? salesSupportExtraPriceLists : null,
 
       salesSupportSalesType,
 

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/status-badge";
-import { cn, humanizeDisplayValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatCustomerTypeLabel } from "@/lib/customer-types";
 import type { CisStatus } from "@/components/status-badge";
 
 type Format = "csv" | "excel" | "pdf";
@@ -16,6 +17,7 @@ interface PreviewRow {
   tradeName: string;
   contactPerson: string;
   customerType: string;
+  customerProgram: string | null;
   status: string;
   agentCode: string;
   customerCode: string;
@@ -27,14 +29,6 @@ interface PreviewData {
   rows: PreviewRow[];
   total: number;
 }
-
-const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  dealer: "Dealer",
-  distributor: "Distributor",
-  private_label: "Private Label",
-  toll_blend: "Toll Blend",
-  end_user: "End-User",
-};
 
 const CUSTOMER_TYPE_COLORS: Record<string, string> = {
   dealer: "bg-blue-50 text-blue-700",
@@ -359,7 +353,7 @@ export function AdminExportPage() {
                           CUSTOMER_TYPE_COLORS[row.customerType] ?? "bg-zinc-100 text-zinc-600"
                         )}
                       >
-                        {CUSTOMER_TYPE_LABELS[row.customerType] ?? humanizeDisplayValue(row.customerType)}
+                        {formatCustomerTypeLabel(row.customerType, row.customerProgram)}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">

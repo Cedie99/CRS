@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { eq, desc, inArray, and, sql, ilike, notInArray } from "drizzle-orm";
+import { eq, desc, inArray, and, sql, ilike, notInArray, isNull } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cisSubmissions, users, workflowEvents, notifications } from "@/lib/db/schema";
@@ -40,6 +40,7 @@ export async function GET() {
         id: cisSubmissions.id,
         agentCode: cisSubmissions.agentCode,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
@@ -64,6 +65,7 @@ export async function GET() {
         id: cisSubmissions.id,
         agentCode: cisSubmissions.agentCode,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
@@ -89,6 +91,7 @@ export async function GET() {
         id: cisSubmissions.id,
         agentCode: cisSubmissions.agentCode,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         status: cisSubmissions.status,
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
@@ -135,6 +138,9 @@ export async function POST(req: Request) {
           and(
             ilike(cisSubmissions.tradeName, parsed.data.tradeName),
             eq(cisSubmissions.customerType, parsed.data.customerType),
+            parsed.data.customerProgram
+              ? eq(cisSubmissions.customerProgram, parsed.data.customerProgram)
+              : isNull(cisSubmissions.customerProgram),
             eq(cisSubmissions.isArchived, false),
             notInArray(cisSubmissions.status, ["denied"])
           )
@@ -155,6 +161,7 @@ export async function POST(req: Request) {
         "agent_code",
         "agent_type",
         "customer_type",
+        "customer_program",
         "status",
         "trade_name",
         "direct_fill"
@@ -164,6 +171,7 @@ export async function POST(req: Request) {
         ${agentCode},
         ${agentType},
         ${parsed.data.customerType},
+        ${parsed.data.customerProgram ?? null},
         ${"draft"},
         ${parsed.data.tradeName || null},
         ${parsed.data.directFill ?? false}

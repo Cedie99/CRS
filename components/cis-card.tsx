@@ -3,6 +3,7 @@ import { StatusBadge, type CisStatus } from "@/components/status-badge";
 import { formatDistanceToNow, humanizeDisplayValue, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Clock, Building2, ChevronRight, RefreshCw } from "lucide-react";
+import { CUSTOMER_PROGRAM_LABELS, isCustomerProgram } from "@/lib/customer-types";
 
 const CUSTOMER_TYPE_LABELS: Record<string, string> = {
   dealer: "Dealer",
@@ -66,6 +67,7 @@ interface CisCardProps {
   tradeName: string | null;
   contactPerson: string | null;
   customerType?: string | null;
+  customerProgram?: string | null;
   agentCode: string;
   agentName?: string;
   customerCode?: string | null;
@@ -81,6 +83,7 @@ export function CisCard({
   tradeName,
   contactPerson,
   customerType,
+  customerProgram,
   agentCode,
   agentName,
   customerCode,
@@ -170,7 +173,7 @@ export function CisCard({
             >
               <Building2 className="h-3 w-3" />
               {hasFinalizedCustomerType && customerType
-                ? (CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType))
+                ? `${isCustomerProgram(customerProgram) ? `${CUSTOMER_PROGRAM_LABELS[customerProgram]} ` : ""}${CUSTOMER_TYPE_LABELS[customerType] ?? humanizeDisplayValue(customerType)}`
                 : "Pending"}
             </span>
           </div>

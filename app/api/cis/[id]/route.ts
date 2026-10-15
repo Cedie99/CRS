@@ -23,6 +23,7 @@ export async function GET(
       agentCode: cisSubmissions.agentCode,
       agentType: cisSubmissions.agentType,
       customerType: cisSubmissions.customerType,
+      customerProgram: cisSubmissions.customerProgram,
       status: cisSubmissions.status,
       tradeName: cisSubmissions.tradeName,
       contactPerson: cisSubmissions.contactPerson,

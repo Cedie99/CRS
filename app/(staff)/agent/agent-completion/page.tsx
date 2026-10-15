@@ -41,6 +41,7 @@ export default async function AgentCompletionQueuePage({
         tradeName: cisSubmissions.tradeName,
         contactPerson: cisSubmissions.contactPerson,
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
         agentCode: cisSubmissions.agentCode,
         status: cisSubmissions.status,
         createdAt: cisSubmissions.createdAt,
@@ -87,6 +88,7 @@ export default async function AgentCompletionQueuePage({
                 tradeName={row.tradeName}
                 contactPerson={row.contactPerson}
                 customerType={row.customerType}
+                customerProgram={row.customerProgram}
                 agentCode={row.agentCode}
                 status={row.status as CisStatus}
                 createdAt={row.createdAt}

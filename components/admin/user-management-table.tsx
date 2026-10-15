@@ -75,7 +75,7 @@ export function UserManagementTable({
   const [form, setForm] = useState({ fullName: "", email: "", role: "", managerId: "", agentCode: "", isTopManager: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [codeMode, setCodeMode] = useState<"select" | "generate">("select");
+  const [codeMode, setCodeMode] = useState<"select" | "generate" | "manual">("select");
   const [generatingCode, setGeneratingCode] = useState(false);
 
   // Reset password dialog state
@@ -122,9 +122,10 @@ export function UserManagementTable({
     }
   }
 
-  async function switchCodeMode(mode: "select" | "generate") {
+  async function switchCodeMode(mode: "select" | "generate" | "manual") {
     setCodeMode(mode);
-    setForm((f) => ({ ...f, agentCode: "" }));
+    // Keep the current code when switching to manual so it can be edited
+    if (mode !== "manual") setForm((f) => ({ ...f, agentCode: "" }));
     if (mode === "generate") fetchGeneratedCode();
   }
 
@@ -591,9 +592,25 @@ export function UserManagementTable({
                     >
                       Auto-generate
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => switchCodeMode("manual")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${codeMode === "manual" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"}`}
+                    >
+                      Type manually
+                    </button>
                   </div>
 
-                  {codeMode === "select" ? (
+                  {codeMode === "manual" ? (
+                    <Input
+                      value={form.agentCode}
+                      onChange={(e) => setForm((f) => ({ ...f, agentCode: e.target.value.toUpperCase() }))}
+                      placeholder="Enter agent code…"
+                      maxLength={50}
+                      className="font-mono"
+                      autoFocus
+                    />
+                  ) : codeMode === "select" ? (
                     <Select
                       value={form.agentCode}
                       onValueChange={(v) => setForm((f) => ({ ...f, agentCode: v ?? "" }))}

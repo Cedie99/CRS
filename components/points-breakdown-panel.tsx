@@ -28,6 +28,13 @@ const SALES_AGENT_TIERS = [
   { min: 30, max: Infinity, terms: "60 Days",         label: "30+ pts"     },
 ] as const;
 
+/** Bagani Dealer & Bagani Distributor accounts — subject to Finance Department's review. */
+const BAGANI_TIERS = [
+  { min: 0,  max: 7,        terms: "Prepaid / COD", label: "0 – 7 pts"  },
+  { min: 8,  max: 29,       terms: "30 Days",        label: "8 – 29 pts" },
+  { min: 30, max: Infinity, terms: "60 Days",         label: "30+ pts"    },
+] as const;
+
 type Tier = { min: number; max: number; terms: string; label: string };
 
 function matchTier(pts: number, tiers: readonly Tier[]): Tier {
@@ -42,8 +49,10 @@ function matchTier(pts: number, tiers: readonly Tier[]): Tier {
 function resolveTermsContext(
   agentType: string | null | undefined,
   customerType: string | null | undefined,
+  customerProgram: string | null | undefined,
 ): {
   isRsr: boolean;
+  bracketLabel: string;
   primaryTiers: readonly Tier[];
   cleanApply: boolean;
   scopeNote: string;
@@ -52,9 +61,23 @@ function resolveTermsContext(
   const isDealer = customerType === "dealer";
   const isNonDealer = customerType != null && !isDealer;
 
+  // Bagani Dealers & Distributors have their own bracket regardless of agent type
+  if (customerProgram === "bagani" && (customerType === "dealer" || customerType === "distributor")) {
+    return {
+      isRsr,
+      bracketLabel: "Bagani",
+      primaryTiers: BAGANI_TIERS,
+      cleanApply: true,
+      scopeNote: customerType === "dealer" ? "Bagani Dealer" : "Bagani Distributor",
+    };
+  }
+
+  const bracketLabel = isRsr ? "RSR" : "Sales Agent";
+
   if (isRsr && isDealer) {
     return {
       isRsr: true,
+      bracketLabel,
       primaryTiers: RSR_TIERS,
       cleanApply: true,
       scopeNote: "RSR · Dealer Account",
@@ -64,6 +87,7 @@ function resolveTermsContext(
   if (!isRsr && isNonDealer) {
     return {
       isRsr: false,
+      bracketLabel,
       primaryTiers: SALES_AGENT_TIERS,
       cleanApply: true,
       scopeNote: "Sales Agent · Non-Dealer Account",
@@ -73,6 +97,7 @@ function resolveTermsContext(
   // Mismatch or unknown — use agent type's bracket but flag for Finance
   return {
     isRsr,
+    bracketLabel,
     primaryTiers: isRsr ? RSR_TIERS : SALES_AGENT_TIERS,
     cleanApply: false,
     scopeNote: isRsr
@@ -192,6 +217,8 @@ export type PointsBreakdownPanelProps = DocFields & {
   docReviewStatuses?: Record<string, { status: string; reason?: string | null }> | null;
   agentType?: string | null;
   customerType?: string | null;
+  /** "platinum" | "bagani" — Bagani Dealers & Distributors use their own credit-terms bracket */
+  customerProgram?: string | null;
   /**
    * "full"    — finance/legal/staff: document checklist + financial metrics + summary + terms (default)
    * "summary" — agent: total score bar + recommended terms only, no per-document or per-metric breakdown
@@ -208,6 +235,7 @@ export function PointsBreakdownPanel({
   metricPoints,
   agentType,
   customerType,
+  customerProgram,
   mode = "full",
   showApprovedAlways = false,
   ...docs
@@ -258,7 +286,8 @@ export function PointsBreakdownPanel({
     ? 0
     : (totalApproved ?? totalPossible);
 
-  const { isRsr, primaryTiers, cleanApply, scopeNote } = resolveTermsContext(agentType, customerType);
+  const { isRsr, bracketLabel, primaryTiers, cleanApply, scopeNote } = resolveTermsContext(agentType, customerType, customerProgram);
+  const isBagani = bracketLabel === "Bagani";
   const activeTier = matchTier(ptsForTerms, primaryTiers);
 
   const possiblePct = Math.min(100, (totalPossible / MAX_TOTAL) * 100);
@@ -464,9 +493,9 @@ export function PointsBreakdownPanel({
           <div className="flex items-center gap-1.5">
             <span className={cn(
               "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-              isRsr ? "bg-sky-100 text-sky-700" : "bg-indigo-100 text-indigo-700",
+              isBagani ? "bg-yellow-100 text-yellow-800" : isRsr ? "bg-sky-100 text-sky-700" : "bg-indigo-100 text-indigo-700",
             )}>
-              {isRsr ? "RSR" : "Sales Agent"}
+              {bracketLabel}
             </span>
             {!cleanApply && (
               <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
@@ -563,6 +592,9 @@ export function PointsBreakdownPanel({
 
         <div className="border-t border-zinc-200 bg-zinc-50 px-3 py-2">
           <p className="text-[9px] text-zinc-500">* Final terms subject to Finance Department review</p>
+          {isBagani && (
+            <p className="text-[9px] text-zinc-500">* Bagani brackets apply to Bagani Dealers and Distributors</p>
+          )}
         </div>
       </div>
     </div>

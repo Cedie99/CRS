@@ -60,6 +60,9 @@ export const roleEnum = pgEnum("role", [
 
 export const agentTypeEnum = pgEnum("agent_type", ["sales_agent", "rsr"]);
 
+// Account program chosen alongside the customer type (e.g. "Bagani Distributor")
+export const customerProgramEnum = pgEnum("customer_program", ["platinum", "bagani"]);
+
 
 
 export const customerTypeEnum = pgEnum("customer_type", [
@@ -235,6 +238,9 @@ export const cisSubmissions = pgTable("cis_submissions", {
   // Routing key — set by agent fill-out step (null until agent submits)
 
   customerType: customerTypeEnum("customer_type"),
+
+  // Platinum / Bagani — set together with customerType when the agent creates the CIS
+  customerProgram: customerProgramEnum("customer_program"),
 
 
 
@@ -487,6 +493,9 @@ export const cisSubmissions = pgTable("cis_submissions", {
   salesSupportPriceList1: varchar("sales_support_price_list_1", { length: 100 }),
 
   salesSupportPriceList2: varchar("sales_support_price_list_2", { length: 100 }),
+
+  // Additional price lists beyond 1 & 2 — Price List 3, 4, … (string[])
+  salesSupportExtraPriceLists: jsonb("sales_support_extra_price_lists").$type<string[]>(),
 
   salesSupportSalesType: varchar("sales_support_sales_type", { length: 100 }),
 

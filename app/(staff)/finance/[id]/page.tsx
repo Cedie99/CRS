@@ -94,6 +94,7 @@ export default async function FinanceCisDetailPage({
         events={events as any}
         status={cis.status}
         customerType={cis.customerType}
+        customerProgram={cis.customerProgram}
         salesChannel={cis.salesChannel}
         agentType={cis.agentType}
         initialSirRestyFiles={(cis.docSirRestySigned as any) ?? []}
@@ -189,6 +190,7 @@ export default async function FinanceCisDetailPage({
         salesSupportAccountType={cis.salesSupportAccountType}
         salesSupportPriceList1={cis.salesSupportPriceList1}
         salesSupportPriceList2={cis.salesSupportPriceList2}
+        salesSupportExtraPriceLists={cis.salesSupportExtraPriceLists}
         salesSupportSalesType={cis.salesSupportSalesType}
         salesSupportVatCode={cis.salesSupportVatCode}
         salesSupportOtherRemarks={cis.salesSupportOtherRemarks}

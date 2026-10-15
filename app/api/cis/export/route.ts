@@ -1,3 +1,4 @@
+import { formatCustomerTypeLabel } from "@/lib/customer-types";
 import { NextResponse } from "next/server";
 import { and, desc, eq, gte, ilike, inArray, lte, ne, or } from "drizzle-orm";
 import * as XLSX from "xlsx";
@@ -63,14 +64,6 @@ const ROLE_SCOPES: Record<string, Scope[]> = {
   senior_approver: ["approver"],
   sales_support: ["support"],
   admin: ["admin"],
-};
-
-const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  dealer: "Dealer",
-  distributor: "Distributor",
-  private_label: "Private Label",
-  toll_blend: "Toll Blend",
-  end_user: "End-User",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -468,7 +461,7 @@ export async function GET(req: Request) {
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
   const query = db
-    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, customerCode: cisSubmissions.customerCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt, docReviewStatuses: cisSubmissions.docReviewStatuses })
+    .select({ id: cisSubmissions.id, tradeName: cisSubmissions.tradeName, contactPerson: cisSubmissions.contactPerson, customerType: cisSubmissions.customerType, customerProgram: cisSubmissions.customerProgram, status: cisSubmissions.status, agentCode: cisSubmissions.agentCode, customerCode: cisSubmissions.customerCode, createdAt: cisSubmissions.createdAt, updatedAt: cisSubmissions.updatedAt, docReviewStatuses: cisSubmissions.docReviewStatuses })
     .from(cisSubmissions)
     .orderBy(desc(cisSubmissions.createdAt))
     .limit(EXPORT_LIMIT);
@@ -483,6 +476,7 @@ export async function GET(req: Request) {
         tradeName: r.tradeName ?? "—",
         contactPerson: r.contactPerson ?? "—",
         customerType: r.customerType ?? "end_user",
+        customerProgram: r.customerProgram ?? null,
         status: r.status,
         agentCode: r.agentCode ?? "—",
         customerCode: r.customerCode ?? "",
@@ -519,7 +513,7 @@ export async function GET(req: Request) {
           i + 1,
           r.tradeName ?? "",
           r.contactPerson ?? "",
-          CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
+          formatCustomerTypeLabel(ct, r.customerProgram),
           STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
           r.agentCode ?? "",
           r.customerCode ?? "",
@@ -565,7 +559,7 @@ export async function GET(req: Request) {
           i + 1,
           r.tradeName ?? "",
           r.contactPerson ?? "",
-          CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
+          formatCustomerTypeLabel(ct, r.customerProgram),
           STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
           r.agentCode ?? "",
           r.customerCode ?? "",
@@ -615,7 +609,7 @@ export async function GET(req: Request) {
       no: String(i + 1),
       tradeName: r.tradeName ?? "—",
       contactPerson: r.contactPerson ?? "—",
-      customerType: CUSTOMER_TYPE_LABELS[ct] ?? humanizeDisplayValue(ct),
+      customerType: formatCustomerTypeLabel(ct, r.customerProgram),
       status: STATUS_LABELS[r.status] ?? humanizeDisplayValue(r.status),
       agentCode: r.agentCode ?? "—",
       customerCode: r.customerCode ?? "—",

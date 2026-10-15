@@ -134,8 +134,19 @@ export const initiateSchema = z.object({
 
   customerType: z.enum(CUSTOMER_TYPE_VALUES, { error: "Customer type is required" }),
 
+  // Only Dealer / Distributor choose a program; other types must not send one
+  customerProgram: z.enum(["platinum", "bagani"]).optional(),
+
   directFill: z.boolean().optional().default(false),
 
+}).superRefine((data, ctx) => {
+  const needsProgram = data.customerType === "dealer" || data.customerType === "distributor";
+  if (needsProgram && !data.customerProgram) {
+    ctx.addIssue({ code: "custom", path: ["customerProgram"], message: "Please choose Platinum or Bagani" });
+  }
+  if (!needsProgram && data.customerProgram) {
+    ctx.addIssue({ code: "custom", path: ["customerProgram"], message: "Platinum / Bagani applies only to Dealer and Distributor" });
+  }
 });
 
 
@@ -660,6 +671,7 @@ export const SALES_SUPPORT_VAT_CODE_OPTIONS = [
 export const salesSupportSubmitSchema = z.object({
   salesSupportPriceList1: z.string().min(1, "Assigned Price List 1 is required").max(100),
   salesSupportPriceList2: z.string().min(1, "Assigned Price List 2 is required").max(100),
+  salesSupportExtraPriceLists: z.array(z.string().min(1, "Select a price list or remove the empty field").max(100)).max(50).optional(),
   salesSupportSalesType: z.string().min(1, "Sales Type is required").max(100),
   salesSupportVatCode: z.string().min(1, "VAT Code is required").max(100),
   salesSupportOtherRemarks: z.string().max(2000).optional().or(z.literal("")),

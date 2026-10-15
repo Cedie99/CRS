@@ -104,6 +104,7 @@ export default async function SpecialistCisDetailPage({
             tinNumber={cis.tinNumber}
             additionalNotes={cis.additionalNotes}
             customerType={cis.customerType}
+            customerProgram={cis.customerProgram}
             salesChannel={cis.salesChannel}
             agentCode={cis.agentCode}
             agentType={cis.agentType}
@@ -187,6 +188,7 @@ export default async function SpecialistCisDetailPage({
             salesSupportAccountType={cis.salesSupportAccountType}
             salesSupportPriceList1={cis.salesSupportPriceList1}
             salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportExtraPriceLists={cis.salesSupportExtraPriceLists}
             salesSupportSalesType={cis.salesSupportSalesType}
             salesSupportVatCode={cis.salesSupportVatCode}
             salesSupportOtherRemarks={cis.salesSupportOtherRemarks}

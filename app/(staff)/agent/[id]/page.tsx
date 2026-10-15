@@ -110,6 +110,7 @@ export default async function AgentCisDetailPage({
         agentType: cisSubmissions.agentType,
 
         customerType: cisSubmissions.customerType,
+        customerProgram: cisSubmissions.customerProgram,
 
         status: cisSubmissions.status,
 
@@ -292,6 +293,7 @@ export default async function AgentCisDetailPage({
         salesSupportPriceList1: cisSubmissions.salesSupportPriceList1,
 
         salesSupportPriceList2: cisSubmissions.salesSupportPriceList2,
+        salesSupportExtraPriceLists: cisSubmissions.salesSupportExtraPriceLists,
 
         salesSupportSalesType: cisSubmissions.salesSupportSalesType,
 
@@ -854,6 +856,7 @@ export default async function AgentCisDetailPage({
             additionalNotes={cis.additionalNotes}
 
             customerType={cis.customerType}
+            customerProgram={cis.customerProgram}
 
             salesChannel={cis.salesChannel}
 
@@ -1020,6 +1023,7 @@ export default async function AgentCisDetailPage({
             salesSupportPriceList1={cis.salesSupportPriceList1}
 
             salesSupportPriceList2={cis.salesSupportPriceList2}
+            salesSupportExtraPriceLists={cis.salesSupportExtraPriceLists}
 
             salesSupportSalesType={cis.salesSupportSalesType}
 

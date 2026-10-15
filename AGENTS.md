@@ -452,6 +452,18 @@ end_user
 
 `dealer` is the only type routed to `legal_approver`. All other types go to `finance_reviewer`. Both roles have identical capabilities — the split is purely based on customer type.
 
+### Customer Program (Platinum / Bagani)
+
+When creating a CIS at `/agent/new`, the agent picks a customer type and, for **Dealer or Distributor only**, a program (`customerProgramEnum`: `platinum` | `bagani`, column `customer_program`). It is displayed as a combined label, e.g. "Bagani Distributor" (`formatCustomerTypeLabel()` in `lib/customer-types.ts`). Routing still depends only on `customerType`. Legacy rows have `customer_program = null`.
+
+Credit-terms brackets (`components/points-breakdown-panel.tsx`):
+
+| Account                 | Brackets                                          |
+| ----------------------- | ------------------------------------------------- |
+| Bagani Dealer / Distributor | 0–7 Prepaid/COD · 8–29 30 Days · 30+ 60 Days      |
+| RSR · Dealer            | 0–10 Prepaid/COD · 11–15 30 Days · 16+ 60 Days    |
+| Sales Agent · non-dealer| 0–24 Prepaid/COD · 25–29 30 Days · 30+ 60 Days    |
+
 ---
 
 ## Key Lib Files

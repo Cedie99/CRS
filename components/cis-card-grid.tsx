@@ -6,6 +6,7 @@ type GridSubmission = {
   tradeName: string | null;
   contactPerson: string | null;
   customerType?: string | null;
+  customerProgram?: string | null;
   agentCode: string;
   agentName?: string | null;
   customerCode?: string | null;
@@ -30,6 +31,7 @@ export function CisCardGrid({ submissions, hrefPrefix, readOnlyView = false }: C
           tradeName={s.tradeName}
           contactPerson={s.contactPerson}
           customerType={s.customerType}
+          customerProgram={s.customerProgram}
           agentCode={s.agentCode}
           agentName={s.agentName ?? undefined}
           customerCode={s.customerCode ?? undefined}

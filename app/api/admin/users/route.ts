@@ -57,7 +57,7 @@ const createUserSchema = z.object({
   agentType: z.enum(["sales_agent", "rsr"]).nullable().optional(),
   managerId: z.string().uuid().nullable().optional(),
   isTopManager: z.boolean().optional(),
-  agentCode: z.string().nullable().optional(),
+  agentCode: z.string().trim().max(50, "Agent code must be 50 characters or fewer").nullable().optional(),
 });
 
 // POST /api/admin/users — create a new user (admin only)
