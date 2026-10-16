@@ -39,6 +39,7 @@ import {
   Check,
   AlertCircle,
   X,
+  PencilLine,
 } from "lucide-react";
 import { useState } from "react";
 import { PrintButton } from "@/components/print-button";
@@ -458,6 +459,8 @@ interface CisInfoCardProps {
    * When provided, the previous value is shown with low opacity above the current value.
    */
   fieldHistory?: Record<string, string | null>;
+  /** CIS field keys the agent edited on the last returned form — drives the "Edited by agent" banner. */
+  agentEditedFields?: string[];
   /** Hide the PointsBreakdownPanel from the main form (it will still be shown in print mode) */
   hidePointsPanel?: boolean;
   /**
@@ -741,6 +744,96 @@ function Field({
   );
 }
 
+const AGENT_EDIT_FIELD_LABELS: Record<string, string> = {
+  tradeName: "Trade Name",
+  corporateName: "Corporate Name",
+  dateOfBusinessReg: "Date of Registration",
+  numberOfEmployees: "No. of Employees",
+  contactPerson: "Contact Person",
+  contactNumber: "Mobile Number",
+  emailAddress: "Email",
+  telephoneNumber: "Telephone",
+  website: "Website",
+  businessAddress: "Business Address",
+  cityMunicipality: "City / Municipality",
+  postalCode: "Postal Code",
+  landmarks: "Landmarks",
+  deliverySameAsOffice: "Delivery Address",
+  deliveryAddress: "Delivery Address",
+  deliveryLandmarks: "Delivery Landmarks",
+  deliveryMobile: "Delivery Mobile",
+  deliveryTelephone: "Delivery Telephone",
+  businessType: "Business Type",
+  tinNumber: "TIN Number",
+  owners: "Owners",
+  officers: "Officers",
+  lineOfBusiness: "Line of Business",
+  lineOfBusinessOther: "Line of Business",
+  businessActivity: "Business Activity",
+  businessActivityOther: "Business Activity",
+  customerType: "Customer Type",
+  paymentTerms: "Payment Terms",
+  tradeReferences: "Trade References",
+  bankReferences: "Bank References",
+  businessLife: "Years in Business",
+  howLongAtAddress: "Years at Address",
+  numberOfBranches: "No. of Branches",
+  govCertifications: "Gov. Certifications",
+  achievements: "Achievements",
+  otherMerits: "Other Merits",
+  additionalNotes: "Additional Notes",
+};
+
+function UpdatedBadge() {
+  return (
+    <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 align-middle print:hidden">
+      Updated
+    </span>
+  );
+}
+
+/** Collapsible faded table of a field's previous rows, shown under the current table. */
+function PreviousRows({
+  rows,
+  columns,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rows: any[];
+  columns: { key: string; label: string }[];
+}) {
+  return (
+    <details className="mt-2 rounded-lg border border-amber-200 bg-amber-50/40 print:hidden">
+      <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-amber-800">
+        Show previous values ({rows.length} {rows.length === 1 ? "row" : "rows"})
+      </summary>
+      {rows.length === 0 ? (
+        <p className="px-3 pb-3 text-xs italic text-zinc-400">None</p>
+      ) : (
+        <div className="overflow-x-auto px-3 pb-3">
+          <table className="w-full text-xs text-zinc-400 line-through">
+            <thead>
+              <tr className="text-left">
+                {columns.map((c) => (
+                  <th key={c.key} className="px-2 py-1 font-semibold no-underline">{c.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  {columns.map((c) => (
+                    <td key={c.key} className="px-2 py-1">{up(r?.[c.key] ? String(r[c.key]) : "") || "—"}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </details>
+  );
+}
+
 function SectionTitle({
   icon: Icon,
   label,
@@ -931,8 +1024,31 @@ export function CisInfoCard(props: CisInfoCardProps) {
     hidePointsPanel = false,
     pointsMode = "full",
     fieldHistory,
+    agentEditedFields,
     printCreditFields = false,
   } = props;
+
+  const agentEditedLabels = Array.from(
+    new Set((agentEditedFields ?? []).map((k) => AGENT_EDIT_FIELD_LABELS[k]).filter(Boolean)),
+  );
+
+  // Previous rows of a table field (owners, officers, …) — stored as JSON in fieldHistory.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const oldRows = (key: string): any[] | null => {
+    if (!fieldHistory || !(key in fieldHistory)) return null;
+    const v = fieldHistory[key];
+    if (!v) return [];
+    try {
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+  const oldOwnerRows = oldRows("owners");
+  const oldOfficerRows = oldRows("officers");
+  const oldTradeRefRows = oldRows("tradeReferences");
+  const oldBankRefRows = oldRows("bankReferences");
 
   const programPrefix = isCustomerProgram(customerProgram) ? `${CUSTOMER_PROGRAM_LABELS[customerProgram]} ` : "";
 
@@ -1064,9 +1180,11 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
   const hasDelivery = !deliverySameAsOffice && (deliveryAddress || deliveryLandmarks || deliveryMobile || deliveryTelephone);
   const hasClassification = lineOfBusiness || businessActivity || old("lineOfBusiness") || old("businessActivity");
-  const hasOwnership = ownerRows.length > 0 || officerRows.length > 0 || !!paymentTerms || old("paymentTerms");
+  const hasOwnership = ownerRows.length > 0 || officerRows.length > 0 || !!paymentTerms || old("paymentTerms")
+    || !!oldOwnerRows || !!oldOfficerRows;
   const hasBackground = businessLife || howLongAtAddress || numberOfBranches || govCertifications
     || tradeRefRows.length > 0 || bankRefRows.length > 0 || achievements || otherMerits
+    || !!oldTradeRefRows || !!oldBankRefRows
     || old("businessLife") || old("howLongAtAddress") || old("numberOfBranches") || old("govCertifications")
     || old("achievements") || old("otherMerits");
 
@@ -1301,7 +1419,26 @@ export function CisInfoCard(props: CisInfoCardProps) {
 
       <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6 print:space-y-2 print:px-0 print:pt-2">
 
-        {fieldHistory && Object.keys(fieldHistory).length > 0 && (
+        {agentEditedLabels.length > 0 ? (
+          <div className="print:hidden rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <PencilLine className="h-4 w-4 text-amber-700 shrink-0" />
+              <p className="text-sm font-semibold text-amber-900">Edited by agent after return</p>
+            </div>
+            <p className="text-xs text-amber-800 mt-1">
+              The agent changed {agentEditedLabels.length} {agentEditedLabels.length === 1 ? "field" : "fields"} before resubmitting. Changed fields below are marked{" "}
+              <span className="inline-flex items-center rounded-md bg-amber-100 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Updated</span>{" "}
+              with the previous value shown.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {agentEditedLabels.map((label) => (
+                <span key={label} className="rounded-full border border-amber-300 bg-white px-2.5 py-0.5 text-[11px] font-medium text-amber-800">
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : fieldHistory && Object.keys(fieldHistory).length > 0 && (
           <div className="print:hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
             <p className="text-sm font-semibold text-amber-900">Customer information updated</p>
             <p className="text-xs text-amber-800 mt-0.5">
@@ -1392,9 +1529,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
         {hasOwnership && (
           <SectionCard>
               <SectionTitle icon={Users} label="Ownership & Officers" />
-              {ownerRows.length > 0 && (
+              {(ownerRows.length > 0 || oldOwnerRows) && (
                 <div className="mb-4">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners</p>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Owners / Partners{oldOwnerRows && <UpdatedBadge />}</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
                     <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
@@ -1417,11 +1554,22 @@ export function CisInfoCard(props: CisInfoCardProps) {
                       </tbody>
                     </table>
                   </div>
+                  {oldOwnerRows && (
+                    <PreviousRows
+                      rows={oldOwnerRows}
+                      columns={[
+                        { key: "name", label: "Name" },
+                        { key: "nationality", label: "Nationality" },
+                        { key: "percentage", label: "% Ownership" },
+                        { key: "contact", label: "Contact" },
+                      ]}
+                    />
+                  )}
                 </div>
               )}
-              {officerRows.length > 0 && (
+              {(officerRows.length > 0 || oldOfficerRows) && (
                 <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives</p>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Officers / Representatives{oldOfficerRows && <UpdatedBadge />}</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
                     <table className="min-w-120 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
@@ -1442,6 +1590,16 @@ export function CisInfoCard(props: CisInfoCardProps) {
                       </tbody>
                     </table>
                   </div>
+                  {oldOfficerRows && (
+                    <PreviousRows
+                      rows={oldOfficerRows}
+                      columns={[
+                        { key: "name", label: "Name" },
+                        { key: "position", label: "Position" },
+                        { key: "contact", label: "Contact" },
+                      ]}
+                    />
+                  )}
                 </div>
               )}
               {(paymentTerms || old("paymentTerms")) && (
@@ -1475,9 +1633,9 @@ export function CisInfoCard(props: CisInfoCardProps) {
                   <Field label="Government Certifications" value={govCertifications} oldValue={old("govCertifications")} />
                 </div>
               )}
-              {tradeRefRows.length > 0 && (
+              {(tradeRefRows.length > 0 || oldTradeRefRows) && (
                 <div className="mb-4">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References</p>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Trade References{oldTradeRefRows && <UpdatedBadge />}</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
                     <table className="min-w-160 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
@@ -1500,11 +1658,22 @@ export function CisInfoCard(props: CisInfoCardProps) {
                       </tbody>
                     </table>
                   </div>
+                  {oldTradeRefRows && (
+                    <PreviousRows
+                      rows={oldTradeRefRows}
+                      columns={[
+                        { key: "company", label: "Company" },
+                        { key: "address", label: "Address" },
+                        { key: "contact", label: "Contact" },
+                        { key: "years", label: "Years" },
+                      ]}
+                    />
+                  )}
                 </div>
               )}
-              {bankRefRows.length > 0 && (
+              {(bankRefRows.length > 0 || oldBankRefRows) && (
                 <div className="mb-4">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References</p>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bank References{oldBankRefRows && <UpdatedBadge />}</p>
                   <div className="overflow-x-auto rounded-lg border border-zinc-100 print:overflow-visible print:rounded-none print:border-zinc-200">
                     <table className="min-w-140 w-full text-sm print:min-w-0 print:text-[13px]">
                       <thead>
@@ -1531,6 +1700,17 @@ export function CisInfoCard(props: CisInfoCardProps) {
                       </tbody>
                     </table>
                   </div>
+                  {oldBankRefRows && (
+                    <PreviousRows
+                      rows={oldBankRefRows}
+                      columns={[
+                        { key: "bank", label: "Bank" },
+                        { key: "branch", label: "Branch" },
+                        { key: "accountType", label: "Account Type" },
+                        { key: "accountNo", label: "Account No." },
+                      ]}
+                    />
+                  )}
                 </div>
               )}
               <div className="grid gap-5 sm:grid-cols-2 print:gap-2">

@@ -63,7 +63,13 @@ export async function transitionCis({
 
     await tx
       .update(cisSubmissions)
-      .set({ status: toStatus, updatedAt: new Date() })
+      .set({
+        status: toStatus,
+        updatedAt: new Date(),
+        // A new return starts a fresh agent-edit round. The snapshot is kept through
+        // resubmission so reviewers can see what the agent changed.
+        ...(toStatus === "returned" ? { agentEditBeforeSnapshot: null } : {}),
+      })
       .where(eq(cisSubmissions.id, cisId));
 
     await tx.insert(workflowEvents).values({

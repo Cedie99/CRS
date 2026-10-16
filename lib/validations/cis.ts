@@ -191,7 +191,7 @@ export const BUSINESS_ACTIVITY_OPTIONS = [
 
 
 
-const ownerRowSchema = z.object({
+export const ownerRowSchema = z.object({
 
   name: z.string().trim().min(1, "Owner name is required").max(255),
 
@@ -217,7 +217,7 @@ const ownerRowSchema = z.object({
 
 
 
-const officerRowSchema = z.object({
+export const officerRowSchema = z.object({
 
   name: z.string().max(255),
 
@@ -229,7 +229,7 @@ const officerRowSchema = z.object({
 
 
 
-const tradeRefRowSchema = z.object({
+export const tradeRefRowSchema = z.object({
 
   company: z.string().max(255),
 

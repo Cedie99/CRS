@@ -94,6 +94,7 @@ export default async function ApproverCisDetailPage({
         <div className="min-w-0 space-y-5 xl:col-span-3 print:col-span-full">
           <CisInfoCard
             fieldHistory={fieldHistory ?? undefined}
+            agentEditedFields={Object.keys((cis.agentEditBeforeSnapshot as Record<string, unknown> | null) ?? {})}
             printEnabled={canPrint}
             cisId={cis.id}
             pointsMode="summary"

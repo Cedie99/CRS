@@ -70,6 +70,154 @@ function emptyBankRef(): BankRefRow {
   return { bank: "", branch: "", accountType: "", accountNo: "" };
 }
 
+interface OwnerRow {
+  name: string;
+  nationality: string;
+  percentage: string;
+  contact: string;
+}
+
+interface OfficerRow {
+  name: string;
+  position: string;
+  contact: string;
+}
+
+interface TradeRefRow {
+  company: string;
+  address: string;
+  contact: string;
+  years: string;
+}
+
+function emptyOwner(): OwnerRow {
+  return { name: "", nationality: "", percentage: "", contact: "" };
+}
+
+function emptyOfficer(): OfficerRow {
+  return { name: "", position: "", contact: "" };
+}
+
+function emptyTradeRef(): TradeRefRow {
+  return { company: "", address: "", contact: "", years: "" };
+}
+
+/** Normalizes stored jsonb rows into fully-populated string rows for editing. */
+function toRows<T extends object>(rows: Partial<Record<keyof T, unknown>>[] | undefined, empty: () => T): T[] {
+  return (rows ?? []).map((r) => {
+    const base = empty();
+    for (const key of Object.keys(base) as (keyof T)[]) {
+      const v = r?.[key];
+      (base as Record<keyof T, unknown>)[key] = v === null || v === undefined ? "" : String(v);
+    }
+    return base;
+  });
+}
+
+function trimRows<T extends object>(rows: T[]): T[] {
+  return rows.map((r) => {
+    const out = { ...r } as Record<string, unknown>;
+    for (const [k, v] of Object.entries(out)) {
+      if (typeof v === "string") out[k] = v.trim();
+    }
+    return out as T;
+  });
+}
+
+function isBlankRow(row: object): boolean {
+  return Object.values(row).every((v) => typeof v !== "string" || !v.trim());
+}
+
+function rowsChanged<T extends object>(initial: T[], current: T[]): boolean {
+  return JSON.stringify(trimRows(initial)) !== JSON.stringify(trimRows(current).filter((r) => !isBlankRow(r)));
+}
+
+interface RowFieldDef<T> {
+  key: keyof T & string;
+  label: string;
+  placeholder?: string;
+  type?: string;
+}
+
+function RowListEditor<T extends object>({ rows, setRows, fieldsDef, makeEmpty, disabled, emptyText, minRows = 0 }: {
+  rows: T[];
+  setRows: React.Dispatch<React.SetStateAction<T[]>>;
+  fieldsDef: RowFieldDef<T>[];
+  makeEmpty: () => T;
+  disabled?: boolean;
+  emptyText: string;
+  minRows?: number;
+}) {
+  return (
+    <>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setRows((prev) => [...prev, makeEmpty()])}
+          disabled={disabled}
+          className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 border border-zinc-200 rounded px-2 py-1 bg-white"
+        >
+          <Plus className="h-3 w-3" /> Add Row
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-xs text-zinc-400 italic">{emptyText}</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row, i) => (
+            <div key={i} className="relative rounded-lg border border-zinc-200 bg-zinc-50/50 p-3">
+              {rows.length > minRows && (
+                <button
+                  type="button"
+                  onClick={() => setRows((prev) => prev.filter((_, idx) => idx !== i))}
+                  disabled={disabled}
+                  className="absolute right-2 top-2 text-zinc-300 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pr-8">
+                {fieldsDef.map((fd) => (
+                  <div key={fd.key} className="space-y-1">
+                    <L>{fd.label}</L>
+                    <F
+                      value={String(row[fd.key] ?? "")}
+                      onChange={(v) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [fd.key]: v } : r)))}
+                      disabled={disabled}
+                      placeholder={fd.placeholder}
+                      type={fd.type}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+const OWNER_FIELDS: RowFieldDef<OwnerRow>[] = [
+  { key: "name", label: "Owner Name", placeholder: "Full name" },
+  { key: "nationality", label: "Nationality", placeholder: "e.g. Filipino" },
+  { key: "percentage", label: "Ownership %", placeholder: "e.g. 50" },
+  { key: "contact", label: "Contact No.", placeholder: "e.g. 09171234567", type: "tel" },
+];
+
+const OFFICER_FIELDS: RowFieldDef<OfficerRow>[] = [
+  { key: "name", label: "Officer Name", placeholder: "Full name" },
+  { key: "position", label: "Position", placeholder: "e.g. President" },
+  { key: "contact", label: "Contact No.", placeholder: "e.g. 09171234567", type: "tel" },
+];
+
+const TRADE_REF_FIELDS: RowFieldDef<TradeRefRow>[] = [
+  { key: "company", label: "Company", placeholder: "Company name" },
+  { key: "address", label: "Address", placeholder: "Company address" },
+  { key: "contact", label: "Contact No.", placeholder: "e.g. 09171234567", type: "tel" },
+  { key: "years", label: "Years Dealing", placeholder: "e.g. 3" },
+];
+
 interface FieldGroupProps {
   label: string;
   children: React.ReactNode;
@@ -97,6 +245,9 @@ interface AgentEditCustomerInfoProps {
   cisId: string;
   initialData: Record<string, string | boolean | null | undefined>;
   initialBankReferences?: BankRefRow[];
+  initialOwners?: Partial<Record<keyof OwnerRow, unknown>>[];
+  initialOfficers?: Partial<Record<keyof OfficerRow, unknown>>[];
+  initialTradeReferences?: Partial<Record<keyof TradeRefRow, unknown>>[];
 }
 
 function F({ value, onChange, disabled, placeholder, type }: {
@@ -141,7 +292,14 @@ function L({ children }: { children: React.ReactNode }) {
   return <Label className="block text-sm font-medium text-zinc-700 mb-1.5">{children}</Label>;
 }
 
-export function AgentEditCustomerInfo({ cisId, initialData, initialBankReferences = [] }: AgentEditCustomerInfoProps) {
+export function AgentEditCustomerInfo({
+  cisId,
+  initialData,
+  initialBankReferences = [],
+  initialOwners: initialOwnersRaw = [],
+  initialOfficers: initialOfficersRaw = [],
+  initialTradeReferences: initialTradeRefsRaw = [],
+}: AgentEditCustomerInfoProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -184,6 +342,15 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
       : []
   );
 
+  const [initialOwners] = useState(() => toRows(initialOwnersRaw, emptyOwner));
+  const [initialOfficers] = useState(() => toRows(initialOfficersRaw, emptyOfficer));
+  const [initialTradeRefs] = useState(() => toRows(initialTradeRefsRaw, emptyTradeRef));
+  const [owners, setOwners] = useState<OwnerRow[]>(() =>
+    initialOwners.length > 0 ? initialOwners : [emptyOwner()]
+  );
+  const [officers, setOfficers] = useState<OfficerRow[]>(initialOfficers);
+  const [tradeRefs, setTradeRefs] = useState<TradeRefRow[]>(initialTradeRefs);
+
   const initialPaymentTerms = init("paymentTerms").toLowerCase();
   const isMovingToWithTerms =
     fields.paymentTerms === "with_terms" && initialPaymentTerms !== "with_terms";
@@ -218,6 +385,9 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
         ? initialBankReferences.map((r) => ({ ...emptyBankRef(), ...r }))
         : []
     );
+    setOwners(initialOwners.length > 0 ? initialOwners : [emptyOwner()]);
+    setOfficers(initialOfficers);
+    setTradeRefs(initialTradeRefs);
     setError("");
   }
 
@@ -257,6 +427,15 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
     if (bankRefsChanged()) {
       changed.bankReferences = bankRefs.filter((r) => r.bank.trim());
     }
+    if (rowsChanged(initialOwners, owners)) {
+      changed.owners = trimRows(owners).filter((r) => !isBlankRow(r));
+    }
+    if (rowsChanged(initialOfficers, officers)) {
+      changed.officers = trimRows(officers).filter((r) => !isBlankRow(r));
+    }
+    if (rowsChanged(initialTradeRefs, tradeRefs)) {
+      changed.tradeReferences = trimRows(tradeRefs).filter((r) => !isBlankRow(r));
+    }
     return changed;
   }
 
@@ -266,6 +445,18 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
     if (Object.keys(changed).length === 0) {
       setEditing(false);
       return;
+    }
+
+    if (Array.isArray(changed.owners)) {
+      const ownerRows = changed.owners as OwnerRow[];
+      if (ownerRows.length === 0) {
+        setError("At least one owner is required.");
+        return;
+      }
+      if (ownerRows.some((r) => !r.name)) {
+        setError("Every owner row must have a name.");
+        return;
+      }
     }
 
     if (isMovingToWithTerms) {
@@ -501,6 +692,30 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
           )}
         </FieldGroup>
 
+        <FieldGroup label="Owners">
+          <p className="text-xs text-zinc-500 -mt-1">At least one owner is required.</p>
+          <RowListEditor
+            rows={owners}
+            setRows={setOwners}
+            fieldsDef={OWNER_FIELDS}
+            makeEmpty={emptyOwner}
+            disabled={saving}
+            emptyText="No owners added yet."
+            minRows={1}
+          />
+        </FieldGroup>
+
+        <FieldGroup label="Officers" defaultOpen={officers.length > 0}>
+          <RowListEditor
+            rows={officers}
+            setRows={setOfficers}
+            fieldsDef={OFFICER_FIELDS}
+            makeEmpty={emptyOfficer}
+            disabled={saving}
+            emptyText="No officers added yet."
+          />
+        </FieldGroup>
+
         <FieldGroup
           label="Payment & Sales"
         >
@@ -618,6 +833,17 @@ export function AgentEditCustomerInfo({ cisId, initialData, initialBankReference
             )}
           </FieldGroup>
         )}
+
+        <FieldGroup label="Trade References" defaultOpen={tradeRefs.length > 0}>
+          <RowListEditor
+            rows={tradeRefs}
+            setRows={setTradeRefs}
+            fieldsDef={TRADE_REF_FIELDS}
+            makeEmpty={emptyTradeRef}
+            disabled={saving}
+            emptyText="No trade references added yet."
+          />
+        </FieldGroup>
 
         <FieldGroup
           label="Business Background"

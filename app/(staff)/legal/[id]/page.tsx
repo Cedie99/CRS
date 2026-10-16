@@ -127,6 +127,7 @@ export default async function LegalCisDetailPage({
         salesSupportVatCode: cisSubmissions.salesSupportVatCode,
         salesSupportOtherRemarks: cisSubmissions.salesSupportOtherRemarks,
         docReviewStatuses: cisSubmissions.docReviewStatuses,
+        agentEditBeforeSnapshot: cisSubmissions.agentEditBeforeSnapshot,
       })
       .from(cisSubmissions)
       .where(eq(cisSubmissions.id, id))
@@ -187,6 +188,7 @@ export default async function LegalCisDetailPage({
 
       <LegalCisDetailClient
         fieldHistory={fieldHistory ?? undefined}
+        agentEditedFields={Object.keys((cis.agentEditBeforeSnapshot as Record<string, unknown> | null) ?? {})}
         cisId={cis.id}
         initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
         canAct={canAct}

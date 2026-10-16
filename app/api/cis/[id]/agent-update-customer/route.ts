@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { mergeAgentEditBeforeSnapshot } from "@/lib/agent-edit-snapshot";
 import { db } from "@/lib/db";
 import { cisSubmissions } from "@/lib/db/schema";
+import { officerRowSchema, ownerRowSchema, tradeRefRowSchema } from "@/lib/validations/cis";
 
 const DIGITS_ONLY = /^\d+$/;
 const DIGITS_OPTIONAL_DECIMAL = /^\d+(\.\d+)?$/;
@@ -84,6 +85,10 @@ const agentUpdateCustomerSchema = z.object({
     }, { message: "TIN must contain 9 to 15 digits" })
     .optional()
     .or(z.literal("")),
+  // Ownership
+  owners: z.array(ownerRowSchema).min(1, "At least one owner is required").optional(),
+  officers: z.array(officerRowSchema).optional(),
+
   lineOfBusiness: z.string().max(100).optional(),
   lineOfBusinessOther: z.string().max(255).optional(),
   businessActivity: z.string().max(100).optional(),
@@ -92,6 +97,8 @@ const agentUpdateCustomerSchema = z.object({
   // Payment & Sales
   customerType: z.enum(["dealer", "distributor", "private_label", "toll_blend", "end_user"]).optional(),
   paymentTerms: z.string().max(50).optional(),
+
+  tradeReferences: z.array(tradeRefRowSchema).optional(),
 
   bankReferences: z.array(z.object({
     bank: z.string().max(255),

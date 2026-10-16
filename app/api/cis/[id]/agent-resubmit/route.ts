@@ -120,11 +120,6 @@ export async function PATCH(
       .where(eq(cisSubmissions.id, id));
   }
 
-  await db
-    .update(cisSubmissions)
-    .set({ agentEditBeforeSnapshot: null })
-    .where(eq(cisSubmissions.id, id));
-
   // Get manager ID for informational notification
   const [agent] = await db
     .select({ managerId: users.managerId })

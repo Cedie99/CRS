@@ -85,6 +85,7 @@ export default async function FinanceCisDetailPage({
 
       <FinanceCisDetailClient
         fieldHistory={fieldHistory ?? undefined}
+        agentEditedFields={Object.keys((cis.agentEditBeforeSnapshot as Record<string, unknown> | null) ?? {})}
         cisId={cis.id}
         initialDocReviewStatuses={(cis.docReviewStatuses as any) ?? {}}
         canAct={canAct}

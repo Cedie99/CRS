@@ -740,6 +740,9 @@ export default async function AgentCisDetailPage({
         <AgentEditCustomerInfo
           cisId={cis.id}
           initialBankReferences={(cis.bankReferences as { bank: string; branch: string; accountType: string; accountNo: string }[] | null) ?? []}
+          initialOwners={(cis.owners as { name: string; nationality: string; percentage?: string; contact?: string }[] | null) ?? []}
+          initialOfficers={(cis.officers as { name: string; position: string; contact?: string }[] | null) ?? []}
+          initialTradeReferences={(cis.tradeReferences as { company: string; address: string; contact?: string; years?: string }[] | null) ?? []}
           initialData={{
             customerType: cis.customerType,
             tradeName: cis.tradeName,

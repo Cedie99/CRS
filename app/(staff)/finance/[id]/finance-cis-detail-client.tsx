@@ -137,6 +137,7 @@ interface FinanceCisDetailClientProps {
   salesSupportVatCode?: string | null;
   salesSupportOtherRemarks?: string | null;
   fieldHistory?: Record<string, string | null>;
+  agentEditedFields?: string[];
 }
 
 const REVIEWED_STATUSES = new Set(["approved", "rejected", "needs_review"]);
