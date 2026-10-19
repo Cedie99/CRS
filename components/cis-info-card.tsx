@@ -1238,6 +1238,22 @@ export function CisInfoCard(props: CisInfoCardProps) {
           return arr.map(fmt).filter(Boolean).join(", ");
         }
 
+        // Table fields (owners, officers, …) — same summary for before (JSON in fieldHistory) and after
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ROW_SUMMARIZERS: Record<string, (item: any) => string> = {
+          owners: (o) => [o?.name, o?.percentage ? `(${o.percentage}%)` : ""].filter(Boolean).join(" "),
+          officers: (o) => [o?.name, o?.position ? `(${o.position})` : ""].filter(Boolean).join(" "),
+          tradeReferences: (r) => r?.company ?? "",
+          bankReferences: (r) => [r?.bank, r?.branch].filter(Boolean).join(" - "),
+        };
+
+        function cusBeforeValue(field: string): string | null | undefined {
+          const summarize = ROW_SUMMARIZERS[field];
+          if (!summarize) return fieldHistory?.[field];
+          const rows = oldRows(field);
+          return rows ? summarizeArray(rows, summarize) : fieldHistory?.[field];
+        }
+
         // Map fieldHistory keys to current (after) prop values (formatted as strings for print table)
         const cusAfterValues: Record<string, string | null | undefined> = {
           tradeName,
@@ -1262,14 +1278,14 @@ export function CisInfoCard(props: CisInfoCardProps) {
           lineOfBusiness,
           businessActivity,
           paymentTerms,
-          owners: summarizeArray(owners, (o) => [o.name, o.percentage ? `(${o.percentage}%)` : ""].filter(Boolean).join(" ")),
-          officers: summarizeArray(officers, (o) => [o.name, o.position ? `(${o.position})` : ""].filter(Boolean).join(" ")),
+          owners: summarizeArray(owners, ROW_SUMMARIZERS.owners),
+          officers: summarizeArray(officers, ROW_SUMMARIZERS.officers),
           businessLife,
           howLongAtAddress,
           numberOfBranches,
           govCertifications,
-          tradeReferences: summarizeArray(tradeReferences, (r) => r.company).replace(/,/g, ", "),
-          bankReferences: summarizeArray(bankReferences, (r) => [r.bank, r.branch].filter(Boolean).join(" - ")),
+          tradeReferences: summarizeArray(tradeReferences, ROW_SUMMARIZERS.tradeReferences),
+          bankReferences: summarizeArray(bankReferences, ROW_SUMMARIZERS.bankReferences),
           achievements,
           otherMerits,
           additionalNotes,
@@ -1357,7 +1373,7 @@ export function CisInfoCard(props: CisInfoCardProps) {
                           {CUS_FIELD_LABELS[field]}
                         </td>
                         <td className={`border border-zinc-300 px-2.5 py-1.5 text-zinc-500`}>
-                          {field === "emailAddress" || field === "website" ? fmtCusVal(field, fieldHistory?.[field]) : up(fmtCusVal(field, fieldHistory?.[field]))}
+                          {field === "emailAddress" || field === "website" ? fmtCusVal(field, cusBeforeValue(field)) : up(fmtCusVal(field, cusBeforeValue(field)))}
                         </td>
                         <td className={`border border-zinc-300 px-2.5 py-1.5 font-semibold text-zinc-900`}>
                           {field === "emailAddress" || field === "website" ? fmtCusVal(field, cusAfterValues[field]) : up(fmtCusVal(field, cusAfterValues[field]))}
