@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PageTransition } from "@/components/page-transition";
 import { DashboardNotificationBell } from "@/components/dashboard-notification-bell";
+import { BackupJobProvider } from "@/components/admin/backup-job-provider";
 
 interface StaffShellProps {
   userName: string;
@@ -71,7 +72,14 @@ export function StaffShell({
             <div className="absolute right-4 top-3 z-10 hidden print:hidden lg:flex lg:right-8">
               <DashboardNotificationBell role={userRole} />
             </div>
-            <PageTransition>{children}</PageTransition>
+            {userRole === "admin" ? (
+              // Admin backup downloads live above the page so they survive navigation
+              <BackupJobProvider>
+                <PageTransition>{children}</PageTransition>
+              </BackupJobProvider>
+            ) : (
+              <PageTransition>{children}</PageTransition>
+            )}
           </div>
         </main>
       </div>

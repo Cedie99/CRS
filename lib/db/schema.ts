@@ -529,6 +529,14 @@ export const cisSubmissions = pgTable("cis_submissions", {
 
 
 
+  // Last time an admin downloaded a backup of this record (Admin → Backup Records)
+
+  lastBackupAt: timestamp("last_backup_at"),
+
+  lastBackupBy: uuid("last_backup_by").references(() => users.id, { onDelete: "set null" }),
+
+
+
   // Pre-edit field values when agent updates customer info on a returned CIS
 
   agentEditBeforeSnapshot: jsonb("agent_edit_before_snapshot"),

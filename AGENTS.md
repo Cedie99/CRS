@@ -235,6 +235,7 @@ Finance and Legal are the same stage, split only by which customer types they ha
 | `/api/admin/users`           | GET / POST     | List or create users    |
 | `/api/admin/users/[id]`      | PATCH / DELETE | Update or delete a user |
 | `/api/admin/cis/[id]/delete` | DELETE         | Delete a CIS record     |
+| `/api/admin/cis/[id]/backup` | POST           | Mark an `erp_encoded` CIS as backed up (`lastBackupAt`/`lastBackupBy`) |
 
 ### Auth
 
@@ -304,6 +305,7 @@ Both detail pages include: doc review (approve/reject per document), credit eval
 - `/admin/[id]` — CIS detail + ERP encode action + delete zone
 - `/admin/users` — User management table
 - `/admin/users/new` — Create new user
+- `/admin/backup` — Backup Records (paginated, 20/page, `?q=` search, `?filter=pending|downloaded`): select one or many `erp_encoded` customers (selection persists across pages) and download their CIS form PDF — one record → `.pdf`, several → `.zip` of PDFs (generated via `/api/cis/[id]/pdf`). Each record shows Downloaded / Not downloaded (from `lastBackupAt`, migration 0027) and asks before re-downloading. The download job lives in `BackupJobProvider` (wrapped around admin pages in `StaffShell`), so it keeps running with a floating progress card while the admin navigates; a full reload/close triggers a leave-page warning
 
 ---
 

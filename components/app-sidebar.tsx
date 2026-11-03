@@ -22,6 +22,7 @@ import {
   List,
   Download,
   BarChart2,
+  Archive,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, humanizeDisplayValue } from "@/lib/utils";
@@ -78,6 +79,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "Create User", href: "/admin/users/new", icon: Plus },
     { label: "Analytics", href: "/admin/analytics", icon: BarChart2, exact: true },
     { label: "Export Report", href: "/admin/export", icon: Download, exact: true },
+    { label: "Backup Records", href: "/admin/backup", icon: Archive, exact: true },
   ],
 };
 
